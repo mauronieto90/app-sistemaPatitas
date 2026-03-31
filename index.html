@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patitas Peludas — Sistema de Gestión v2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F7F5F0; --surface:#FFF; --surface2:#F0EDE6;
+  --border:rgba(0,0,0,0.08); --border-strong:rgba(0,0,0,0.15);
+  --text:#1A1915; --text2:#6B6860; --text3:#A09D97;
+  --green:#1D9E75; --green-bg:#E6F5EF; --green-text:#0D6B4F;
+  --red:#D94F3D; --red-bg:#FCECEA; --red-text:#9B2A1A;
+  --amber:#C47B20; --amber-bg:#FEF3E2; --amber-text:#7A4A0A;
+  --blue:#2563EB; --blue-bg:#EFF4FF; --blue-text:#1E40AF;
+  --purple:#6D28D9; --purple-bg:#F3EFFE; --purple-text:#4C1D95;
+  --radius:10px; --radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+/* LAYOUT */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:224px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.main{flex:1;overflow-y:auto;padding:28px 32px}
+/* SIDEBAR */
+.brand{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.brand-logo{width:34px;height:34px;border-radius:9px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:9px}
+.brand h2{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
+.brand p{font-size:11px;color:var(--text3);margin-top:1px}
+.nav-section{padding:10px 10px 2px}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin-bottom:3px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;border:none;background:none;width:100%;text-align:left;transition:all .12s}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--green-bg);color:var(--green-text);font-weight:500}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)}
+.sidebar-footer strong{display:block;color:var(--text2);font-size:12px;margin-bottom:1px}
+/* PAGES */
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:22px}
+.page-header h1{font-size:21px;font-weight:600}
+.page-header p{font-size:13px;color:var(--text2);margin-top:3px}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+.card-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(136px,1fr));gap:10px;margin-bottom:18px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;box-shadow:var(--shadow)}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:5px}
+.metric-value{font-size:21px;font-weight:600;color:var(--text);line-height:1}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.metric-value.green{color:var(--green)}.metric-value.red{color:var(--red)}.metric-value.amber{color:var(--amber)}.metric-value.blue{color:var(--blue)}
+/* PILLS */
+.pill{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.pill-green{background:var(--green-bg);color:var(--green-text)}
+.pill-red{background:var(--red-bg);color:var(--red-text)}
+.pill-amber{background:var(--amber-bg);color:var(--amber-text)}
+.pill-blue{background:var(--blue-bg);color:var(--blue-text)}
+.pill-purple{background:var(--purple-bg);color:var(--purple-text)}
+.pill-gray{background:var(--surface2);color:var(--text2)}
+/* ALERTS */
+.alert{border-radius:var(--radius);padding:9px 13px;font-size:12px;margin-bottom:12px;border-left:3px solid}
+.alert-amber{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)}
+.alert-green{background:var(--green-bg);color:var(--green-text);border-color:var(--green)}
+.alert-red{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
+.alert-blue{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue)}
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{font-size:11px;font-weight:600;color:var(--text3);text-align:left;padding:7px 10px;background:var(--bg);border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg)}
+.mono{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.field label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;font-weight:500}
+select,input[type=number],input[type=date],input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);transition:border-color .12s}
+select:focus,input:focus{outline:none;border-color:var(--green)}
+.btn{padding:8px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;border:none}
+.btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--green-text)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border-strong)}.btn-secondary:hover{background:var(--border)}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-icon{padding:4px 7px;font-size:12px;border-radius:7px;cursor:pointer;border:none;background:transparent;color:var(--text3);transition:all .12s}
+.btn-icon:hover{background:var(--surface2);color:var(--text)}
+/* SEARCH */
+.search-bar{width:100%;padding:9px 14px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);margin-bottom:10px}
+.search-bar:focus{outline:none;border-color:var(--green)}
+/* CHIPS */
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.chip{padding:4px 11px;font-size:12px;border-radius:20px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
+.chip:hover{border-color:var(--green);color:var(--green)}
+.chip.on{background:var(--green-bg);color:var(--green-text);border-color:var(--green);font-weight:500}
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+/* BARS */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-label{font-size:12px;color:var(--text2);width:150px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-value{font-size:12px;font-weight:500;width:82px;text-align:right;flex-shrink:0}
+/* CHART */
+.chart-wrap{position:relative;width:100%}
+/* LEGEND */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:9px;font-size:12px;color:var(--text2)}
+.legend span{display:flex;align-items:center;gap:4px}
+.ldot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+/* PREVIEW BOX */
+.preview-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;margin-bottom:12px}
+.preview-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;color:var(--text2)}
+.preview-total{display:flex;justify-content:space-between;padding-top:9px;margin-top:6px;border-top:1px solid var(--border);font-weight:600;font-size:14px;color:var(--text)}
+/* STOCK COLORS */
+.stk-ok{color:var(--green);font-weight:500}.stk-low{color:var(--amber);font-weight:500}.stk-out{color:var(--red);font-weight:500}
+/* LOG SCROLL */
+.log-scroll{max-height:280px;overflow-y:auto}
+/* PRODUCT SEARCH MODAL STYLE */
+.prod-search-wrap{position:relative;margin-bottom:10px}
+.prod-search-input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text)}
+.prod-search-input:focus{outline:none;border-color:var(--green)}
+.prod-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.prod-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:100;max-height:260px;overflow-y:auto;display:none}
+.prod-dropdown.open{display:block}
+.prod-option{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+.prod-option:last-child{border-bottom:none}
+.prod-option:hover{background:var(--bg)}
+.prod-option .po-name{font-size:13px;font-weight:500;color:var(--text)}
+.prod-option .po-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.prod-option .po-stk{font-size:11px;font-weight:500;margin-left:auto;flex-shrink:0}
+.prod-selected{background:var(--green-bg);border:1px solid var(--green);border-radius:var(--radius);padding:9px 12px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between}
+.prod-selected.show{display:flex}
+.prod-selected .ps-name{font-size:13px;font-weight:500;color:var(--green-text)}
+.prod-selected .ps-meta{font-size:11px;color:var(--green-text);opacity:.7}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:16px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+/* MOBILE */
+@media(max-width:768px){
+  .shell{flex-direction:column}
+  .sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border);overflow:hidden}
+  .sidebar.collapsed .nav-section,.sidebar.collapsed .sidebar-footer{display:none}
+  .main{padding:14px}
+  .menu-btn{display:flex}
+}
+.menu-btn{display:none;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text2);border:none;background:none;font-family:'DM Sans',sans-serif}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-logo">🐾</div>
+    <h2>Patitas Peludas</h2>
+    <p>Sistema de gestión v2</p>
+  </div>
+  <button class="menu-btn" onclick="toggleSidebar()">☰ Menú</button>
+
+  <div class="nav-section">
+    <div class="nav-label">General</div>
+    <button class="nav-item active" onclick="goTo('resumen',this)"><span class="nav-icon">📊</span> Resumen</button>
+    <button class="nav-item" onclick="goTo('finanzas',this)"><span class="nav-icon">💰</span> Finanzas</button>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Ventas</div>
+    <button class="nav-item" onclick="goTo('nueva-venta',this)"><span class="nav-icon">➕</span> Nueva venta</button>
+    <button class="nav-item" onclick="goTo('historial',this)"><span class="nav-icon">📋</span> Historial</button>
+    <button class="nav-item" onclick="goTo('productos-top',this)"><span class="nav-icon">⭐</span> Top productos</button>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Inventario</div>
+    <button class="nav-item" onclick="goTo('inventario',this)"><span class="nav-icon">📦</span> Stock estimado</button>
+    <button class="nav-item" onclick="goTo('nueva-compra',this)"><span class="nav-icon">🛒</span> Nueva compra</button>
+    <button class="nav-item" onclick="goTo('nuevo-gasto',this)"><span class="nav-icon">💸</span> Nuevo gasto</button>
+    <button class="nav-item" onclick="goTo('compras',this)"><span class="nav-icon">📜</span> Historial compras</button>
+    <button class="nav-item" onclick="goTo('catalogo',this)"><span class="nav-icon">📑</span> Catálogo</button>
+  </div>
+  <div class="sidebar-footer">
+    <strong>Patitas Peludas</strong>v2.0 — 25 mar 2026
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ══ RESUMEN ══ -->
+<section class="page active" id="page-resumen">
+  <div class="page-header"><h1>Resumen general</h1><p>Vista consolidada — feb/mar 2026</p></div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Ventas hoy</div><div class="metric-value" id="rm-hoy">$40.400</div><div class="metric-sub">25 mar 2026</div></div>
+    <div class="metric"><div class="metric-label">Ventas marzo</div><div class="metric-value green" id="rm-mes">$4.483K</div><div class="metric-sub">+122% vs feb</div></div>
+    <div class="metric"><div class="metric-label">Menudeo hoy</div><div class="metric-value green" id="rm-menudeo">$40.400</div><div class="metric-sub">sin contar bultos</div></div>
+    <div class="metric"><div class="metric-label">Bultos hoy</div><div class="metric-value blue" id="rm-bulto">$0</div><div class="metric-sub">ventas por bulto</div></div>
+    <div class="metric"><div class="metric-label">Stock OK</div><div class="metric-value green" id="r-ok">—</div></div>
+    <div class="metric"><div class="metric-label">Stock bajo/agotado</div><div class="metric-value amber" id="r-alerta">—</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Ventas diarias — menudeo vs bulto</div>
+    <div class="legend">
+      <span><span class="ldot" style="background:#1D9E75"></span>Menudeo</span>
+      <span><span class="ldot" style="background:#2563EB"></span>Bulto</span>
+    </div>
+    <div class="chart-wrap" style="height:200px"><canvas id="cDiario"></canvas></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Ventas por día de la semana</div>
+      <div class="chart-wrap" style="height:155px"><canvas id="cSemana"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Medio de pago</div>
+      <div class="legend">
+        <span><span class="ldot" style="background:#1D9E75"></span>Nequi 52%</span>
+        <span><span class="ldot" style="background:#2563EB"></span>Efectivo 47%</span>
+        <span><span class="ldot" style="background:#C47B20"></span>Otros 1%</span>
+      </div>
+      <div class="chart-wrap" style="height:120px"><canvas id="cPago"></canvas></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Tipo de venta (total)</div>
+      <div class="legend">
+        <span><span class="ldot" style="background:#1D9E75"></span>Granel 46%</span>
+        <span><span class="ldot" style="background:#D94F3D"></span>Bulto 33%</span>
+        <span><span class="ldot" style="background:#2563EB"></span>Und 10%</span>
+        <span><span class="ldot" style="background:#C47B20"></span>Paquete 8%</span>
+      </div>
+      <div class="chart-wrap" style="height:120px"><canvas id="cTipo"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Compras por categoría</div>
+      <div class="legend">
+        <span><span class="ldot" style="background:#2563EB"></span>Concentrado 74%</span>
+        <span><span class="ldot" style="background:#1D9E75"></span>Aseo 9%</span>
+        <span><span class="ldot" style="background:#6D28D9"></span>Accesorio 7%</span>
+        <span><span class="ldot" style="background:#C47B20"></span>Snack 4%</span>
+      </div>
+      <div class="chart-wrap" style="height:120px"><canvas id="cCatCmp"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FINANZAS ══ -->
+<section class="page" id="page-finanzas">
+  <div class="page-header"><h1>Finanzas</h1><p>Ingresos, egresos y balance operativo</p></div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Ingresos ventas</div><div class="metric-value green" id="fin-ingresos">$6.502K</div></div>
+    <div class="metric"><div class="metric-label">Compras inventario</div><div class="metric-value red" id="fin-compras">$8.952K</div></div>
+    <div class="metric"><div class="metric-label">Gastos operativos</div><div class="metric-value red" id="fin-gastos">$520K</div></div>
+    <div class="metric"><div class="metric-label">Balance neto</div><div class="metric-value red" id="fin-balance">−$2.970K</div></div>
+    <div class="metric"><div class="metric-label">Transacciones</div><div class="metric-value">962</div></div>
+    <div class="metric"><div class="metric-label">Proveedores</div><div class="metric-value" id="fin-provs">11</div></div>
+  </div>
+  <div class="alert alert-amber">El balance negativo refleja la inversión inicial en inventario — normal al arrancar. Mejora a medida que rota el stock.</div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Ingresos por mes</div>
+      <div class="chart-wrap" style="height:155px"><canvas id="cMes"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Compras por proveedor</div>
+      <div id="prov-bars"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Gastos operativos acumulados</div>
+    <table><thead><tr><th>Concepto</th><th style="text-align:right">Total</th></tr></thead>
+    <tbody id="gastos-hist-tbl">
+      <tr><td>Adecuaciones y herramientas</td><td style="text-align:right">$183.042</td></tr>
+      <tr><td>Parqueaderos</td><td style="text-align:right">$75.900</td></tr>
+      <tr><td>Empaques y bolsas</td><td style="text-align:right">$67.200</td></tr>
+      <tr><td>Frascos y envases</td><td style="text-align:right">$65.320</td></tr>
+      <tr><td>Varios</td><td style="text-align:right">$128.330</td></tr>
+    </tbody></table>
+    <div style="display:flex;justify-content:space-between;padding-top:9px;margin-top:7px;border-top:1px solid var(--border);font-weight:600">
+      <span>Total</span><span id="gastos-acum-fin" style="color:var(--red)">$519.792</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ NUEVA VENTA ══ -->
+<section class="page" id="page-nueva-venta">
+  <div class="page-header"><h1>Nueva venta</h1><p>Busca y selecciona del catálogo unificado</p></div>
+  <div class="card">
+    <div class="card-title">Buscar producto</div>
+    <div class="prod-search-wrap">
+      <span class="prod-search-icon">🔍</span>
+      <input class="prod-search-input" id="vta-search" type="text" placeholder="Escribe nombre o categoría..." autocomplete="off" oninput="searchProds(this.value,'vta')" onfocus="openDropdown('vta')" onblur="setTimeout(()=>closeDropdown('vta'),180)">
+      <div class="prod-dropdown" id="vta-dropdown"></div>
+    </div>
+    <div class="prod-selected" id="vta-selected">
+      <div><div class="ps-name" id="vta-sel-name">—</div><div class="ps-meta" id="vta-sel-meta"></div></div>
+      <button class="btn-icon" onclick="clearProdSel('vta')">✕</button>
+    </div>
+    <div class="chips" id="vta-cat-chips"></div>
+    <div class="form-grid">
+      <div class="field"><label>Tipo de venta</label>
+        <select id="vta-tipo">
+          <option>Granel</option><option>Paquete</option><option>Bulto</option>
+          <option>Und</option><option>Sobre</option><option>Caja</option><option>Accesorio</option>
+        </select>
+      </div>
+      <div class="field"><label>Cantidad</label>
+        <input type="number" id="vta-qty" min="0.1" step="0.1" value="1" oninput="updateVtaPreview()">
+      </div>
+      <div class="field"><label>Valor ($)</label>
+        <input type="number" id="vta-val" min="0" step="100" placeholder="0" oninput="updateVtaPreview()">
+      </div>
+      <div class="field"><label>Medio de pago</label>
+        <select id="vta-pago"><option>Efectivo</option><option>Nequi</option><option>Daviplata</option><option>Fiado</option></select>
+      </div>
+      <div class="field"><label>Fecha</label>
+        <input type="date" id="vta-fecha" value="2026-03-25">
+      </div>
+    </div>
+    <div class="preview-box" id="vta-preview" style="display:none">
+      <div class="preview-row"><span>Producto</span><span id="vpv-prod" style="font-weight:500;color:var(--text)"></span></div>
+      <div class="preview-row"><span>Stock actual</span><span id="vpv-stk"></span></div>
+      <div class="preview-row"><span>Stock tras venta</span><span id="vpv-new"></span></div>
+      <div class="preview-total"><span>Total venta</span><span id="vpv-val" style="color:var(--green)">$0</span></div>
+    </div>
+    <button class="btn btn-primary" onclick="registrarVenta()">Registrar venta</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Ventas de esta sesión</div>
+    <div class="log-scroll">
+      <table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cant.</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
+      <tbody id="tbody-vta-session"><tr><td colspan="7" style="text-align:center;padding:18px;color:var(--text3)">Sin ventas en esta sesión</td></tr></tbody>
+      </table>
+    </div>
+    <div id="vta-session-total" style="text-align:right;margin-top:9px;font-size:14px;font-weight:600;color:var(--green)"></div>
+  </div>
+</section>
+
+<!-- ══ HISTORIAL VENTAS ══ -->
+<section class="page" id="page-historial">
+  <div class="page-header"><h1>Historial de ventas</h1><p>962 transacciones registradas — feb/mar 2026</p></div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Total ventas</div><div class="metric-value green">$6.502K</div></div>
+    <div class="metric"><div class="metric-label">Febrero</div><div class="metric-value">$2.019K</div><div class="metric-sub">14 días</div></div>
+    <div class="metric"><div class="metric-label">Marzo</div><div class="metric-value green">$4.483K</div><div class="metric-sub">25 días</div></div>
+    <div class="metric"><div class="metric-label">Crecimiento</div><div class="metric-value green">+122%</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Ventas hoy — 25 mar 2026</div>
+    <table><thead><tr><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
+    <tbody id="tbody-hist-hoy">
+      <tr><td>Monello tradicional</td><td><span class="pill pill-green">Granel</span></td><td>$20.000</td><td>Efectivo</td><td><button class="btn-icon btn-sm" onclick="editVenta(this)">✏️</button></td></tr>
+      <tr><td>Dog chaw adulto</td><td><span class="pill pill-green">Granel</span></td><td>$6.400</td><td>Efectivo</td><td><button class="btn-icon btn-sm" onclick="editVenta(this)">✏️</button></td></tr>
+      <tr><td>Monello tradicional</td><td><span class="pill pill-green">Granel</span></td><td>$7.000</td><td>Efectivo</td><td><button class="btn-icon btn-sm" onclick="editVenta(this)">✏️</button></td></tr>
+      <tr><td>Oh mai gat</td><td><span class="pill pill-green">Granel</span></td><td>$7.000</td><td>Efectivo</td><td><button class="btn-icon btn-sm" onclick="editVenta(this)">✏️</button></td></tr>
+    </tbody></table>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font-weight:600;font-size:14px">
+      <span>Total del día</span><span id="hist-hoy-total" style="color:var(--green)">$40.400</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Últimas 2 semanas — menudeo vs bulto</div>
+    <div class="legend">
+      <span><span class="ldot" style="background:#1D9E75"></span>Menudeo</span>
+      <span><span class="ldot" style="background:#2563EB"></span>Bulto</span>
+    </div>
+    <div class="chart-wrap" style="height:200px"><canvas id="cHistorial"></canvas></div>
+  </div>
+</section>
+
+<!-- ══ TOP PRODUCTOS ══ -->
+<section class="page" id="page-productos-top">
+  <div class="page-header"><h1>Top productos</h1><p>Ranking por valor y rotación</p></div>
+  <div class="grid2">
+    <div class="card"><div class="card-title">Por valor total vendido</div><div id="top-valor"></div></div>
+    <div class="card"><div class="card-title">Por rotación (und/kg)</div><div id="top-rot"></div></div>
+  </div>
+</section>
+
+<!-- ══ INVENTARIO / STOCK ══ -->
+<section class="page" id="page-inventario">
+  <div class="page-header"><h1>Stock estimado</h1><p>Compras − ventas registradas. Edita para ajuste de inventario físico.</p></div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Con stock (3+)</div><div class="metric-value green" id="i-ok">—</div></div>
+    <div class="metric"><div class="metric-label">Stock bajo (1–3)</div><div class="metric-value amber" id="i-low">—</div></div>
+    <div class="metric"><div class="metric-label">Agotado / negativo</div><div class="metric-value red" id="i-out">—</div></div>
+    <div class="metric"><div class="metric-label">Sin movimiento</div><div class="metric-value" id="i-none">—</div></div>
+  </div>
+  <div class="alert alert-amber">Los negativos indican ventas en fracciones o sin mapear. Usa el botón ✏️ para corregir con el conteo físico.</div>
+  <div class="legend">
+    <span><span class="ldot" style="background:#1D9E75;border-radius:50%"></span>OK (+3)</span>
+    <span><span class="ldot" style="background:#C47B20;border-radius:50%"></span>Bajo (1–3)</span>
+    <span><span class="ldot" style="background:#D94F3D;border-radius:50%"></span>Agotado/negativo</span>
+  </div>
+  <input class="search-bar" type="text" placeholder="Buscar por nombre, ID o categoría..." oninput="filtrarInv(this.value)" id="inv-search">
+  <div class="chips" id="inv-chips"></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tbl-wrap">
+      <table><thead><tr><th>ID</th><th>Categoría</th><th>Producto</th><th>Precio venta</th><th>Comprado</th><th>Vendido</th><th>Stock est.</th><th>Und</th><th></th></tr></thead>
+      <tbody id="tbody-inv"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ NUEVA COMPRA ══ -->
+<section class="page" id="page-nueva-compra">
+  <div class="page-header"><h1>Nueva compra</h1><p>Registra compras de inventario — actualiza stock automáticamente</p></div>
+  <div class="card">
+    <div class="card-title">¿Producto existente o nuevo?</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-primary" id="btn-prod-exist" onclick="toggleNuevoProd(false)">Producto existente</button>
+      <button class="btn btn-secondary" id="btn-prod-nuevo" onclick="toggleNuevoProd(true)">+ Nuevo producto</button>
+    </div>
+
+    <!-- Producto existente -->
+    <div id="cmp-exist-block">
+      <div class="prod-search-wrap">
+        <span class="prod-search-icon">🔍</span>
+        <input class="prod-search-input" id="cmp-search" type="text" placeholder="Busca producto del catálogo..." autocomplete="off" oninput="searchProds(this.value,'cmp')" onfocus="openDropdown('cmp')" onblur="setTimeout(()=>closeDropdown('cmp'),180)">
+        <div class="prod-dropdown" id="cmp-dropdown"></div>
+      </div>
+      <div class="prod-selected" id="cmp-selected">
+        <div><div class="ps-name" id="cmp-sel-name">—</div><div class="ps-meta" id="cmp-sel-meta"></div></div>
+        <button class="btn-icon" onclick="clearProdSel('cmp')">✕</button>
+      </div>
+    </div>
+
+    <!-- Nuevo producto -->
+    <div id="cmp-nuevo-block" style="display:none">
+      <div class="alert alert-blue">Se creará un nuevo producto en el catálogo con código automático.</div>
+      <div class="form-grid">
+        <div class="field"><label>Nombre del producto</label><input type="text" id="np-nombre" placeholder="Ej: Purina Pro Plan adulto"></div>
+        <div class="field"><label>Categoría</label>
+          <select id="np-cat" onchange="updateNpId()">
+            <option value="CON">Concentrado</option><option value="ASE">Aseo</option>
+            <option value="ACC">Accesorio</option><option value="SNK">Snack</option><option value="MED">Medicina</option>
+          </select>
+        </div>
+        <div class="field"><label>Subcategoría</label><input type="text" id="np-sub" placeholder="Ej: Concentrado perro"></div>
+        <div class="field"><label>Unidad base</label>
+          <select id="np-unit"><option value="kg">kg</option><option value="und">und</option></select>
+        </div>
+        <div class="field"><label>Código generado</label>
+          <input type="text" id="np-id" readonly style="background:var(--bg);color:var(--text3)">
+        </div>
+        <div class="field"><label>Precio de venta ($)</label>
+          <input type="number" id="np-precio" min="0" step="100" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-top:4px">
+      <div class="field"><label>Proveedor</label>
+        <select id="cmp-prov" onchange="checkNuevoProv()">
+          <option>AnimalHome</option><option>Monello</option><option>Nutivara</option>
+          <option>Villapets</option><option>Dorado</option><option>Nagopets</option>
+          <option>Servicampo</option><option>Jambo</option><option>Porvenir</option>
+          <option>Tauro</option><option>megamarcas</option><option value="__nuevo__">+ Nuevo proveedor…</option>
+        </select>
+      </div>
+      <div class="field" id="nuevo-prov-field" style="display:none"><label>Nombre del nuevo proveedor</label><input type="text" id="cmp-prov-nuevo" placeholder="Nombre del proveedor"></div>
+      <div class="field"><label>Cantidad comprada</label><input type="number" id="cmp-qty" min="0.1" step="0.1" value="1" oninput="updateCmpPreview()"></div>
+      <div class="field"><label>Unidad</label>
+        <select id="cmp-und"><option>kg</option><option>und</option><option>bulto</option><option>caja</option><option>paquete</option></select>
+      </div>
+      <div class="field"><label>Costo unitario ($)</label><input type="number" id="cmp-cu" min="0" step="100" placeholder="0" oninput="updateCmpPreview()"></div>
+      <div class="field"><label>Precio venta ($)</label><input type="number" id="cmp-precio-vta" min="0" step="100" placeholder="0" oninput="updateCmpPreview()"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="cmp-fecha" value="2026-03-25"></div>
+    </div>
+    <div class="preview-box" id="cmp-preview" style="display:none">
+      <div class="preview-row"><span>Producto</span><span id="cpv-prod" style="font-weight:500;color:var(--text)"></span></div>
+      <div class="preview-row"><span>Stock actual</span><span id="cpv-stk"></span></div>
+      <div class="preview-row"><span>Stock tras compra</span><span id="cpv-new" style="color:var(--green);font-weight:500"></span></div>
+      <div class="preview-row"><span>Margen estimado</span><span id="cpv-margen" style="color:var(--blue);font-weight:500"></span></div>
+      <div class="preview-total"><span>Total compra</span><span id="cpv-total" style="color:var(--blue)">$0</span></div>
+    </div>
+    <button class="btn btn-primary" onclick="registrarCompra()">Registrar compra</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Compras de esta sesión</div>
+    <div class="log-scroll">
+      <table><thead><tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cant.</th><th>Costo unit.</th><th>Total</th><th></th></tr></thead>
+      <tbody id="tbody-cmp-session"><tr><td colspan="7" style="text-align:center;padding:18px;color:var(--text3)">Sin compras en esta sesión</td></tr></tbody>
+      </table>
+    </div>
+    <div id="cmp-session-total" style="text-align:right;margin-top:9px;font-size:14px;font-weight:600;color:var(--blue)"></div>
+  </div>
+</section>
+
+<!-- ══ NUEVO GASTO ══ -->
+<section class="page" id="page-nuevo-gasto">
+  <div class="page-header"><h1>Nuevo gasto operativo</h1><p>Parqueadero, empaques, servicios, herramientas…</p></div>
+  <div class="card">
+    <div class="card-title">Datos del gasto</div>
+    <div class="form-grid">
+      <div class="field"><label>Concepto</label><input type="text" id="gst-concepto" placeholder="Ej: Parqueadero Corabastos"></div>
+      <div class="field"><label>Categoría</label>
+        <select id="gst-cat">
+          <option>Transporte</option><option>Empaques</option><option>Herramientas</option>
+          <option>Servicios</option><option>Publicidad</option><option>Alimentación</option>
+          <option>Mantenimiento</option><option>Otros</option>
+        </select>
+      </div>
+      <div class="field"><label>Proveedor / Lugar</label><input type="text" id="gst-prov" placeholder="Ej: Corabastos"></div>
+      <div class="field"><label>Cantidad</label><input type="number" id="gst-qty" min="1" step="1" value="1"></div>
+      <div class="field"><label>Valor unitario ($)</label><input type="number" id="gst-val" min="0" step="100" placeholder="0"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="gst-fecha" value="2026-03-25"></div>
+    </div>
+    <button class="btn btn-primary" onclick="registrarGasto()">Registrar gasto</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Gastos de esta sesión</div>
+    <div class="log-scroll">
+      <table><thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Total</th><th></th></tr></thead>
+      <tbody id="tbody-gst-session"><tr><td colspan="5" style="text-align:center;padding:18px;color:var(--text3)">Sin gastos en esta sesión</td></tr></tbody>
+      </table>
+    </div>
+    <div id="gst-session-total" style="text-align:right;margin-top:9px;font-size:14px;font-weight:600;color:var(--red)"></div>
+  </div>
+</section>
+
+<!-- ══ HISTORIAL COMPRAS ══ -->
+<section class="page" id="page-compras">
+  <div class="page-header"><h1>Historial de compras</h1><p>Inventario + compras de sesión</p></div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Total compras</div><div class="metric-value red" id="cmp-total-metric">$8.952K</div></div>
+    <div class="metric"><div class="metric-label">Concentrados</div><div class="metric-value blue">$7.019K</div></div>
+    <div class="metric"><div class="metric-label">Aseo</div><div class="metric-value">$888K</div></div>
+    <div class="metric"><div class="metric-label">Accesorios</div><div class="metric-value">$636K</div></div>
+  </div>
+  <input class="search-bar" type="text" placeholder="Buscar producto o proveedor..." oninput="filtrarCompras(this.value)">
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Producto</th><th>Categoría</th><th>Proveedor</th><th>Cant.</th><th>Costo unit.</th><th>Total</th><th></th></tr></thead>
+      <tbody id="tbody-cmp"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CATÁLOGO ══ -->
+<section class="page" id="page-catalogo">
+  <div class="page-header"><h1>Catálogo de productos</h1><p>Nombres unificados — edita precio de venta directamente</p></div>
+  <div class="alert alert-green">23 grupos duplicados unificados. Puedes editar precio de venta (✏️) y el catálogo se actualiza en toda la app.</div>
+  <input class="search-bar" type="text" placeholder="Buscar por nombre, ID o subcategoría..." oninput="filtrarCatalogo(this.value)">
+  <div class="chips" id="cat-chips"></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tbl-wrap">
+      <table><thead><tr><th>ID</th><th>Categoría</th><th>Subcategoría</th><th>Nombre canónico</th><th>Precio venta</th><th>Stock</th><th></th></tr></thead>
+      <tbody id="tbody-cat"></tbody></table>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3 id="modal-title">Editar registro</h3>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="modal-delete" onclick="confirmDelete()">🗑 Eliminar</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBchsyVUUHZcKsqPV0bRBwHZ_j5-pLaFhg",
+  authDomain: "patitas-peludas-4089f.firebaseapp.com",
+  projectId: "patitas-peludas-4089f",
+  storageBucket: "patitas-peludas-4089f.firebasestorage.app",
+  messagingSenderId: "21123771619",
+  appId: "1:21123771619:web:b4612954e40fc35a8529d6"
+};
+const fireApp = initializeApp(firebaseConfig);
+const db = getFirestore(fireApp);
+
+// ── COLECCIONES FIRESTORE ──
+const COL_VENTAS   = 'ventas';
+const COL_COMPRAS  = 'compras';
+const COL_GASTOS   = 'gastos';
+const COL_CATALOGO = 'catalogo';
+
+// ── TOAST NOTIFICATION ──
+function toast(msg, color='var(--green)'){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:24px;right:24px;background:${color};color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:opacity .4s`;
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400)},2500);
+}
+
+// ── LOADING OVERLAY ──
+function showLoading(msg='Cargando…'){
+  let el=document.getElementById('fb-loading');
+  if(!el){el=document.createElement('div');el.id='fb-loading';el.style.cssText='position:fixed;inset:0;background:rgba(247,245,240,0.85);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:14px;color:var(--text2)';el.innerHTML='<div style="width:32px;height:32px;border:3px solid var(--border-strong);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite"></div><span id="fb-loading-msg"></span>';document.body.appendChild(el);const st=document.createElement('style');st.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
+  document.getElementById('fb-loading-msg').textContent=msg;
+  el.style.display='flex';
+}
+function hideLoading(){const el=document.getElementById('fb-loading');if(el)el.style.display='none';}
+
+// ══════════════════════════════════════
+// CATÁLOGO — sincronización bidireccional
+// ══════════════════════════════════════
+async function initCatalogo(){
+  // Check if Firestore already has catalogue
+  const snap = await getDocs(collection(db, COL_CATALOGO));
+  if(snap.empty){
+    // First run: seed from INV array
+    toast('Cargando catálogo por primera vez…','var(--blue)');
+    for(const item of INV){
+      await setDoc(doc(db, COL_CATALOGO, item.id), {
+        id:item.id, cat:item.cat, sub:item.sub, p:item.p,
+        bought:item.bought, sold:item.sold, unit:item.unit, precio:item.precio||0
+      });
+    }
+    toast('Catálogo cargado ✓');
+  } else {
+    // Load from Firestore into INV array
+    INV.length = 0;
+    snap.forEach(d => INV.push(d.data()));
+    INV.sort((a,b)=>a.id.localeCompare(b.id));
+  }
+  renderInv(INV);
+  renderCatalogo(INV);
+}
+
+// Save single product to Firestore
+async function saveCatalogoItem(item){
+  await setDoc(doc(db, COL_CATALOGO, item.id), {
+    id:item.id, cat:item.cat, sub:item.sub, p:item.p,
+    bought:item.bought, sold:item.sold, unit:item.unit, precio:item.precio||0
+  });
+}
+
+// ══════════════════════════════════════
+// VENTAS
+// ══════════════════════════════════════
+async function guardarVenta(venta){
+  try {
+    const ref = await addDoc(collection(db, COL_VENTAS), venta);
+    return ref.id;
+  } catch(e){ toast('Error guardando venta','var(--red)'); return null; }
+}
+
+async function eliminarVenta(fbId){
+  if(!fbId) return;
+  try { await deleteDoc(doc(db, COL_VENTAS, fbId)); } catch(e){}
+}
+
+async function actualizarVenta(fbId, data){
+  if(!fbId) return;
+  try { await updateDoc(doc(db, COL_VENTAS, fbId), data); } catch(e){}
+}
+
+// Real-time listener for ventas del día
+function escucharVentasHoy(){
+  const q = query(collection(db, COL_VENTAS), orderBy('fecha','desc'));
+  onSnapshot(q, snap => {
+    const hoy = new Date().toISOString().slice(0,10);
+    const tbody = document.getElementById('tbody-hist-hoy');
+    if(!tbody) return;
+    // Only show today's
+    const hoyRows = [];
+    let totalHoy = 0;
+    snap.forEach(d => {
+      const v = d.data();
+      if(v.fecha && v.fecha.slice(0,10) === hoy){
+        hoyRows.push({...v, fbId: d.id});
+        totalHoy += (v.valor||0);
+      }
+    });
+    if(hoyRows.length > 0){
+      tbody.innerHTML = hoyRows.map(v =>
+        `<tr data-fbid="${v.fbId}"><td>${v.producto||''}</td><td><span class="pill ${v.tipo==='Bulto'?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td>${fmt(v.valor||0)}</td><td>${v.pago||''}</td><td><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor||0},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId}',${v.valor||0})">🗑</button></td></tr>`
+      ).join('');
+      document.getElementById('hist-hoy-total').textContent = fmt(totalHoy);
+      todayHoyTotal = totalHoy;
+    }
+  });
+}
+
+window.borrarVentaFB = async function(fbId, valor){
+  if(!confirm('¿Eliminar esta venta?')) return;
+  await eliminarVenta(fbId);
+  toast('Venta eliminada');
+};
+
+window.editVentaFB = function(fbId, tipo, valor, pago){
+  openModal('Editar venta', `
+    <div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>Tipo de venta</label>
+        <select id="edit-tipo">
+          <option ${tipo==='Granel'?'selected':''}>Granel</option>
+          <option ${tipo==='Paquete'?'selected':''}>Paquete</option>
+          <option ${tipo==='Bulto'?'selected':''}>Bulto</option>
+          <option ${tipo==='Und'?'selected':''}>Und</option>
+          <option ${tipo==='Sobre'?'selected':''}>Sobre</option>
+        </select>
+      </div>
+      <div class="field"><label>Valor ($)</label><input type="number" id="edit-valor" value="${valor}" step="100"></div>
+      <div class="field"><label>Medio de pago</label>
+        <select id="edit-pago">
+          <option ${pago==='Efectivo'?'selected':''}>Efectivo</option>
+          <option ${pago==='Nequi'?'selected':''}>Nequi</option>
+          <option ${pago==='Daviplata'?'selected':''}>Daviplata</option>
+          <option ${pago==='Fiado'?'selected':''}>Fiado</option>
+        </select>
+      </div>
+    </div>
+  `, {type:'ventaFB', fbId, showDelete:false});
+};
+
+// Override saveModal for ventaFB
+const _origSaveModal = window.saveModal;
+window.saveModal = async function(){
+  if(modalCtx.type==='ventaFB'){
+    const newTipo = document.getElementById('edit-tipo').value;
+    const newValor = parseFloat(document.getElementById('edit-valor').value)||0;
+    const newPago = document.getElementById('edit-pago').value;
+    await actualizarVenta(modalCtx.fbId, {tipo:newTipo, valor:newValor, pago:newPago});
+    toast('Venta actualizada ✓');
+    closeModal();
+    return;
+  }
+  if(modalCtx.type==='stock'){
+    const item=INV.find(r=>r.id===modalCtx.id);
+    if(item){
+      item.bought=parseFloat(document.getElementById('edit-bought').value)||item.bought;
+      item.sold=parseFloat(document.getElementById('edit-sold').value)||0;
+      item.precio=parseFloat(document.getElementById('edit-precio').value)||item.precio;
+      await saveCatalogoItem(item);
+      renderInv(INV); renderCatalogo(INV);
+      toast('Stock actualizado ✓');
+    }
+    closeModal(); return;
+  }
+  if(modalCtx.type==='catalogo'){
+    const item=INV.find(r=>r.id===modalCtx.id);
+    if(item){
+      item.p=document.getElementById('edit-nombre').value||item.p;
+      item.precio=parseFloat(document.getElementById('edit-precio').value)||item.precio;
+      await saveCatalogoItem(item);
+      renderCatalogo(INV); renderInv(INV);
+      toast('Producto actualizado ✓');
+    }
+    closeModal(); return;
+  }
+  if(modalCtx.type==='compra'){
+    const r=COMPRAS[modalCtx.idx];
+    if(r){
+      r.p=document.getElementById('edit-nombre').value||r.p;
+      r.prov=document.getElementById('edit-prov').value||r.prov;
+      r.q=parseFloat(document.getElementById('edit-qty').value)||r.q;
+      r.cu=parseFloat(document.getElementById('edit-cu').value)||r.cu;
+      r.t=r.q*r.cu;
+      if(r.fbId) await updateDoc(doc(db, COL_COMPRAS, r.fbId), {p:r.p,prov:r.prov,q:r.q,cu:r.cu,t:r.t});
+      renderCompras(COMPRAS);
+      toast('Compra actualizada ✓');
+    }
+    closeModal(); return;
+  }
+  if(_origSaveModal) _origSaveModal();
+};
+
+// ══════════════════════════════════════
+// PATCH registrarVenta → Firebase
+// ══════════════════════════════════════
+const _origRegistrarVenta = window.registrarVenta;
+window.registrarVenta = async function(){
+  const item = selState.vta;
+  if(!item){alert('Selecciona un producto');return;}
+  const qty   = parseFloat(document.getElementById('vta-qty').value)||0;
+  const valor = parseFloat(document.getElementById('vta-val').value)||0;
+  const tipo  = document.getElementById('vta-tipo').value;
+  const pago  = document.getElementById('vta-pago').value;
+  const fecha = document.getElementById('vta-fecha').value;
+  const esBulto = tipo==='Bulto';
+
+  // Save to Firestore
+  const fbId = await guardarVenta({
+    producto: item.p, productoId: item.id, tipo, valor, pago,
+    cantidad: qty, fecha, esBulto, ts: Date.now()
+  });
+
+  // Update stock in Firestore
+  sessionDelta[item.id] = (sessionDelta[item.id]||0) + qty;
+  item.sold = parseFloat((item.sold + qty).toFixed(1));
+  await saveCatalogoItem(item);
+
+  vtaSessionTotal += valor;
+
+  // Session log
+  const tbody = document.getElementById('tbody-vta-session');
+  if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
+  const tr = document.createElement('tr');
+  tr.dataset.fbid = fbId||'';
+  tr.innerHTML=`<td>${fecha}</td><td>${item.p}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${tipo}</span></td><td>${fmtN(qty)}</td><td style="font-weight:600;color:var(--green)">${fmt(valor)}</td><td>${pago}</td><td><button class="btn-icon btn-sm" onclick="editVentaFB('${fbId}','${tipo}',${valor},'${pago}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${fbId}',${valor})">🗑</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('vta-session-total').textContent='Total sesión: '+fmt(vtaSessionTotal);
+
+  // Charts
+  if(esBulto) dailyBulto[dailyBulto.length-1]+=valor;
+  else dailyMenudeo[dailyMenudeo.length-1]+=valor;
+  if(diarioChart){diarioChart.data.datasets[0].data=[...dailyMenudeo];diarioChart.data.datasets[1].data=[...dailyBulto];diarioChart.update();}
+  if(historialChart){historialChart.data.datasets[0].data=[...dailyMenudeo.slice(-14)];historialChart.data.datasets[1].data=[...dailyBulto.slice(-14)];historialChart.update();}
+  updateResumenMetrics();
+  renderInv(INV);
+  clearProdSel('vta');
+  document.getElementById('vta-qty').value=1;
+  document.getElementById('vta-val').value='';
+  toast('Venta guardada ✓');
+};
+
+// ══════════════════════════════════════
+// PATCH registrarCompra → Firebase
+// ══════════════════════════════════════
+const _origRegistrarCompra = window.registrarCompra;
+window.registrarCompra = async function(){
+  const qty   = parseFloat(document.getElementById('cmp-qty').value)||0;
+  const cu    = parseFloat(document.getElementById('cmp-cu').value)||0;
+  const pv    = parseFloat(document.getElementById('cmp-precio-vta').value)||0;
+  const und   = document.getElementById('cmp-und').value;
+  const fecha = document.getElementById('cmp-fecha').value;
+  let provVal = document.getElementById('cmp-prov').value;
+  if(provVal==='__nuevo__') provVal=document.getElementById('cmp-prov-nuevo').value.trim()||'Nuevo';
+  const total = qty*cu;
+
+  let item = selState.cmp;
+  if(usandoNuevoProd){
+    const nombre=document.getElementById('np-nombre').value.trim();
+    if(!nombre){alert('Escribe el nombre del producto');return;}
+    const id=document.getElementById('np-id').value;
+    const catCode=id.split('-')[0];
+    const catName={CON:'Concentrado',ASE:'Aseo',ACC:'Accesorio',SNK:'Snack',MED:'Medicina'}[catCode]||'Concentrado';
+    const sub=document.getElementById('np-sub').value.trim()||catName;
+    const unit=document.getElementById('np-unit').value;
+    const precio=parseFloat(document.getElementById('np-precio').value)||pv||0;
+    item={id,cat:catName,sub,p:nombre,bought:0,sold:0,unit,precio};
+    INV.push(item);
+  }
+  if(!item){alert('Selecciona o crea un producto');return;}
+
+  item.bought=parseFloat((item.bought+qty).toFixed(1));
+  if(pv>0) item.precio=pv;
+  await saveCatalogoItem(item);
+
+  const compraData={p:item.p,cat:item.cat,prov:provVal,q:qty,und,cu,t:total,fecha,ts:Date.now()};
+  const ref = await addDoc(collection(db, COL_COMPRAS), compraData);
+  COMPRAS.unshift({...compraData, fbId:ref.id});
+  renderCompras(COMPRAS);
+  cmpSessionTotal+=total;
+
+  const tbody=document.getElementById('tbody-cmp-session');
+  if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${fecha}</td><td>${item.p}</td><td>${provVal}</td><td>${fmtN(qty)} ${und}</td><td>${fmt(cu)}</td><td style="font-weight:600;color:var(--blue)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'cmp-session',${total},0)">🗑</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('cmp-session-total').textContent='Total sesión: '+fmt(cmpSessionTotal);
+
+  renderInv(INV); renderCatalogo(INV);
+  clearProdSel('cmp');
+  document.getElementById('cmp-qty').value=1;
+  document.getElementById('cmp-cu').value='';
+  document.getElementById('cmp-precio-vta').value='';
+  document.getElementById('cmp-preview').style.display='none';
+  if(usandoNuevoProd){document.getElementById('np-nombre').value='';document.getElementById('np-sub').value='';}
+  toast('Compra guardada ✓');
+};
+
+// ══════════════════════════════════════
+// PATCH registrarGasto → Firebase
+// ══════════════════════════════════════
+const _origRegistrarGasto = window.registrarGasto;
+window.registrarGasto = async function(){
+  const concepto=document.getElementById('gst-concepto').value.trim();
+  if(!concepto){alert('Escribe el concepto');return;}
+  const cat  =document.getElementById('gst-cat').value;
+  const prov =document.getElementById('gst-prov').value.trim();
+  const qty  =parseFloat(document.getElementById('gst-qty').value)||1;
+  const val  =parseFloat(document.getElementById('gst-val').value)||0;
+  const fecha=document.getElementById('gst-fecha').value;
+  const total=qty*val;
+
+  await addDoc(collection(db, COL_GASTOS), {concepto,cat,prov,qty,val,total,fecha,ts:Date.now()});
+  gastosAcum+=total;
+  gstSessionTotal+=total;
+
+  const tbody=document.getElementById('tbody-gst-session');
+  if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${fecha}</td><td>${concepto}</td><td><span class="pill pill-amber">${cat}</span></td><td style="font-weight:600;color:var(--red)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'gst-session',${total},0)">🗑</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('gst-session-total').textContent='Total sesión: '+fmt(gstSessionTotal);
+  document.getElementById('gst-concepto').value='';
+  document.getElementById('gst-prov').value='';
+  document.getElementById('gst-qty').value=1;
+  document.getElementById('gst-val').value='';
+  toast('Gasto guardado ✓');
+};
+
+// ══════════════════════════════════════
+// CARGAR COMPRAS HISTÓRICAS DESDE FIRESTORE
+// ══════════════════════════════════════
+async function cargarCompras(){
+  const snap = await getDocs(query(collection(db, COL_COMPRAS), orderBy('ts','desc')));
+  if(!snap.empty){
+    COMPRAS.length=0;
+    snap.forEach(d=>COMPRAS.push({...d.data(),fbId:d.id}));
+    renderCompras(COMPRAS);
+  }
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+showLoading('Conectando con la base de datos…');
+try {
+  await initCatalogo();
+  await cargarCompras();
+  escucharVentasHoy();
+  hideLoading();
+  toast('Conectado a Firebase ✓');
+} catch(e){
+  hideLoading();
+  toast('Sin conexión — modo offline','var(--amber)');
+  console.error(e);
+}
+
+</script>
+<script>
+// ══════════════════════════════════════════════
+// MASTER DATA
+// ══════════════════════════════════════════════
+const INV = [
+  {id:"ASE-ARE-001",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza café (bulto)",bought:50,sold:3,unit:"kg",precio:65000},
+  {id:"ASE-ARE-002",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza café 4.5",bought:76.5,sold:28,unit:"kg",precio:14000},
+  {id:"ASE-ARE-003",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza lavanda 4.5",bought:18,sold:0,unit:"kg",precio:14000},
+  {id:"ASE-ARE-004",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza manzana 4.5",bought:4.5,sold:0,unit:"kg",precio:14000},
+  {id:"ASE-ARE-005",cat:"Aseo",sub:"Arenas",p:"Arena Foficat verde manzana (bulto)",bought:25,sold:16,unit:"kg",precio:60000},
+  {id:"ASE-ARE-006",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza café 10kg",bought:10,sold:0,unit:"kg",precio:26000},
+  {id:"ASE-ARE-007",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza carbón activado 4.5",bought:9,sold:0,unit:"kg",precio:14500},
+  {id:"ASE-ARE-008",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza talco 4.5",bought:9,sold:4,unit:"kg",precio:14000},
+  {id:"ASE-ARE-009",cat:"Aseo",sub:"Arenas",p:"Arena Calabaza jazmín 4.5",bought:4.5,sold:0,unit:"kg",precio:14000},
+  {id:"ASE-BOL-001",cat:"Aseo",sub:"Bolsas",p:"Bolsas rollo",bought:1,sold:12,unit:"und",precio:5000},
+  {id:"ASE-BOL-002",cat:"Aseo",sub:"Bolsas",p:"Bolsas manija negra 1.5kg",bought:4,sold:4,unit:"und",precio:3000},
+  {id:"ASE-COR-001",cat:"Aseo",sub:"Corta uñas",p:"Corta uñas gris mediano",bought:1,sold:1,unit:"und",precio:8000},
+  {id:"ASE-JAB-001",cat:"Aseo",sub:"Jabones",p:"Shampoo Can Amor sobres",bought:12,sold:4,unit:"und",precio:4500},
+  {id:"ASE-JAB-002",cat:"Aseo",sub:"Jabones",p:"Jabón Canamor árbol de té",bought:1,sold:0,unit:"und",precio:12000},
+  {id:"ASE-JAB-003",cat:"Aseo",sub:"Jabones",p:"Jabón antipulgas",bought:1,sold:0,unit:"und",precio:10000},
+  {id:"ASE-TAP-001",cat:"Aseo",sub:"Tapetes",p:"Tapete Calabaza",bought:40,sold:8,unit:"und",precio:3500},
+  {id:"ASE-TAP-002",cat:"Aseo",sub:"Tapetes",p:"Tapete Pettys",bought:1,sold:6,unit:"und",precio:3500},
+  {id:"ACC-ARE-001",cat:"Accesorio",sub:"Areneras",p:"Arenera cubierta azul",bought:3,sold:1,unit:"und",precio:65000},
+  {id:"ACC-ARE-002",cat:"Accesorio",sub:"Areneras",p:"Arenera cubierta azul claro",bought:2,sold:1,unit:"und",precio:60000},
+  {id:"ACC-ARN-001",cat:"Accesorio",sub:"Arnés perro",p:"Correa arnés mix colores",bought:2,sold:1,unit:"und",precio:28000},
+  {id:"ACC-BEB-001",cat:"Accesorio",sub:"Bebedero",p:"Bebedero y comedero",bought:1,sold:0,unit:"und",precio:22000},
+  {id:"ACC-BEB-002",cat:"Accesorio",sub:"Bebedero",p:"Bebedero porta agua azul",bought:1,sold:1,unit:"und",precio:22000},
+  {id:"ACC-CEP-001",cat:"Accesorio",sub:"Cepillos",p:"Cepillo a vapor amarillo",bought:1,sold:1,unit:"und",precio:12000},
+  {id:"ACC-CEP-002",cat:"Accesorio",sub:"Cepillos",p:"Cepillo carda mantequilla pequeña",bought:1,sold:1,unit:"und",precio:6000},
+  {id:"ACC-CEP-003",cat:"Accesorio",sub:"Cepillos",p:"Cepillo a vapor amarillo (2)",bought:3,sold:0,unit:"und",precio:12000},
+  {id:"ACC-CEP-004",cat:"Accesorio",sub:"Cepillos",p:"Cepillo naranja",bought:1,sold:0,unit:"und",precio:8000},
+  {id:"ACC-CEP-005",cat:"Accesorio",sub:"Cepillos",p:"Cepillo rosado",bought:1,sold:0,unit:"und",precio:8000},
+  {id:"ACC-CEP-006",cat:"Accesorio",sub:"Cepillos",p:"Cepillo quita pelos",bought:2,sold:0,unit:"und",precio:9000},
+  {id:"ACC-COL-001",cat:"Accesorio",sub:"Collares gato",p:"Collares gato",bought:12,sold:3,unit:"und",precio:3500},
+  {id:"ACC-COL-101",cat:"Accesorio",sub:"Collares perro",p:"Collar fino",bought:3,sold:1,unit:"und",precio:12000},
+  {id:"ACC-COL-102",cat:"Accesorio",sub:"Collares perro",p:"Collar broche metálico",bought:2,sold:0,unit:"und",precio:14000},
+  {id:"ACC-COM-001",cat:"Accesorio",sub:"Comederos",p:"Comedero metálico 26cm huella",bought:1,sold:1,unit:"und",precio:14000},
+  {id:"ACC-COM-002",cat:"Accesorio",sub:"Comederos",p:"Plato antireflujo mediano azul",bought:1,sold:0,unit:"und",precio:10000},
+  {id:"ACC-COM-003",cat:"Accesorio",sub:"Comederos",p:"Comedero 15cm",bought:2,sold:0,unit:"und",precio:4000},
+  {id:"ACC-COM-004",cat:"Accesorio",sub:"Comederos",p:"Comedero huella interna",bought:2,sold:0,unit:"und",precio:6000},
+  {id:"ACC-COM-005",cat:"Accesorio",sub:"Comederos",p:"Plato metálico pequeño",bought:1,sold:0,unit:"und",precio:8000},
+  {id:"ACC-COM-006",cat:"Accesorio",sub:"Comederos",p:"Plato metálico mediano",bought:1,sold:0,unit:"und",precio:10000},
+  {id:"ACC-FUE-001",cat:"Accesorio",sub:"Fuentes",p:"Fuente cuadrada huellas",bought:1,sold:1,unit:"und",precio:35000},
+  {id:"ACC-JUG-001",cat:"Accesorio",sub:"Juguete Gato",p:"Vara plástica libélula",bought:1,sold:1,unit:"und",precio:7000},
+  {id:"ACC-JUG-002",cat:"Accesorio",sub:"Juguete Gato",p:"Vara plástica pulpo",bought:4,sold:2,unit:"und",precio:7500},
+  {id:"ACC-JUG-003",cat:"Accesorio",sub:"Juguete Gato",p:"Paquete pelotas insonoras",bought:1,sold:0,unit:"und",precio:6000},
+  {id:"ACC-JUG-004",cat:"Accesorio",sub:"Juguete Gato",p:"Aguacate catnip",bought:7,sold:5,unit:"und",precio:7000},
+  {id:"ACC-JUG-005",cat:"Accesorio",sub:"Juguete Gato",p:"Pelota loca",bought:6,sold:3,unit:"und",precio:6000},
+  {id:"ACC-JUG-101",cat:"Accesorio",sub:"Juguete perro",p:"Juguete Pollo eco chillón",bought:1,sold:0,unit:"und",precio:10000},
+  {id:"ACC-JUG-102",cat:"Accesorio",sub:"Juguete perro",p:"Cuerda con pelota",bought:1,sold:1,unit:"und",precio:12000},
+  {id:"ACC-JUG-103",cat:"Accesorio",sub:"Juguete perro",p:"Pelota chillona",bought:1,sold:0,unit:"und",precio:8500},
+  {id:"ACC-JUG-104",cat:"Accesorio",sub:"Juguete perro",p:"Pelota asteroide",bought:1,sold:0,unit:"und",precio:12000},
+  {id:"ACC-JUG-105",cat:"Accesorio",sub:"Juguete perro",p:"Pelota porta snacks",bought:1,sold:0,unit:"und",precio:7000},
+  {id:"ACC-JUG-106",cat:"Accesorio",sub:"Juguete perro",p:"Pelota maciza",bought:1,sold:1,unit:"und",precio:12000},
+  {id:"ACC-JUG-107",cat:"Accesorio",sub:"Juguete perro",p:"Pelota porta snacks pequeña",bought:2,sold:0,unit:"und",precio:7000},
+  {id:"ACC-JUG-108",cat:"Accesorio",sub:"Juguete perro",p:"Juguete didáctico perro",bought:1,sold:0,unit:"und",precio:25000},
+  {id:"ACC-LAZ-001",cat:"Accesorio",sub:"Lazos",p:"Lazo",bought:6,sold:0,unit:"und",precio:3000},
+  {id:"ACC-PAL-001",cat:"Accesorio",sub:"Palas",p:"Pala gato",bought:2,sold:1,unit:"und",precio:3000},
+  {id:"ACC-PAL-002",cat:"Accesorio",sub:"Palas",p:"Pala de gato (grande)",bought:3,sold:0,unit:"und",precio:4500},
+  {id:"ACC-POR-001",cat:"Accesorio",sub:"Portabolsas",p:"Porta bolsas hueso",bought:2,sold:0,unit:"und",precio:4500},
+  {id:"ACC-TRA-001",cat:"Accesorio",sub:"Transporte",p:"Maleta de viaje tela azul",bought:1,sold:0,unit:"und",precio:65000},
+  {id:"CON-COP-001",cat:"Concentrado",sub:"Conc. perro",p:"Chunky adulto pollo",bought:25,sold:21,unit:"kg",precio:7200},
+  {id:"CON-COP-002",cat:"Concentrado",sub:"Conc. perro",p:"Dog Chow adulto raza pequeña",bought:22.7,sold:20,unit:"kg",precio:8500},
+  {id:"CON-COP-003",cat:"Concentrado",sub:"Conc. perro",p:"Dogourmet cachorro",bought:25,sold:8,unit:"kg",precio:9000},
+  {id:"CON-COP-004",cat:"Concentrado",sub:"Conc. perro",p:"Ringo adulto",bought:30,sold:5,unit:"kg",precio:5000},
+  {id:"CON-COP-005",cat:"Concentrado",sub:"Conc. perro",p:"Dogourmet adulto carne parrilla",bought:25,sold:9,unit:"kg",precio:9000},
+  {id:"CON-COP-006",cat:"Concentrado",sub:"Conc. perro",p:"Donkan cachorro",bought:25,sold:2,unit:"kg",precio:7000},
+  {id:"CON-COP-007",cat:"Concentrado",sub:"Conc. perro",p:"Filpo",bought:30,sold:1,unit:"kg",precio:4500},
+  {id:"CON-COP-008",cat:"Concentrado",sub:"Conc. perro",p:"Chunky cordero",bought:12,sold:9,unit:"kg",precio:7200},
+  {id:"CON-COP-009",cat:"Concentrado",sub:"Conc. perro",p:"Chunky cachorro",bought:18,sold:14,unit:"kg",precio:7200},
+  {id:"CON-COP-010",cat:"Concentrado",sub:"Conc. perro",p:"Monello cachorro",bought:75,sold:4,unit:"kg",precio:8500},
+  {id:"CON-COP-011",cat:"Concentrado",sub:"Conc. perro",p:"Monello razas pequeñas",bought:25,sold:24,unit:"kg",precio:8500},
+  {id:"CON-COP-012",cat:"Concentrado",sub:"Conc. perro",p:"Monello tradicional",bought:50,sold:31,unit:"kg",precio:8000},
+  {id:"CON-COP-013",cat:"Concentrado",sub:"Conc. perro",p:"Agility gold piel adultos 3kg",bought:3,sold:3,unit:"kg",precio:16000},
+  {id:"CON-COP-014",cat:"Concentrado",sub:"Conc. perro",p:"Agility gold piel adultos 1.5kg",bought:1.5,sold:1,unit:"kg",precio:16000},
+  {id:"CON-COP-015",cat:"Concentrado",sub:"Conc. perro",p:"Nutranuggets adulto lamb & rice",bought:15,sold:1,unit:"kg",precio:20000},
+  {id:"CON-COG-001",cat:"Concentrado",sub:"Conc. gato",p:"Cat Chow",bought:15,sold:23,unit:"kg",precio:8000},
+  {id:"CON-COG-002",cat:"Concentrado",sub:"Conc. gato",p:"Don Kat gaticos",bought:7,sold:13,unit:"kg",precio:6000},
+  {id:"CON-COG-003",cat:"Concentrado",sub:"Conc. gato",p:"Don Kat adulto",bought:16,sold:22,unit:"kg",precio:6000},
+  {id:"CON-COG-004",cat:"Concentrado",sub:"Conc. gato",p:"Chunky gatos",bought:18,sold:4,unit:"kg",precio:7000},
+  {id:"CON-COG-005",cat:"Concentrado",sub:"Conc. gato",p:"Gatsy",bought:16,sold:3,unit:"kg",precio:5500},
+  {id:"CON-COG-006",cat:"Concentrado",sub:"Conc. gato",p:"Mirringo",bought:30,sold:11,unit:"kg",precio:5000},
+  {id:"CON-COG-007",cat:"Concentrado",sub:"Conc. gato",p:"Oh mai gat",bought:48,sold:26,unit:"kg",precio:7500},
+  {id:"CON-COG-008",cat:"Concentrado",sub:"Conc. gato",p:"Br Cat gatito pollo",bought:6,sold:10,unit:"kg",precio:18000},
+  {id:"CON-COG-009",cat:"Concentrado",sub:"Conc. gato",p:"Monello gato",bought:45,sold:43,unit:"kg",precio:8500},
+  {id:"CON-COG-010",cat:"Concentrado",sub:"Conc. gato",p:"Br gato salmón",bought:3,sold:0,unit:"kg",precio:18000},
+  {id:"CON-COG-011",cat:"Concentrado",sub:"Conc. gato",p:"Br Cat adulto castrado salmón",bought:3,sold:2,unit:"kg",precio:20000},
+  {id:"CON-COG-012",cat:"Concentrado",sub:"Conc. gato",p:"Royal Canin mini",bought:2,sold:1,unit:"kg",precio:32000},
+  {id:"CON-CHG-001",cat:"Concentrado",sub:"Húmeda gato",p:"Whiskas sobre gatito carne",bought:3,sold:1,unit:"und",precio:2800},
+  {id:"CON-CHG-002",cat:"Concentrado",sub:"Húmeda gato",p:"Whiskas sobre gatito atún",bought:3,sold:0,unit:"und",precio:2800},
+  {id:"CON-CHG-003",cat:"Concentrado",sub:"Húmeda gato",p:"Whiskas sobre adulto",bought:11,sold:9,unit:"und",precio:2800},
+  {id:"CON-CHG-004",cat:"Concentrado",sub:"Húmeda gato",p:"Chunky sobres delicat",bought:3,sold:4,unit:"und",precio:2800},
+  {id:"CON-CHG-005",cat:"Concentrado",sub:"Húmeda gato",p:"Felix sobres adulto",bought:6,sold:5,unit:"und",precio:2800},
+  {id:"CON-CHP-001",cat:"Concentrado",sub:"Húmeda perro",p:"Chunky sobres Delodog",bought:3,sold:0,unit:"und",precio:2800},
+  {id:"CON-CHP-002",cat:"Concentrado",sub:"Húmeda perro",p:"Pedigree sobres adulto",bought:7,sold:4,unit:"und",precio:2800},
+  {id:"CON-CHP-003",cat:"Concentrado",sub:"Húmeda perro",p:"Dog Chow sobres adulto",bought:5,sold:2,unit:"und",precio:2800},
+  {id:"MED-ANT-001",cat:"Medicina",sub:"Antiparasitario",p:"Bravecto 4.5 a 10kg",bought:1,sold:0,unit:"und",precio:85000},
+  {id:"SNK-CRE-001",cat:"Snack",sub:"Cremosos",p:"Pudding calabaza",bought:30,sold:17,unit:"und",precio:3500},
+  {id:"SNK-CRE-002",cat:"Snack",sub:"Cremosos",p:"Michiko churu",bought:30,sold:28,unit:"und",precio:4000},
+  {id:"SNK-CRE-003",cat:"Snack",sub:"Cremosos",p:"Michiko yogurt",bought:3,sold:0,unit:"und",precio:4000},
+  {id:"SNK-CRO-001",cat:"Snack",sub:"Croquetas gato",p:"Br for cat snacks bola pelo",bought:2,sold:1,unit:"und",precio:18000},
+  {id:"SNK-CRO-002",cat:"Snack",sub:"Croquetas gato",p:"Bola pelo Mimos",bought:3,sold:2,unit:"und",precio:12000},
+  {id:"SNK-DUL-001",cat:"Snack",sub:"Dulces",p:"Snack cabano color",bought:2,sold:6,unit:"kg",precio:2000},
+  {id:"SNK-DUL-002",cat:"Snack",sub:"Dulces",p:"Snack mini galleta moneda",bought:1,sold:0,unit:"kg",precio:2000},
+  {id:"SNK-GAL-001",cat:"Snack",sub:"Galletas",p:"Snack galleta leche",bought:5,sold:40,unit:"kg",precio:2000},
+  {id:"SNK-GAL-002",cat:"Snack",sub:"Galletas",p:"Snack galleta hígado",bought:4,sold:17,unit:"kg",precio:2000},
+  {id:"SNK-GOM-001",cat:"Snack",sub:"Gomas perro",p:"Goma Chunky",bought:1,sold:12,unit:"kg",precio:3500},
+  {id:"SNK-HUE-001",cat:"Snack",sub:"Huesos",p:"Snack hueso",bought:1,sold:7,unit:"und",precio:2000},
+];
+
+let COMPRAS = [
+  {p:"Arena Calabaza café (bulto)",cat:"Aseo",prov:"Nutivara",q:1,und:"kg",cu:49000,t:49000},
+  {p:"Snack galleta leche",cat:"Snack",prov:"Nutivara",q:2,und:"kg",cu:10000,t:20000},
+  {p:"Chunky adulto pollo",cat:"Concentrado",prov:"AnimalHome",q:1,und:"kg",cu:150400,t:150400},
+  {p:"Dog Chow adulto raza pequeña",cat:"Concentrado",prov:"AnimalHome",q:1,und:"kg",cu:179750,t:179750},
+  {p:"Dogourmet cachorro",cat:"Concentrado",prov:"AnimalHome",q:1,und:"kg",cu:195600,t:195600},
+  {p:"Monello tradicional",cat:"Concentrado",prov:"Monello",q:5,und:"kg",cu:185000,t:925000},
+  {p:"Monello gato",cat:"Concentrado",prov:"Monello",q:4,und:"kg",cu:125000,t:500000},
+  {p:"Nutranuggets adulto",cat:"Concentrado",prov:"Nagopets",q:1,und:"kg",cu:195800,t:195800},
+  {p:"Cat Chow",cat:"Concentrado",prov:"AnimalHome",q:2,und:"kg",cu:145000,t:290000},
+  {p:"Br Cat adulto castrado salmón",cat:"Concentrado",prov:"Dorado",q:2,und:"kg",cu:189850,t:379700},
+  {p:"Oh mai gat",cat:"Concentrado",prov:"AnimalHome",q:3,und:"kg",cu:98000,t:294000},
+  {p:"Ringo adulto",cat:"Concentrado",prov:"Servicampo",q:1,und:"kg",cu:112174,t:112174},
+  {p:"Collares gato",cat:"Accesorio",prov:"Villapets",q:12,und:"und",cu:1158,t:13896},
+  {p:"Arenera cubierta azul",cat:"Accesorio",prov:"Villapets",q:1,und:"und",cu:42900,t:42900},
+  {p:"Correa arnés mix colores",cat:"Accesorio",prov:"Villapets",q:2,und:"und",cu:16900,t:33800},
+];
+
+// Separate daily data by bulto vs menudeo (estimated split)
+const dailyMenudeo=[20000,25000,45000,180000,100000,35000,80000,38000,50000,42000,200000,95000,240000,210000,65000,60000,95000,220000,130000,85000,200000,300000,170000,72000,100000,65000,100000,280000,28000,75000,140000,125000,110000,110000,260000,95000,72000,130000,40400];
+const dailyBulto= [16500,13400,17800,183000,37100,10950,20300,10300,14600,10000,130900,33400,79350,81600,21800,21100,33800,173000,41800,27300,152100,173300,61500,20200,33000,20300,32800,113900, 5000,23500,41100,40100,34200,35350,160000,26500,23300,40600,0];
+const dailyLabels=["15/2","16/2","17/2","18/2","19/2","20/2","21/2","22/2","23/2","24/2","25/2","26/2","27/2","28/2","1/3","2/3","3/3","4/3","5/3","6/3","7/3","8/3","9/3","10/3","11/3","12/3","13/3","14/3","15/3","16/3","17/3","18/3","19/3","20/3","21/3","22/3","23/3","24/3","25/3"];
+
+// ── STATE ──
+const sessionDelta={};
+const catPill={Aseo:'pill-green',Snack:'pill-amber',Accesorio:'pill-purple',Concentrado:'pill-blue',Medicina:'pill-red'};
+const fmt=v=>'$'+Math.round(v).toLocaleString('es-CO');
+const fmtN=v=>v%1===0?v:parseFloat(v.toFixed(1));
+let gastosAcum=519792;
+let comprasTotal=8952324;
+let todayHoyTotal=40400;
+let cmpSessionTotal=0;
+let gstSessionTotal=0;
+let vtaSessionTotal=0;
+
+// selected prod state per context
+const selState={vta:null,cmp:null};
+let catFilterVta='todos';
+let historialChart=null;
+let diarioChart=null;
+
+function getStock(item){return parseFloat((item.bought-item.sold-(sessionDelta[item.id]||0)).toFixed(1));}
+function stkClass(s){return s>3?'stk-ok':s>=1?'stk-low':'stk-out';}
+
+// ── NAVIGATION ──
+function goTo(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(window.innerWidth<=768) document.getElementById('sidebar').classList.add('collapsed');
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
+
+// ── PRODUCT SEARCH DROPDOWN ──
+function searchProds(q,ctx){
+  const f=q.toLowerCase();
+  const cat=catFilterVta;
+  const items=[...INV].sort((a,b)=>a.p.localeCompare(b.p)).filter(r=>
+    (r.p.toLowerCase().includes(f)||r.cat.toLowerCase().includes(f)||r.sub.toLowerCase().includes(f)||r.id.toLowerCase().includes(f))&&
+    (ctx!=='vta'||cat==='todos'||r.cat===cat)
+  );
+  const dd=document.getElementById(ctx+'-dropdown');
+  if(!items.length){dd.innerHTML='<div style="padding:12px;color:var(--text3);font-size:13px">Sin resultados</div>';}
+  else{
+    dd.innerHTML=items.slice(0,12).map(r=>{
+      const stk=getStock(r);
+      const stkCol=stk>3?'var(--green)':stk>=1?'var(--amber)':'var(--red)';
+      return `<div class="prod-option" onmousedown="selectProd('${r.id}','${ctx}')">
+        <span class="pill ${catPill[r.cat]||'pill-gray'}" style="flex-shrink:0">${r.cat}</span>
+        <div><div class="po-name">${r.p}</div><div class="po-meta">${r.id} · ${r.sub}</div></div>
+        <span class="po-stk" style="color:${stkCol}">${fmtN(stk)} ${r.unit}</span>
+      </div>`;
+    }).join('');
+  }
+  dd.classList.add('open');
+}
+function openDropdown(ctx){
+  const inp=document.getElementById(ctx===('vta')?'vta-search':'cmp-search');
+  if(inp) searchProds(inp.value||'',ctx);
+}
+function closeDropdown(ctx){document.getElementById(ctx+'-dropdown').classList.remove('open');}
+function selectProd(id,ctx){
+  const item=INV.find(r=>r.id===id);
+  if(!item) return;
+  selState[ctx]=item;
+  const nameEl=document.getElementById(ctx+'-sel-name');
+  const metaEl=document.getElementById(ctx+'-sel-meta');
+  const selEl=document.getElementById(ctx+'-selected');
+  if(nameEl) nameEl.textContent=item.p;
+  if(metaEl) metaEl.textContent=item.id+' · '+item.sub+' · Stock: '+fmtN(getStock(item))+' '+item.unit;
+  if(selEl) selEl.classList.add('show');
+  const inp=document.getElementById(ctx===('vta')?'vta-search':'cmp-search');
+  if(inp) inp.value='';
+  document.getElementById(ctx+'-dropdown').classList.remove('open');
+  if(ctx==='vta') updateVtaPreview();
+  if(ctx==='cmp') updateCmpPreview();
+}
+function clearProdSel(ctx){
+  selState[ctx]=null;
+  document.getElementById(ctx+'-selected').classList.remove('show');
+  document.getElementById(ctx===('vta')?'vta-preview':'cmp-preview').style.display='none';
+}
+
+// ── CATEGORY CHIPS FOR VENTA ──
+const allCats=['todos',...new Set(INV.map(r=>r.cat))];
+document.getElementById('vta-cat-chips').innerHTML=allCats.map((c,i)=>
+  `<button class="chip${i===0?' on':''}" onclick="setVtaCat('${c}',this)">${c==='todos'?'Todos':c}</button>`
+).join('');
+function setVtaCat(cat,btn){
+  catFilterVta=cat;
+  document.querySelectorAll('#vta-cat-chips .chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const v=document.getElementById('vta-search').value;
+  if(v) searchProds(v,'vta');
+}
+
+// ── NUEVA VENTA ──
+function updateVtaPreview(){
+  const item=selState.vta;
+  const qty=parseFloat(document.getElementById('vta-qty').value)||0;
+  const val=parseFloat(document.getElementById('vta-val').value)||0;
+  if(!item){document.getElementById('vta-preview').style.display='none';return;}
+  const stk=getStock(item);
+  const newStk=parseFloat((stk-qty).toFixed(1));
+  document.getElementById('vpv-prod').textContent=item.p;
+  document.getElementById('vpv-stk').textContent=fmtN(stk)+' '+item.unit;
+  document.getElementById('vpv-new').innerHTML=`<span class="${stkClass(newStk)}">${fmtN(newStk)} ${item.unit}</span>`;
+  document.getElementById('vpv-val').textContent=fmt(val);
+  document.getElementById('vta-preview').style.display='block';
+}
+function registrarVenta(){
+  const item=selState.vta;
+  if(!item){alert('Selecciona un producto');return;}
+  const qty=parseFloat(document.getElementById('vta-qty').value)||0;
+  const val=parseFloat(document.getElementById('vta-val').value)||0;
+  const tipo=document.getElementById('vta-tipo').value;
+  const pago=document.getElementById('vta-pago').value;
+  const fecha=document.getElementById('vta-fecha').value;
+  const esBulto=tipo==='Bulto';
+
+  sessionDelta[item.id]=(sessionDelta[item.id]||0)+qty;
+  vtaSessionTotal+=val;
+
+  // Session table
+  const tbody=document.getElementById('tbody-vta-session');
+  if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
+  const idx=Date.now();
+  const tr=document.createElement('tr');
+  tr.dataset.idx=idx;
+  tr.innerHTML=`<td>${fecha}</td><td>${item.p}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${tipo}</span></td><td>${fmtN(qty)}</td><td style="font-weight:600;color:var(--green)">${fmt(val)}</td><td>${pago}</td><td><button class="btn-icon btn-sm" onclick="openEditVenta(this,'session',${idx})">✏️</button><button class="btn-icon btn-sm" onclick="deleteRow(this,'vta-session',${val},${esBulto?1:0})">🗑</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('vta-session-total').textContent='Total sesión: '+fmt(vtaSessionTotal);
+
+  // Historial hoy
+  const histTbody=document.getElementById('tbody-hist-hoy');
+  const htr=document.createElement('tr');
+  htr.innerHTML=`<td>${item.p}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${tipo}</span></td><td>${fmt(val)}</td><td>${pago}</td><td><button class="btn-icon btn-sm" onclick="editVenta(this)">✏️</button></td>`;
+  histTbody.appendChild(htr);
+  todayHoyTotal+=val;
+  document.getElementById('hist-hoy-total').textContent=fmt(todayHoyTotal);
+
+  // Update charts
+  if(esBulto) dailyBulto[dailyBulto.length-1]+=val;
+  else dailyMenudeo[dailyMenudeo.length-1]+=val;
+  if(diarioChart){diarioChart.data.datasets[0].data=[...dailyMenudeo];diarioChart.data.datasets[1].data=[...dailyBulto];diarioChart.update();}
+  if(historialChart){
+    const last14m=dailyMenudeo.slice(-14),last14b=dailyBulto.slice(-14);
+    historialChart.data.datasets[0].data=last14m;historialChart.data.datasets[1].data=last14b;historialChart.update();
+  }
+  updateResumenMetrics();
+  renderInv(INV);
+  clearProdSel('vta');
+  document.getElementById('vta-qty').value=1;
+  document.getElementById('vta-val').value='';
+}
+function updateResumenMetrics(){
+  const hoyM=dailyMenudeo[dailyMenudeo.length-1];
+  const hoyB=dailyBulto[dailyBulto.length-1];
+  document.getElementById('rm-hoy').textContent=fmt(hoyM+hoyB);
+  document.getElementById('rm-menudeo').textContent=fmt(hoyM);
+  document.getElementById('rm-bulto').textContent=fmt(hoyB);
+}
+
+// ── INVENTARIO ──
+let invCatFilter='todos';
+function renderInv(data){
+  let ok=0,low=0,out=0,none=0;
+  document.getElementById('tbody-inv').innerHTML=data.map(r=>{
+    const stk=getStock(r);
+    const b=r.bought,s=r.sold+(sessionDelta[r.id]||0);
+    if(b===0&&s===0){none++;return `<tr><td class="mono">${r.id}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td>${r.p}</td><td style="color:var(--text3)">${r.precio?fmt(r.precio):'—'}</td><td style="color:var(--text3)">—</td><td style="color:var(--text3)">—</td><td><span class="pill pill-gray">Sin datos</span></td><td>${r.unit}</td><td><button class="btn-icon btn-sm" onclick="openEditStock('${r.id}')">✏️</button></td></tr>`;}
+    if(stk>3)ok++;else if(stk>=1)low++;else out++;
+    return `<tr><td class="mono">${r.id}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td>${r.p}</td><td style="color:var(--text2)">${r.precio?fmt(r.precio):'—'}</td><td style="color:var(--text2)">${fmtN(b)}</td><td style="color:var(--text2)">${fmtN(s)}</td><td class="${stkClass(stk)}">${fmtN(stk)}</td><td style="color:var(--text3)">${r.unit}</td><td><button class="btn-icon btn-sm" onclick="openEditStock('${r.id}')">✏️</button></td></tr>`;
+  }).join('');
+  document.getElementById('i-ok').textContent=ok;
+  document.getElementById('i-low').textContent=low;
+  document.getElementById('i-out').textContent=out;
+  document.getElementById('i-none').textContent=none;
+  document.getElementById('r-ok').textContent=ok;
+  document.getElementById('r-alerta').textContent=low+out;
+}
+function filtrarInv(q){
+  const f=q.toLowerCase();
+  renderInv(INV.filter(r=>(r.p.toLowerCase().includes(f)||r.id.toLowerCase().includes(f)||r.cat.toLowerCase().includes(f)||r.sub.toLowerCase().includes(f))&&(invCatFilter==='todos'||r.cat===invCatFilter)));
+}
+const invCats=['todos',...new Set(INV.map(r=>r.cat))];
+document.getElementById('inv-chips').innerHTML=invCats.map((c,i)=>`<button class="chip${i===0?' on':''}" onclick="setInvFilter('${c}',this)">${c==='todos'?'Todos':c}</button>`).join('');
+function setInvFilter(cat,btn){invCatFilter=cat;document.querySelectorAll('#inv-chips .chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');filtrarInv(document.getElementById('inv-search').value||'');}
+renderInv(INV);
+
+// ── CATÁLOGO ──
+let catCatFilter='todos';
+function renderCatalogo(data){
+  document.getElementById('tbody-cat').innerHTML=data.map(r=>{
+    const stk=getStock(r);
+    return `<tr><td class="mono">${r.id}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td style="color:var(--text2)">${r.sub}</td><td>${r.p}</td><td>${r.precio?fmt(r.precio):'<span style="color:var(--text3)">—</span>'}</td><td class="${stkClass(stk)}">${fmtN(stk)}</td><td><button class="btn-icon btn-sm" onclick="openEditCatalogo('${r.id}')">✏️</button></td></tr>`;
+  }).join('');
+}
+function filtrarCatalogo(q){const f=q.toLowerCase();renderCatalogo(INV.filter(r=>(r.p.toLowerCase().includes(f)||r.id.toLowerCase().includes(f)||r.sub.toLowerCase().includes(f))&&(catCatFilter==='todos'||r.cat===catCatFilter)));}
+document.getElementById('cat-chips').innerHTML=invCats.map((c,i)=>`<button class="chip${i===0?' on':''}" onclick="setCatFilter('${c}',this)">${c==='todos'?'Todos':c}</button>`).join('');
+function setCatFilter(cat,btn){catCatFilter=cat;document.querySelectorAll('#cat-chips .chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');filtrarCatalogo('');}
+renderCatalogo(INV);
+
+// ── COMPRAS ──
+function renderCompras(data){
+  document.getElementById('tbody-cmp').innerHTML=data.map((r,i)=>
+    `<tr><td>${r.p}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td>${r.prov}</td><td>${fmtN(r.q)} ${r.und||''}</td><td>${fmt(r.cu)}</td><td style="font-weight:600">${fmt(r.t)}</td><td><button class="btn-icon btn-sm" onclick="openEditCompra(${i})">✏️</button><button class="btn-icon btn-sm" onclick="deleteCompra(${i})">🗑</button></td></tr>`
+  ).join('');
+}
+renderCompras(COMPRAS);
+function filtrarCompras(q){const f=q.toLowerCase();renderCompras(COMPRAS.filter(r=>r.p.toLowerCase().includes(f)||r.prov.toLowerCase().includes(f)||r.cat.toLowerCase().includes(f)));}
+
+// ── NUEVA COMPRA ──
+let usandoNuevoProd=false;
+function toggleNuevoProd(nuevo){
+  usandoNuevoProd=nuevo;
+  document.getElementById('cmp-exist-block').style.display=nuevo?'none':'block';
+  document.getElementById('cmp-nuevo-block').style.display=nuevo?'block':'none';
+  document.getElementById('btn-prod-exist').className='btn '+(nuevo?'btn-secondary':'btn-primary');
+  document.getElementById('btn-prod-nuevo').className='btn '+(nuevo?'btn-primary':'btn-secondary');
+  if(nuevo) updateNpId();
+}
+function updateNpId(){
+  const cat=document.getElementById('np-cat').value;
+  const existing=INV.filter(r=>r.id.startsWith(cat)).map(r=>{const n=parseInt(r.id.split('-').pop());return isNaN(n)?0:n;});
+  const next=String(Math.max(0,...existing)+1).padStart(3,'0');
+  document.getElementById('np-id').value=cat+'-NEW-'+next;
+}
+function checkNuevoProv(){
+  const val=document.getElementById('cmp-prov').value;
+  document.getElementById('nuevo-prov-field').style.display=val==='__nuevo__'?'block':'none';
+}
+function updateCmpPreview(){
+  const item=selState.cmp;
+  const qty=parseFloat(document.getElementById('cmp-qty').value)||0;
+  const cu=parseFloat(document.getElementById('cmp-cu').value)||0;
+  const pv=parseFloat(document.getElementById('cmp-precio-vta').value)||0;
+  if(!item&&!usandoNuevoProd){document.getElementById('cmp-preview').style.display='none';return;}
+  const stk=item?getStock(item):0;
+  const newStk=parseFloat((stk+qty).toFixed(1));
+  const margen=cu>0&&pv>0?((pv-cu)/cu*100).toFixed(1)+'%':'—';
+  document.getElementById('cpv-prod').textContent=item?item.p:(document.getElementById('np-nombre').value||'Nuevo producto');
+  document.getElementById('cpv-stk').textContent=fmtN(stk)+' '+(item?item.unit:'und');
+  document.getElementById('cpv-new').textContent=fmtN(newStk)+' '+(item?item.unit:'und');
+  document.getElementById('cpv-margen').textContent=margen;
+  document.getElementById('cpv-total').textContent=fmt(qty*cu);
+  document.getElementById('cmp-preview').style.display='block';
+}
+function registrarCompra(){
+  const qty=parseFloat(document.getElementById('cmp-qty').value)||0;
+  const cu=parseFloat(document.getElementById('cmp-cu').value)||0;
+  const pv=parseFloat(document.getElementById('cmp-precio-vta').value)||0;
+  const und=document.getElementById('cmp-und').value;
+  const fecha=document.getElementById('cmp-fecha').value;
+  let provVal=document.getElementById('cmp-prov').value;
+  if(provVal==='__nuevo__') provVal=document.getElementById('cmp-prov-nuevo').value.trim()||'Nuevo';
+  const total=qty*cu;
+
+  let item=selState.cmp;
+  if(usandoNuevoProd){
+    const nombre=document.getElementById('np-nombre').value.trim();
+    if(!nombre){alert('Escribe el nombre del producto');return;}
+    const id=document.getElementById('np-id').value;
+    const cat=(['CON','ASE','ACC','SNK','MED'].find(c=>id.startsWith(c))||'CON');
+    const catName={CON:'Concentrado',ASE:'Aseo',ACC:'Accesorio',SNK:'Snack',MED:'Medicina'}[cat];
+    const sub=document.getElementById('np-sub').value.trim()||catName;
+    const unit=document.getElementById('np-unit').value;
+    const precio=parseFloat(document.getElementById('np-precio').value)||pv||0;
+    item={id,cat:catName,sub,p:nombre,bought:0,sold:0,unit,precio};
+    INV.push(item);
+    renderCatalogo(INV);
+    // Add to prod selectors
+    addProdToSelectors(item);
+  }
+  if(!item){alert('Selecciona o crea un producto');return;}
+
+  // Update stock
+  item.bought=parseFloat((item.bought+qty).toFixed(1));
+  if(pv>0) item.precio=pv;
+
+  // Add to COMPRAS log
+  COMPRAS.unshift({p:item.p,cat:item.cat,prov:provVal,q:qty,und,cu,t:total});
+  renderCompras(COMPRAS);
+  comprasTotal+=total;
+  cmpSessionTotal+=total;
+
+  // Session log
+  const tbody=document.getElementById('tbody-cmp-session');
+  if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${fecha}</td><td>${item.p}</td><td>${provVal}</td><td>${fmtN(qty)} ${und}</td><td>${fmt(cu)}</td><td style="font-weight:600;color:var(--blue)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'cmp-session',${total},0)">🗑</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('cmp-session-total').textContent='Total sesión: '+fmt(cmpSessionTotal);
+
+  renderInv(INV);
+  clearProdSel('cmp');
+  document.getElementById('cmp-qty').value=1;
+  document.getElementById('cmp-cu').value='';
+  document.getElementById('cmp-precio-vta').value='';
+  document.getElementById('cmp-preview').style.display='none';
+  if(usandoNuevoProd){document.getElementById('np-nombre').value='';document.getElementById('np-sub').value='';}
+}
+function addProdToSelectors(item){
+  // nothing extra needed — search is dynamic from INV array
+}
+
+// ── GASTOS ──
+function registrarGasto(){
+  const concepto=document.getElementById('gst-concepto').value.trim();
+  if(!concepto){alert('Escribe el concepto');return;}
+  const cat=document.getElementById('gst-cat').value;
+  const prov=document.getElementById('gst-prov').value.trim();
+  const qty=parseFloat(document.getElementById('gst-qty').value)||1;
+  const val=parseFloat(document.getElementById('gst-val').value)||0;
+  const fecha=document.getElementById('gst-fecha').value;
+  const total=qty*val;
+  gstSessionTotal+=total;
+  gastosAcum+=total;
+  const tbody=document.getElementById('tbody-gst-session');
+  if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${fecha}</td><td>${concepto}</td><td><span class="pill pill-amber">${cat}</span></td><td style="font-weight:600;color:var(--red)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'gst-session',${total},0)">🗑</button></td>`;
+  tbody.appendChild(tr);
+  document.getElementById('gst-session-total').textContent='Total sesión: '+fmt(gstSessionTotal);
+  document.getElementById('gst-concepto').value='';
+  document.getElementById('gst-prov').value='';
+  document.getElementById('gst-qty').value=1;
+  document.getElementById('gst-val').value='';
+}
+
+// ── DELETE ROW ──
+function deleteRow(btn,ctx,val,isBulto){
+  if(!confirm('¿Eliminar este registro?')) return;
+  const tr=btn.closest('tr');
+  tr.remove();
+  if(ctx==='vta-session'){
+    vtaSessionTotal=Math.max(0,vtaSessionTotal-val);
+    document.getElementById('vta-session-total').textContent=vtaSessionTotal>0?'Total sesión: '+fmt(vtaSessionTotal):'';
+  }
+  if(ctx==='gst-session'){gstSessionTotal=Math.max(0,gstSessionTotal-val);document.getElementById('gst-session-total').textContent=gstSessionTotal>0?'Total sesión: '+fmt(gstSessionTotal):'';}
+  if(ctx==='cmp-session'){cmpSessionTotal=Math.max(0,cmpSessionTotal-val);document.getElementById('cmp-session-total').textContent=cmpSessionTotal>0?'Total sesión: '+fmt(cmpSessionTotal):'';}
+}
+function deleteCompra(i){
+  if(!confirm('¿Eliminar esta compra?')) return;
+  COMPRAS.splice(i,1);
+  renderCompras(COMPRAS);
+}
+
+// ── MODAL EDITS ──
+let modalCtx={};
+function openModal(title,bodyHtml,ctx){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=bodyHtml;
+  document.getElementById('modal-delete').style.display=ctx.showDelete?'inline-flex':'none';
+  modalCtx=ctx;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('edit-modal').classList.remove('open');modalCtx={};}
+function saveModal(){
+  if(modalCtx.type==='stock'){
+    const item=INV.find(r=>r.id===modalCtx.id);
+    if(item){
+      item.bought=parseFloat(document.getElementById('edit-bought').value)||item.bought;
+      item.sold=parseFloat(document.getElementById('edit-sold').value)||0;
+      item.precio=parseFloat(document.getElementById('edit-precio').value)||item.precio;
+      renderInv(INV);renderCatalogo(INV);
+    }
+  }
+  if(modalCtx.type==='catalogo'){
+    const item=INV.find(r=>r.id===modalCtx.id);
+    if(item){
+      item.p=document.getElementById('edit-nombre').value||item.p;
+      item.precio=parseFloat(document.getElementById('edit-precio').value)||item.precio;
+      renderCatalogo(INV);renderInv(INV);
+    }
+  }
+  if(modalCtx.type==='compra'){
+    const r=COMPRAS[modalCtx.idx];
+    if(r){
+      r.p=document.getElementById('edit-nombre').value||r.p;
+      r.prov=document.getElementById('edit-prov').value||r.prov;
+      r.q=parseFloat(document.getElementById('edit-qty').value)||r.q;
+      r.cu=parseFloat(document.getElementById('edit-cu').value)||r.cu;
+      r.t=r.q*r.cu;
+      renderCompras(COMPRAS);
+    }
+  }
+  if(modalCtx.type==='venta'){
+    const tr=modalCtx.tr;
+    if(tr){
+      const tds=tr.querySelectorAll('td');
+      const newVal=parseFloat(document.getElementById('edit-valor').value)||0;
+      const newTipo=document.getElementById('edit-tipo').value;
+      const newPago=document.getElementById('edit-pago').value;
+      tds[2].innerHTML=`<span class="pill ${newTipo==='Bulto'?'pill-blue':'pill-green'}">${newTipo}</span>`;
+      tds[4].textContent=fmt(newVal);
+      tds[5].textContent=newPago;
+    }
+  }
+  closeModal();
+}
+function confirmDelete(){
+  if(modalCtx.type==='compra'&&confirm('¿Eliminar esta compra?')){COMPRAS.splice(modalCtx.idx,1);renderCompras(COMPRAS);closeModal();}
+}
+function openEditStock(id){
+  const item=INV.find(r=>r.id===id);
+  if(!item) return;
+  openModal('Editar stock — '+item.p,`
+    <div class="alert alert-amber">Úsalo para ajuste de inventario físico. Modifica directamente los valores.</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>Total comprado</label><input type="number" id="edit-bought" value="${item.bought}" step="0.1"></div>
+      <div class="field"><label>Total vendido</label><input type="number" id="edit-sold" value="${item.sold}" step="0.1"></div>
+      <div class="field"><label>Precio de venta ($)</label><input type="number" id="edit-precio" value="${item.precio||0}" step="100"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text3)">Stock estimado resultante: <strong>${fmtN(item.bought-item.sold)}</strong> ${item.unit}</div>
+  `,{type:'stock',id,showDelete:false});
+}
+function openEditCatalogo(id){
+  const item=INV.find(r=>r.id===id);
+  if(!item) return;
+  openModal('Editar producto — '+item.id,`
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="field"><label>Nombre canónico</label><input type="text" id="edit-nombre" value="${item.p}"></div>
+      <div class="field"><label>Precio de venta ($)</label><input type="number" id="edit-precio" value="${item.precio||0}" step="100"></div>
+    </div>
+  `,{type:'catalogo',id,showDelete:false});
+}
+function openEditCompra(idx){
+  const r=COMPRAS[idx];
+  openModal('Editar compra',`
+    <div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>Producto</label><input type="text" id="edit-nombre" value="${r.p}"></div>
+      <div class="field"><label>Proveedor</label><input type="text" id="edit-prov" value="${r.prov}"></div>
+      <div class="field"><label>Cantidad</label><input type="number" id="edit-qty" value="${r.q}" step="0.1"></div>
+      <div class="field"><label>Costo unitario ($)</label><input type="number" id="edit-cu" value="${r.cu}" step="100"></div>
+    </div>
+  `,{type:'compra',idx,showDelete:true});
+}
+function editVenta(btn){
+  const tr=btn.closest('tr');
+  const tds=tr.querySelectorAll('td');
+  const prod=tds[0].textContent;
+  const tipo=tds[1].textContent.trim();
+  const valorStr=tds[2].textContent.replace(/\$|\.|\s/g,'').replace(',','.');
+  const valor=parseFloat(valorStr)||0;
+  const pago=tds[3].textContent;
+  openModal('Editar venta — '+prod,`
+    <div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>Tipo de venta</label>
+        <select id="edit-tipo">
+          <option ${tipo==='Granel'?'selected':''}>Granel</option>
+          <option ${tipo==='Paquete'?'selected':''}>Paquete</option>
+          <option ${tipo==='Bulto'?'selected':''}>Bulto</option>
+          <option ${tipo==='Und'?'selected':''}>Und</option>
+          <option ${tipo==='Sobre'?'selected':''}>Sobre</option>
+        </select>
+      </div>
+      <div class="field"><label>Valor ($)</label><input type="number" id="edit-valor" value="${valor}" step="100"></div>
+      <div class="field"><label>Medio de pago</label>
+        <select id="edit-pago">
+          <option ${pago==='Efectivo'?'selected':''}>Efectivo</option>
+          <option ${pago==='Nequi'?'selected':''}>Nequi</option>
+          <option ${pago==='Daviplata'?'selected':''}>Daviplata</option>
+          <option ${pago==='Fiado'?'selected':''}>Fiado</option>
+        </select>
+      </div>
+    </div>
+  `,{type:'venta',tr,showDelete:false});
+}
+
+// ── TOP PRODUCTOS ──
+const topValor=[{n:"Monello tradicional",v:1085000},{n:"Monello gato",v:691850},{n:"Arena Calabaza café 4.5",v:288400},{n:"Nutranuggets",v:282000},{n:"Br Cat Castrado salmón",v:230000},{n:"Chunky adulto pollo",v:166600},{n:"Cat Chow",v:161800},{n:"Arena calabaza (bulto)",v:160000},{n:"Agility piel adulto 8kg",v:156000},{n:"Oh mai gat",v:110000}];
+const topRot=[{n:"Snack galleta leche",v:40,u:"kg"},{n:"Monello gato",v:43,u:"kg"},{n:"Monello tradicional",v:31,u:"kg"},{n:"Oh mai gat",v:26,u:"kg"},{n:"Michiko churu",v:28,u:"und"},{n:"Chunky adulto pollo",v:21,u:"kg"},{n:"Dog Chow raza pequeña",v:20,u:"kg"},{n:"Chunky cachorro",v:14,u:"kg"},{n:"Pudding calabaza",v:17,u:"und"},{n:"Cat Chow",v:23,u:"kg"}];
+const maxV=topValor[0].v,maxR=Math.max(...topRot.map(r=>r.v));
+document.getElementById('top-valor').innerHTML=topValor.map(p=>`<div class="bar-row"><span class="bar-label" title="${p.n}">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxV*100)}%;background:var(--green)"></div></div><span class="bar-value" style="color:var(--green)">${fmt(p.v)}</span></div>`).join('');
+document.getElementById('top-rot').innerHTML=topRot.map(p=>`<div class="bar-row"><span class="bar-label" title="${p.n}">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxR*100)}%;background:var(--blue)"></div></div><span class="bar-value" style="color:var(--blue)">${p.v} ${p.u}</span></div>`).join('');
+
+// ── PROVEEDORES ──
+const provs=[{n:"AnimalHome",v:3130956},{n:"Monello",v:2438748},{n:"Nutivara",v:2087450},{n:"Villapets",v:409096},{n:"Dorado",v:379700},{n:"Nagopets",v:195800},{n:"Servicampo",v:112174},{n:"Jambo",v:90200},{n:"Porvenir",v:61600},{n:"Tauro",v:39000}];
+const maxP=provs[0].v;
+document.getElementById('prov-bars').innerHTML=provs.map(p=>`<div class="bar-row"><span class="bar-label">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxP*100)}%;background:var(--blue)"></div></div><span class="bar-value" style="color:var(--text2);font-size:11px">${fmt(p.v)}</span></div>`).join('');
+
+// ── CHARTS ──
+function mkChart(id,type,labels,datasets,opts={}){
+  return new Chart(document.getElementById(id),{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},...(opts.plugins||{})},scales:opts.scales||{},...opts}});
+}
+
+diarioChart=new Chart(document.getElementById('cDiario'),{
+  type:'bar',
+  data:{labels:dailyLabels,datasets:[
+    {label:'Menudeo',data:[...dailyMenudeo],backgroundColor:'rgba(29,158,117,0.7)',borderRadius:3,borderSkipped:false},
+    {label:'Bulto',data:[...dailyBulto],backgroundColor:'rgba(37,99,235,0.6)',borderRadius:3,borderSkipped:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},scales:{x:{stacked:true,ticks:{maxTicksLimit:10,font:{size:9}},grid:{color:'rgba(0,0,0,0.04)'}},y:{stacked:true,ticks:{callback:v=>v>=1000?'$'+Math.round(v/1000)+'K':fmt(v),font:{size:9}},grid:{color:'rgba(0,0,0,0.04)'}}}}
+});
+
+mkChart('cSemana','bar',['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],[{data:[609400,687500,1425400,686800,735750,1557900,799400],backgroundColor:['rgba(29,158,117,0.4)','rgba(29,158,117,0.4)','rgba(29,158,117,0.4)','rgba(29,158,117,0.4)','rgba(29,158,117,0.4)','#1D9E75','rgba(29,158,117,0.4)'],borderRadius:4,borderSkipped:false}],{plugins:{tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{callback:v=>v>=1000?'$'+Math.round(v/1000)+'K':fmt(v),font:{size:9}},grid:{color:'rgba(0,0,0,0.04)'}}}});
+mkChart('cPago','doughnut',['Nequi','Efectivo','Fiado','Daviplata'],[{data:[3451950,3031200,14000,5000],backgroundColor:['#1D9E75','#2563EB','#C47B20','#D94F3D'],borderWidth:0}],{cutout:'65%'});
+mkChart('cTipo','doughnut',['Granel','Bulto','Und','Paquete','Otros'],[{data:[2975450,2165000,662100,529900,169700],backgroundColor:['#1D9E75','#D94F3D','#2563EB','#C47B20','#6D28D9'],borderWidth:0}],{cutout:'65%'});
+mkChart('cCatCmp','doughnut',['Concentrado','Aseo','Accesorio','Snack','Medicina'],[{data:[7018606,888072,635896,378950,30800],backgroundColor:['#2563EB','#1D9E75','#6D28D9','#C47B20','#D94F3D'],borderWidth:0}],{cutout:'65%'});
+mkChart('cMes','bar',['Febrero','Marzo'],[{data:[2019200,4482950],backgroundColor:['rgba(29,158,117,0.5)','#1D9E75'],borderRadius:7,borderSkipped:false}],{plugins:{tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{callback:v=>v>=1000?'$'+Math.round(v/1000)+'K':fmt(v),font:{size:9}},grid:{color:'rgba(0,0,0,0.04)'}}}});
+
+const last14m=dailyMenudeo.slice(-14),last14b=dailyBulto.slice(-14),last14l=dailyLabels.slice(-14);
+historialChart=new Chart(document.getElementById('cHistorial'),{
+  type:'bar',
+  data:{labels:last14l,datasets:[
+    {label:'Menudeo',data:[...last14m],backgroundColor:'rgba(29,158,117,0.7)',borderRadius:3,borderSkipped:false},
+    {label:'Bulto',data:[...last14b],backgroundColor:'rgba(37,99,235,0.6)',borderRadius:3,borderSkipped:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},scales:{x:{stacked:true,ticks:{font:{size:10},maxRotation:45},grid:{color:'rgba(0,0,0,0.04)'}},y:{stacked:true,ticks:{callback:v=>v>=1000?'$'+Math.round(v/1000)+'K':fmt(v),font:{size:9}},grid:{color:'rgba(0,0,0,0.04)'}}}}
+});
+
+updateResumenMetrics();
+</script>
+</body>
+</html>
