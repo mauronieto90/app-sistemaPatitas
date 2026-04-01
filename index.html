@@ -194,6 +194,70 @@ select:focus,input:focus{outline:none;border-color:var(--green)}
 .logout-btn{background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.7);padding:5px 8px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif;flex-shrink:0}
 .logout-btn:hover{background:rgba(255,255,255,0.22);color:#fff}
 </style>
+<script>
+// LOGIN — carga antes que Firebase y Chart.js
+var USERS = {
+  'admin':    { pass: 'patitas2026', nombre: 'Administrador', rol: 'admin' },
+  'vendedor': { pass: 'tienda123',   nombre: 'Vendedor',      rol: 'vendedor' }
+};
+var currentUser = null;
+
+function showLogin(){
+  var a=document.getElementById('app-shell'), l=document.getElementById('login-screen');
+  if(a) a.style.display='none';
+  if(l) l.style.display='flex';
+}
+function showApp(){
+  var a=document.getElementById('app-shell'), l=document.getElementById('login-screen');
+  if(l) l.style.display='none';
+  if(a) a.style.display='flex';
+}
+function doLogin(){
+  var u=document.getElementById('li-user');
+  var p=document.getElementById('li-pass');
+  var e=document.getElementById('li-error');
+  if(!u||!p) return;
+  var user=u.value.trim().toLowerCase();
+  var pass=p.value;
+  if(USERS[user] && USERS[user].pass===pass){
+    currentUser=user;
+    try{sessionStorage.setItem('pp_user',user);}catch(x){}
+    var sn=document.getElementById('sidebar-user-name');
+    var sr=document.getElementById('sidebar-user-rol');
+    if(sn) sn.textContent=USERS[user].nombre;
+    if(sr) sr.textContent=USERS[user].rol==='admin'?'Administrador':'Vendedor';
+    if(e) e.textContent='';
+    showApp();
+  } else {
+    if(e) e.textContent='Usuario o contraseña incorrectos';
+    p.value=''; p.focus();
+  }
+}
+function doLogout(){
+  try{sessionStorage.removeItem('pp_user');}catch(x){}
+  currentUser=null;
+  var u=document.getElementById('li-user'), p=document.getElementById('li-pass');
+  if(u) u.value=''; if(p) p.value='';
+  showLogin();
+}
+document.addEventListener('keydown',function(e){
+  var ls=document.getElementById('login-screen');
+  if(e.key==='Enter' && ls && ls.style.display!=='none') doLogin();
+});
+document.addEventListener('DOMContentLoaded',function(){
+  try{
+    var s=sessionStorage.getItem('pp_user');
+    if(s && USERS[s]){
+      currentUser=s;
+      var sn=document.getElementById('sidebar-user-name');
+      var sr=document.getElementById('sidebar-user-rol');
+      if(sn) sn.textContent=USERS[s].nombre;
+      if(sr) sr.textContent=USERS[s].rol==='admin'?'Administrador':'Vendedor';
+      showApp();
+    }
+  }catch(x){}
+});
+</script>
 </head>
 <body>
 <!-- LOGIN SCREEN -->
@@ -1777,57 +1841,12 @@ window.goTo = function(id, btn){
 // ══════════════════════════════════════
 // LOGIN SCREEN
 // ══════════════════════════════════════
-const USERS = {
-  'admin': { pass: 'patitas2026', nombre: 'Administrador', rol: 'admin' },
-  'vendedor': { pass: 'tienda123', nombre: 'Vendedor', rol: 'vendedor' }
-};
-
-let currentUser = null;
-
-function showLogin(){
-  document.getElementById('app-shell').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-}
-function showApp(){
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app-shell').style.display='flex';
-}
-function doLogin(){
-  const user=document.getElementById('li-user').value.trim().toLowerCase();
-  const pass=document.getElementById('li-pass').value;
-  const err=document.getElementById('li-error');
-  if(USERS[user] && USERS[user].pass===pass){
-    currentUser=user;
-    sessionStorage.setItem('pp_user', user);
-    document.getElementById('sidebar-user-name').textContent=USERS[user].nombre;
-    document.getElementById('sidebar-user-rol').textContent=USERS[user].rol==='admin'?'Administrador':'Vendedor';
-    err.textContent='';
-    showApp();
-  } else {
-    err.textContent='Usuario o contraseña incorrectos';
-  }
-}
-function doLogout(){
-  sessionStorage.removeItem('pp_user');
-  currentUser=null;
-  document.getElementById('li-user').value='';
-  document.getElementById('li-pass').value='';
-  showLogin();
-}
-// Check session on load
-(function checkSession(){
-  try {
-    const saved=sessionStorage.getItem('pp_user');
-    if(saved && USERS[saved]){
-      currentUser=saved;
-      document.getElementById('sidebar-user-name').textContent=USERS[saved].nombre;
-      document.getElementById('sidebar-user-rol').textContent=USERS[saved].rol==='admin'?'Administrador':'Vendedor';
-      showApp();
-    } else { showLogin(); }
-  } catch(e){ showLogin(); }
-})();
+/* login in head */
+/* doLogin in head */
+/* doLogout in head */
+/* checkSession in head */
 // Enter key triggers login
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin();});
+/* enter key in head */
 
 </script>
 </body>
