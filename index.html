@@ -810,7 +810,17 @@ document.addEventListener('DOMContentLoaded',function(){
     <button class="htab" onclick="setVentasPeriodo('mes',this)">Por mes</button>
   </div>
 
-  <div id="hv-filtros" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <select id="hv-select-periodo" onchange="onHvSelectChange(this)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'Nunito',sans-serif;background:var(--surface);color:var(--text);font-weight:500">
+        <option value="">Selecciona un período…</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn btn-secondary" style="padding:8px 12px;font-size:12px" onclick="navHvPeriodo(-1)">◀ Anterior</button>
+      <button class="btn btn-secondary" style="padding:8px 12px;font-size:12px" onclick="navHvPeriodo(1)">Siguiente ▶</button>
+    </div>
+  </div>
 
   <div class="summary-bar" id="hv-summary"></div>
 
@@ -853,7 +863,13 @@ document.addEventListener('DOMContentLoaded',function(){
   <div class="summary-bar" id="cmp-summary"></div>
 
   <input class="search-bar" type="text" id="cmp-hist-search" placeholder="Buscar producto, proveedor o categoría…" oninput="filtrarCmpHist(this.value)">
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="cmp-periodo-btns"></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:180px">
+      <select id="cmp-select-mes" onchange="filterCmpHistSelect(this.value)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'Nunito',sans-serif;background:var(--surface);color:var(--text);font-weight:500">
+        <option value="todos">Todos los períodos</option>
+      </select>
+    </div>
+  </div>
 
   <div class="card" style="padding:0;overflow:hidden">
     <div class="tbl-wrap">
@@ -1700,9 +1716,14 @@ function registrarCompra(){
   item.bought=parseFloat((item.bought+qty).toFixed(1));
   if(pv>0) item.precio=pv;
 
-  // Add to COMPRAS log
-  COMPRAS.unshift({p:item.p,cat:item.cat,prov:provVal,q:qty,und,cu,t:total});
+  // Add to COMPRAS log + historial
+  const nuevaCompra = {p:item.p,cat:item.cat,prov:provVal,q:qty,und,cu,t:total,fecha,
+    producto:item.p,qty,t:total,ts:Date.now()};
+  COMPRAS.unshift(nuevaCompra);
+  COMPRAS_HIST.unshift({...nuevaCompra, fecha:fecha||getTodayISO()});
   renderCompras(COMPRAS);
+  // Rebuild historial compras if visible
+  if(cmpHistRows.length) buildCmpHist();
   comprasTotal+=total;
   cmpSessionTotal+=total;
 
@@ -2083,16 +2104,25 @@ function setVentasPeriodo(p, btn){
   hvPeriodo = p;
   document.querySelectorAll('#page-historial-ventas .htab').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  hvFiltroActual = null;
   buildHvFiltros();
 }
 
 function buildHvFiltros(){
-  const btns = document.getElementById('hv-filtros');
   const periodos = getHvPeriodos();
-  btns.innerHTML = periodos.map((p,i)=>
-    `<button class="periodo-btn${i===0?' on':''}" onclick="selectHvPeriodo('${p}',this)">${p}</button>`
-  ).join('');
-  if(periodos.length) selectHvPeriodo(periodos[0], btns.querySelector('.on'));
+  const sel = document.getElementById('hv-select-periodo');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Selecciona un período…</option>' +
+    periodos.map((p,i)=>{
+      const val = typeof p==='string'&&p.includes('|') ? p.split('|')[1] : p;
+      const lbl = typeof p==='string'&&p.includes('|') ? p.split('|')[0] : p;
+      return `<option value="${val}">${lbl}</option>`;
+    }).join('');
+  if(periodos.length){
+    const firstVal = typeof periodos[0]==='string'&&periodos[0].includes('|') ? periodos[0].split('|')[1] : periodos[0];
+    sel.value = firstVal;
+    selectHvPeriodo(firstVal);
+  }
 }
 
 function getHvPeriodos(){
@@ -2126,15 +2156,28 @@ function getHvPeriodos(){
   return [];
 }
 
-function selectHvPeriodo(periodo, btn){
-  document.querySelectorAll('#hv-filtros .periodo-btn').forEach(b=>b.classList.remove('on'));
-  if(btn) btn.classList.add('on');
+function selectHvPeriodo(periodo){
   hvFiltroActual = periodo;
   const rows = getHvRows(periodo);
   hvRows = rows;
   renderHvSummary(rows);
   renderHvCharts(rows);
   renderHvTable(rows);
+}
+
+function onHvSelectChange(sel){
+  if(sel.value) selectHvPeriodo(sel.value);
+}
+
+function navHvPeriodo(dir){
+  const sel = document.getElementById('hv-select-periodo');
+  if(!sel) return;
+  const idx = sel.selectedIndex;
+  const newIdx = idx + dir;
+  if(newIdx >= 1 && newIdx < sel.options.length){
+    sel.selectedIndex = newIdx;
+    selectHvPeriodo(sel.value);
+  }
 }
 
 function getHvRows(periodo){
@@ -2222,7 +2265,7 @@ function filtrarHv(q){ renderHvTable(hvRows, q); }
 
 // Init historial ventas on first load
 document.getElementById('page-historial-ventas').addEventListener('click', function initHv(){
-  if(VENTAS_HIST.length && !hvFiltroActual) buildHvFiltros();
+  if(VENTAS_HIST.length) buildHvFiltros();
 }, {once:true});
 
 // ══════════════════════════════════════
@@ -2241,27 +2284,31 @@ function setCmpTab(tab, btn){
 function buildCmpHist(){
   const rows = cmpHistTab==='inventario' ? COMPRAS_HIST : OTRAS_COMPRAS_HIST;
   cmpHistRows = rows;
-  // Periodo buttons: unique months
   const meses=[...new Set(rows.map(r=>r.fecha.slice(0,7)))].sort().reverse();
   const nombres=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const periodos=[{k:'todos',l:'Todos'},...meses.map(m=>{const[y,mo]=m.split('-');return{k:m,l:nombres[parseInt(mo)]+' '+y};})];
-  document.getElementById('cmp-periodo-btns').innerHTML=periodos.map((p,i)=>
-    `<button class="periodo-btn${i===0?' on':''}" onclick="filterCmpHist('${p.k}',this)">${p.l}</button>`
-  ).join('');
-  filterCmpHist('todos', document.querySelector('#cmp-periodo-btns .on'));
+  const sel = document.getElementById('cmp-select-mes');
+  if(sel){
+    sel.innerHTML = '<option value="todos">Todos los períodos</option>' +
+      meses.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${nombres[parseInt(mo)]} ${y}</option>`;}).join('');
+    sel.value = 'todos';
+  }
+  filterCmpHistSelect('todos');
 }
 
-function filterCmpHist(key, btn){
-  document.querySelectorAll('#cmp-periodo-btns .periodo-btn').forEach(b=>b.classList.remove('on'));
-  if(btn) btn.classList.add('on');
+function filterCmpHistSelect(key){
+  const sel = document.getElementById('cmp-select-mes');
+  if(sel) sel.value = key;
   const q = document.getElementById('cmp-hist-search').value||'';
   const rows = key==='todos' ? cmpHistRows : cmpHistRows.filter(r=>r.fecha.startsWith(key));
   renderCmpHist(rows, q);
 }
 
+// Keep old signature for backward compat
+function filterCmpHist(key, btn){ filterCmpHistSelect(key); }
+
 function filtrarCmpHist(q){
-  const active = document.querySelector('#cmp-periodo-btns .on');
-  const key = active ? active.onclick.toString().match(/'([^']+)'/)?.[1]||'todos' : 'todos';
+  const sel = document.getElementById('cmp-select-mes');
+  const key = sel ? sel.value : 'todos';
   const rows = key==='todos' ? cmpHistRows : cmpHistRows.filter(r=>r.fecha.startsWith(key));
   renderCmpHist(rows, q);
 }
