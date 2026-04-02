@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <div class="page-header"><h1>Resumen general</h1><p id="resumen-sub">Vista consolidada · Cargando fecha…</p></div>
   <div class="metrics">
     <div class="metric"><div class="metric-label">Ventas hoy</div><div class="metric-value" id="rm-hoy">—</div><div class="metric-sub"></div></div>
-    <div class="metric"><div class="metric-label">Ventas marzo</div><div class="metric-value green" id="rm-mes">$4.483K</div><div class="metric-sub">+122% vs feb</div></div>
+    <div class="metric"><div class="metric-label">Ventas marzo</div><div class="metric-value green" id="rm-mes">$5.829K</div><div class="metric-sub">+122% vs feb</div></div>
     <div class="metric"><div class="metric-label">Menudeo hoy</div><div class="metric-value green" id="rm-menudeo">—</div><div class="metric-sub">sin contar bultos</div></div>
     <div class="metric"><div class="metric-label">Bultos hoy</div><div class="metric-value blue" id="rm-bulto">—</div><div class="metric-sub">ventas por bulto</div></div>
     <div class="metric"><div class="metric-label">Stock OK</div><div class="metric-value green" id="r-ok">—</div></div>
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <section class="page" id="page-finanzas">
   <div class="page-header"><h1>Finanzas</h1><p>Ingresos, egresos y balance operativo</p></div>
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Ingresos ventas</div><div class="metric-value green" id="fin-ingresos">$6.502K</div></div>
+    <div class="metric"><div class="metric-label">Ingresos ventas</div><div class="metric-value green" id="fin-ingresos">$8.043K</div></div>
     <div class="metric"><div class="metric-label">Compras inventario</div><div class="metric-value red" id="fin-compras">$8.952K</div></div>
     <div class="metric"><div class="metric-label">Gastos operativos</div><div class="metric-value red" id="fin-gastos">$520K</div></div>
     <div class="metric"><div class="metric-label">Balance neto</div><div class="metric-value red" id="fin-balance">−$2.970K</div></div>
@@ -500,10 +500,10 @@ document.addEventListener('DOMContentLoaded',function(){
 <section class="page" id="page-historial">
   <div class="page-header"><h1>Historial de ventas</h1><p>Transacciones registradas — feb/mar 2026</p></div>
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Total ventas</div><div class="metric-value green">$6.502K</div></div>
+    <div class="metric"><div class="metric-label">Total ventas</div><div class="metric-value green">$8.043K</div></div>
     <div class="metric"><div class="metric-label">Febrero</div><div class="metric-value">$2.019K</div><div class="metric-sub">14 días</div></div>
-    <div class="metric"><div class="metric-label">Marzo</div><div class="metric-value green">$4.483K</div><div class="metric-sub">25 días</div></div>
-    <div class="metric"><div class="metric-label">Crecimiento</div><div class="metric-value green">+122%</div></div>
+    <div class="metric"><div class="metric-label">Marzo</div><div class="metric-value green">$5.829K</div><div class="metric-sub">46 días</div></div>
+    <div class="metric"><div class="metric-label">Crecimiento</div><div class="metric-value green">+189%</div></div>
   </div>
   <div class="card">
     <div class="card-title">Ventas de hoy — <span id="fecha-hoy-label"></span></div>
@@ -1241,11 +1241,11 @@ const INV = [
   {id:"SNK-CRE-003",cat:"Snack",sub:"Cremosos",p:"Michiko yogurt",bought:3,sold:0,unit:"und",precio:4000},
   {id:"SNK-CRO-001",cat:"Snack",sub:"Croquetas gato",p:"Br for cat snacks bola pelo",bought:2,sold:1,unit:"und",precio:18000},
   {id:"SNK-CRO-002",cat:"Snack",sub:"Croquetas gato",p:"Bola pelo Mimos",bought:3,sold:2,unit:"und",precio:12000},
-  {id:"SNK-DUL-001",cat:"Snack",sub:"Dulces",p:"Snack cabano color",bought:2,sold:6,unit:"kg",precio:2000},
-  {id:"SNK-DUL-002",cat:"Snack",sub:"Dulces",p:"Snack mini galleta moneda",bought:1,sold:0,unit:"kg",precio:2000},
-  {id:"SNK-GAL-001",cat:"Snack",sub:"Galletas",p:"Snack galleta leche",bought:5,sold:40,unit:"kg",precio:2000},
-  {id:"SNK-GAL-002",cat:"Snack",sub:"Galletas",p:"Snack galleta hígado",bought:4,sold:17,unit:"kg",precio:2000},
-  {id:"SNK-GOM-001",cat:"Snack",sub:"Gomas perro",p:"Goma Chunky",bought:1,sold:12,unit:"kg",precio:3500},
+  {id:"SNK-DUL-001",cat:"Snack",sub:"Dulces",p:"Snack palitos cabano (10 und × 100gr)",bought:2,sold:6,unit:"paq",precio:2000},
+  {id:"SNK-DUL-002",cat:"Snack",sub:"Dulces",p:"Snack monedas cabano (20 und × 100gr)",bought:1,sold:0,unit:"paq",precio:2000},
+  {id:"SNK-GAL-001",cat:"Snack",sub:"Galletas",p:"Snack galleta leche (10 und × 70gr)",bought:5,sold:40,unit:"paq",precio:2000},
+  {id:"SNK-GAL-002",cat:"Snack",sub:"Galletas",p:"Snack galleta hígado (10 und × 70gr)",bought:4,sold:17,unit:"paq",precio:2000},
+  {id:"SNK-GOM-001",cat:"Snack",sub:"Gomas perro",p:"Goma Chunky (25gr)",bought:1,sold:12,unit:"paq",precio:3500},
   {id:"SNK-HUE-001",cat:"Snack",sub:"Huesos",p:"Snack hueso",bought:1,sold:7,unit:"und",precio:2000},
 ];
 
@@ -1268,9 +1268,9 @@ let COMPRAS = [
 ];
 
 // Separate daily data by bulto vs menudeo (estimated split)
-const dailyMenudeo=[20000,25000,45000,180000,100000,35000,80000,38000,50000,42000,200000,95000,240000,210000,65000,60000,95000,220000,130000,85000,200000,300000,170000,72000,100000,65000,100000,280000,28000,75000,140000,125000,110000,110000,260000,95000,72000,130000,40400];
-const dailyBulto= [16500,13400,17800,183000,37100,10950,20300,10300,14600,10000,130900,33400,79350,81600,21800,21100,33800,173000,41800,27300,152100,173300,61500,20200,33000,20300,32800,113900, 5000,23500,41100,40100,34200,35350,160000,26500,23300,40600,0];
-const dailyLabels=["15/2","16/2","17/2","18/2","19/2","20/2","21/2","22/2","23/2","24/2","25/2","26/2","27/2","28/2","1/3","2/3","3/3","4/3","5/3","6/3","7/3","8/3","9/3","10/3","11/3","12/3","13/3","14/3","15/3","16/3","17/3","18/3","19/3","20/3","21/3","22/3","23/3","24/3","25/3"];
+const dailyMenudeo=[36500,38400,62800,103000,72100,45950,35300,48300,64600,52000,70900,56400,69350,291600,86800,81100,89800,133000,171800,112300,322100,102300,231500,92200,133000,85300,132800,128900,33000,98500,181100,165100,144200,145350,192000,121500,95300,170600,89900,128300,214000,139500,82700,259400,179800,192500];
+const dailyBulto=[0,0,0,260000,65000,0,65000,0,0,0,260000,72000,250000,0,0,0,39000,260000,0,0,30000,371000,0,0,0,0,0,265000,0,0,0,0,0,0,228000,0,0,0,0,0,150000,78000,0,65000,0,0];
+const dailyLabels=["15/2","16/2","17/2","18/2","19/2","20/2","21/2","22/2","23/2","24/2","25/2","26/2","27/2","28/2","1/3","2/3","3/3","4/3","5/3","6/3","7/3","8/3","9/3","10/3","11/3","12/3","13/3","14/3","15/3","16/3","17/3","18/3","19/3","20/3","21/3","22/3","23/3","24/3","25/3","26/3","27/3","28/3","29/3","30/3","31/3","1/4"];
 
 // ── STATE ──
 const sessionDelta={};
@@ -1427,11 +1427,13 @@ function registrarVenta(){
   document.getElementById('vta-val').value='';
 }
 function updateResumenMetrics(){
-  const hoyM=dailyMenudeo[dailyMenudeo.length-1];
-  const hoyB=dailyBulto[dailyBulto.length-1];
-  document.getElementById('rm-hoy').textContent=fmt(hoyM+hoyB);
-  document.getElementById('rm-menudeo').textContent=fmt(hoyM);
-  document.getElementById('rm-bulto').textContent=fmt(hoyB);
+  // rm-hoy, rm-menudeo, rm-bulto are updated by Firebase onSnapshot listener
+  // This just refreshes the daily chart
+  if(diarioChart){
+    diarioChart.data.datasets[0].data=[...dailyMenudeo];
+    diarioChart.data.datasets[1].data=[...dailyBulto];
+    diarioChart.update();
+  }
 }
 
 // ── INVENTARIO ──
@@ -1742,8 +1744,8 @@ function editVenta(btn){
 }
 
 // ── TOP PRODUCTOS ──
-const topValor=[{n:"Monello tradicional",v:1085000},{n:"Monello gato",v:691850},{n:"Arena Calabaza café 4.5",v:288400},{n:"Nutranuggets",v:282000},{n:"Br Cat Castrado salmón",v:230000},{n:"Chunky adulto pollo",v:166600},{n:"Cat Chow",v:161800},{n:"Arena calabaza (bulto)",v:160000},{n:"Agility piel adulto 8kg",v:156000},{n:"Oh mai gat",v:110000}];
-const topRot=[{n:"Snack galleta leche",v:40,u:"kg"},{n:"Monello gato",v:43,u:"kg"},{n:"Monello tradicional",v:31,u:"kg"},{n:"Oh mai gat",v:26,u:"kg"},{n:"Michiko churu",v:28,u:"und"},{n:"Chunky adulto pollo",v:21,u:"kg"},{n:"Dog Chow raza pequeña",v:20,u:"kg"},{n:"Chunky cachorro",v:14,u:"kg"},{n:"Pudding calabaza",v:17,u:"und"},{n:"Cat Chow",v:23,u:"kg"}];
+const topValor=[{n:"Monello tradicional",v:1179000},{n:"Monello gato",v:761150},{n:"Arena Calabaza 4.5kg",v:288400},{n:"Nutranuggets",v:282000},{n:"Br Cat Castrado salmón",v:230000},{n:"Chunky adulto pollo",v:218100},{n:"Cat Chow",v:306800},{n:"Arena calabaza (bulto)",v:160000},{n:"Agility piel adulto 8kg",v:156000},{n:"Don kat adulto",v:113700}];
+const topRot=[{n:"Snack galleta leche",v:40,u:"paq"},{n:"Monello gato",v:43,u:"kg"},{n:"Monello tradicional",v:31,u:"kg"},{n:"Cat Chow",v:28,u:"kg"},{n:"Br Cat gatito pollo",v:22,u:"kg"},{n:"Chunky adulto pollo",v:21,u:"kg"},{n:"Don kat adulto",v:18,u:"kg"},{n:"Pudding calabaza",v:17,u:"und"},{n:"Michiko churu",v:28,u:"und"},{n:"Don kat gatito",v:14,u:"kg"}];
 const maxV=topValor[0].v,maxR=Math.max(...topRot.map(r=>r.v));
 document.getElementById('top-valor').innerHTML=topValor.map(p=>`<div class="bar-row"><span class="bar-label" title="${p.n}">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxV*100)}%;background:var(--green)"></div></div><span class="bar-value" style="color:var(--green)">${fmt(p.v)}</span></div>`).join('');
 document.getElementById('top-rot').innerHTML=topRot.map(p=>`<div class="bar-row"><span class="bar-label" title="${p.n}">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxR*100)}%;background:var(--blue)"></div></div><span class="bar-value" style="color:var(--blue)">${p.v} ${p.u}</span></div>`).join('');
