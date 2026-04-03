@@ -623,12 +623,41 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="form-grid">
         <div class="field"><label>Nombre del producto</label><input type="text" id="np-nombre" placeholder="Ej: Purina Pro Plan adulto"></div>
         <div class="field"><label>Categoría</label>
-          <select id="np-cat" onchange="updateNpId()">
-            <option value="CON">Concentrado</option><option value="ASE">Aseo</option>
-            <option value="ACC">Accesorio</option><option value="SNK">Snack</option><option value="MED">Medicina</option>
+          <select id="np-cat" onchange="updateNpSub()">
+            <option value="CON">Concentrado</option>
+            <option value="ASE">Aseo</option>
+            <option value="ACC">Accesorio</option>
+            <option value="SNK">Snack</option>
+            <option value="MED">Medicina</option>
           </select>
         </div>
-        <div class="field"><label>Subcategoría</label><input type="text" id="np-sub" placeholder="Ej: Concentrado perro"></div>
+        <div class="field"><label>Subcategoría</label>
+          <select id="np-sub" onchange="updateNpId()">
+            <option value="COP">Concentrado perro</option>
+            <option value="COG">Concentrado gato</option>
+            <option value="CHG">Comida húmeda gato</option>
+            <option value="CHP">Comida húmeda perro</option>
+            <option value="ARE">Arenas</option>
+            <option value="BOL">Bolsas</option>
+            <option value="TAP">Tapetes</option>
+            <option value="JAB">Jabones</option>
+            <option value="COR">Corta uñas</option>
+            <option value="JUG">Juguetes</option>
+            <option value="COM">Comederos</option>
+            <option value="CEP">Cepillos</option>
+            <option value="COL">Collares</option>
+            <option value="ARN">Arnés</option>
+            <option value="BEB">Bebederos</option>
+            <option value="TRA">Transporte</option>
+            <option value="GAL">Galletas</option>
+            <option value="DUL">Dulces</option>
+            <option value="GOM">Gomas</option>
+            <option value="CRE">Cremosos</option>
+            <option value="CRO">Croquetas</option>
+            <option value="HUE">Huesos</option>
+            <option value="ANT">Antiparasitario</option>
+          </select>
+        </div>
         <div class="field"><label>Unidad base</label>
           <select id="np-unit"><option value="kg">kg</option><option value="und">und</option></select>
         </div>
@@ -810,16 +839,17 @@ document.addEventListener('DOMContentLoaded',function(){
     <button class="htab" onclick="setVentasPeriodo('mes',this)">Por mes</button>
   </div>
 
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-    <div style="flex:1;min-width:200px">
-      <select id="hv-select-periodo" onchange="onHvSelectChange(this)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'Nunito',sans-serif;background:var(--surface);color:var(--text);font-weight:500">
-        <option value="">Selecciona un período…</option>
-      </select>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <div class="prod-search-wrap" style="flex:1">
+      <input class="prod-search-input" id="hv-periodo-input" type="text" placeholder="Busca una fecha, semana o mes…"
+        autocomplete="off" oninput="searchHvPeriodo(this.value)" onfocus="openHvDropdown()" onblur="setTimeout(()=>closeHvDropdown(),180)">
+      <div class="prod-dropdown" id="hv-periodo-dropdown"></div>
     </div>
-    <div style="display:flex;gap:6px;flex-shrink:0">
-      <button class="btn btn-secondary" style="padding:8px 12px;font-size:12px" onclick="navHvPeriodo(-1)">◀ Anterior</button>
-      <button class="btn btn-secondary" style="padding:8px 12px;font-size:12px" onclick="navHvPeriodo(1)">Siguiente ▶</button>
-    </div>
+    <button class="btn btn-secondary" style="padding:8px 11px;font-size:13px;flex-shrink:0" onclick="navHvPeriodo(-1)" title="Anterior">◀</button>
+    <button class="btn btn-secondary" style="padding:8px 11px;font-size:13px;flex-shrink:0" onclick="navHvPeriodo(1)" title="Siguiente">▶</button>
+  </div>
+  <div class="prod-selected" id="hv-periodo-selected" style="margin-bottom:10px">
+    <div><div class="ps-name" id="hv-periodo-label">—</div><div class="ps-meta" id="hv-periodo-meta"></div></div>
   </div>
 
   <div class="summary-bar" id="hv-summary"></div>
@@ -863,12 +893,13 @@ document.addEventListener('DOMContentLoaded',function(){
   <div class="summary-bar" id="cmp-summary"></div>
 
   <input class="search-bar" type="text" id="cmp-hist-search" placeholder="Buscar producto, proveedor o categoría…" oninput="filtrarCmpHist(this.value)">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-    <div style="flex:1;min-width:180px">
-      <select id="cmp-select-mes" onchange="filterCmpHistSelect(this.value)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'Nunito',sans-serif;background:var(--surface);color:var(--text);font-weight:500">
-        <option value="todos">Todos los períodos</option>
-      </select>
-    </div>
+  <div class="prod-search-wrap" style="margin-bottom:12px">
+    <input class="prod-search-input" id="cmp-mes-input" type="text" placeholder="Busca por mes… ej: marzo"
+      autocomplete="off" oninput="searchCmpMes(this.value)" onfocus="openCmpMesDropdown()" onblur="setTimeout(()=>closeCmpMesDropdown(),180)">
+    <div class="prod-dropdown" id="cmp-mes-dropdown"></div>
+  </div>
+  <div class="prod-selected show" id="cmp-mes-selected" style="margin-bottom:10px">
+    <div><div class="ps-name" id="cmp-mes-label">Todos los períodos</div></div>
   </div>
 
   <div class="card" style="padding:0;overflow:hidden">
@@ -1228,6 +1259,9 @@ window.registrarCompra = async function(){
   document.getElementById('cmp-session-total').textContent='Total sesión: '+fmt(cmpSessionTotal);
 
   renderInv(INV); renderCatalogo(INV);
+  // Force rebuild historial compras
+  cmpHistRows = [];
+  buildCmpHist();
   clearProdSel('cmp');
   document.getElementById('cmp-qty').value=1;
   document.getElementById('cmp-cu').value='';
@@ -1656,13 +1690,43 @@ function toggleNuevoProd(nuevo){
   document.getElementById('cmp-nuevo-block').style.display=nuevo?'block':'none';
   document.getElementById('btn-prod-exist').className='btn '+(nuevo?'btn-secondary':'btn-primary');
   document.getElementById('btn-prod-nuevo').className='btn '+(nuevo?'btn-primary':'btn-secondary');
-  if(nuevo) updateNpId();
+  if(nuevo){ updateNpSub(); updateNpId(); }
+}
+function updateNpSub(){
+  // When category changes, filter subcategory options
+  const cat = document.getElementById('np-cat').value;
+  const subMap = {
+    CON:['COP','COG','CHG','CHP'],
+    ASE:['ARE','BOL','TAP','JAB','COR'],
+    ACC:['JUG','COM','CEP','COL','ARN','BEB','TRA'],
+    SNK:['GAL','DUL','GOM','CRE','CRO','HUE'],
+    MED:['ANT']
+  };
+  const sub = document.getElementById('np-sub');
+  const allowed = subMap[cat]||[];
+  Array.from(sub.options).forEach(o => {
+    o.hidden = allowed.length ? !allowed.includes(o.value) : false;
+  });
+  // Select first visible
+  const first = Array.from(sub.options).find(o=>!o.hidden);
+  if(first) sub.value = first.value;
+  updateNpId();
 }
 function updateNpId(){
-  const cat=document.getElementById('np-cat').value;
-  const existing=INV.filter(r=>r.id.startsWith(cat)).map(r=>{const n=parseInt(r.id.split('-').pop());return isNaN(n)?0:n;});
-  const next=String(Math.max(0,...existing)+1).padStart(3,'0');
-  document.getElementById('np-id').value=cat+'-NEW-'+next;
+  const cat = document.getElementById('np-cat').value;
+  const sub = document.getElementById('np-sub').value;
+  const prefix = cat + '-' + sub;
+  // Find highest number with this prefix
+  const existing = INV
+    .filter(r => r.id.startsWith(prefix+'-'))
+    .map(r => { const n=parseInt(r.id.split('-').pop()); return isNaN(n)?0:n; });
+  // Also check COMPRAS_HIST for any new ones added this session
+  const fromCompras = COMPRAS_HIST
+    .filter(r => (r.id||'').startsWith(prefix+'-'))
+    .map(r => { const n=parseInt((r.id||'').split('-').pop()); return isNaN(n)?0:n; });
+  const allNums = [...existing, ...fromCompras];
+  const next = String(Math.max(0, ...allNums) + 1).padStart(3,'0');
+  document.getElementById('np-id').value = prefix + '-' + next;
 }
 function checkNuevoProv(){
   const val=document.getElementById('cmp-prov').value;
@@ -1699,9 +1763,11 @@ function registrarCompra(){
     const nombre=document.getElementById('np-nombre').value.trim();
     if(!nombre){alert('Escribe el nombre del producto');return;}
     const id=document.getElementById('np-id').value;
-    const cat=(['CON','ASE','ACC','SNK','MED'].find(c=>id.startsWith(c))||'CON');
-    const catName={CON:'Concentrado',ASE:'Aseo',ACC:'Accesorio',SNK:'Snack',MED:'Medicina'}[cat];
-    const sub=document.getElementById('np-sub').value.trim()||catName;
+    const catCode=(['CON','ASE','ACC','SNK','MED'].find(c=>id.startsWith(c))||'CON');
+    const catName={CON:'Concentrado',ASE:'Aseo',ACC:'Accesorio',SNK:'Snack',MED:'Medicina'}[catCode];
+    const subEl=document.getElementById('np-sub');
+    const subText = subEl.options[subEl.selectedIndex]?.text || catName;
+    const sub = subText;
     const unit=document.getElementById('np-unit').value;
     const precio=parseFloat(document.getElementById('np-precio').value)||pv||0;
     item={id,cat:catName,sub,p:nombre,bought:0,sold:0,unit,precio};
@@ -1722,8 +1788,9 @@ function registrarCompra(){
   COMPRAS.unshift(nuevaCompra);
   COMPRAS_HIST.unshift({...nuevaCompra, fecha:fecha||getTodayISO()});
   renderCompras(COMPRAS);
-  // Rebuild historial compras if visible
-  if(cmpHistRows.length) buildCmpHist();
+  // Auto-rebuild historial compras (always)
+  cmpHistRows = []; // force full rebuild
+  buildCmpHist();
   comprasTotal+=total;
   cmpSessionTotal+=total;
 
@@ -2165,20 +2232,7 @@ function selectHvPeriodo(periodo){
   renderHvTable(rows);
 }
 
-function onHvSelectChange(sel){
-  if(sel.value) selectHvPeriodo(sel.value);
-}
-
-function navHvPeriodo(dir){
-  const sel = document.getElementById('hv-select-periodo');
-  if(!sel) return;
-  const idx = sel.selectedIndex;
-  const newIdx = idx + dir;
-  if(newIdx >= 1 && newIdx < sel.options.length){
-    sel.selectedIndex = newIdx;
-    selectHvPeriodo(sel.value);
-  }
-}
+// navHvPeriodo and onHvSelectChange defined below
 
 function getHvRows(periodo){
   const all = VENTAS_HIST;
@@ -2352,6 +2406,130 @@ buildCmpHist(); // also build on load
 // ══════════════════════════════════════
 // PATCH Firebase listener → also update ventas-dia page
 // ══════════════════════════════════════
+
+
+// ══════════════════════════════════════
+// HISTORIAL VENTAS — periodo dropdown
+// ══════════════════════════════════════
+let hvAllPeriodos = [];
+
+function buildHvFiltros(){
+  hvAllPeriodos = getHvPeriodos();
+  populateHvDropdown(hvAllPeriodos);
+  if(hvAllPeriodos.length){
+    const first = hvAllPeriodos[0];
+    const val = typeof first==='string'&&first.includes('|') ? first.split('|')[1] : first;
+    const lbl = typeof first==='string'&&first.includes('|') ? first.split('|')[0] : first;
+    setHvPeriodo(val, lbl);
+  }
+}
+
+function populateHvDropdown(periodos){
+  const dd = document.getElementById('hv-periodo-dropdown');
+  if(!dd) return;
+  dd.innerHTML = periodos.slice(0,40).map(p => {
+    const val = typeof p==='string'&&p.includes('|') ? p.split('|')[1] : p;
+    const lbl = typeof p==='string'&&p.includes('|') ? p.split('|')[0] : p;
+    return `<div class="prod-option" onmousedown="setHvPeriodo('${val}','${lbl.replace(/'/g,'\'')}')">
+      <div><div class="po-name">${lbl}</div></div>
+    </div>`;
+  }).join('');
+  dd.classList.add('open');
+}
+
+function searchHvPeriodo(q){
+  const f = q.toLowerCase();
+  const filtered = hvAllPeriodos.filter(p => {
+    const lbl = typeof p==='string'&&p.includes('|') ? p.split('|')[0] : p;
+    return lbl.toLowerCase().includes(f);
+  });
+  populateHvDropdown(filtered.length ? filtered : hvAllPeriodos);
+}
+
+function openHvDropdown(){ populateHvDropdown(hvAllPeriodos); }
+function closeHvDropdown(){ const dd=document.getElementById('hv-periodo-dropdown'); if(dd) dd.classList.remove('open'); }
+
+function setHvPeriodo(val, lbl){
+  closeHvDropdown();
+  const inp = document.getElementById('hv-periodo-input');
+  if(inp) inp.value = '';
+  const labelEl = document.getElementById('hv-periodo-label');
+  const metaEl = document.getElementById('hv-periodo-meta');
+  if(labelEl) labelEl.textContent = lbl||val;
+  const selEl = document.getElementById('hv-periodo-selected');
+  if(selEl) selEl.classList.add('show');
+  selectHvPeriodo(val);
+}
+
+function onHvSelectChange(sel){ if(sel.value) selectHvPeriodo(sel.value); }
+
+function navHvPeriodo(dir){
+  if(!hvAllPeriodos.length) return;
+  const currentVal = hvFiltroActual;
+  const idx = hvAllPeriodos.findIndex(p=>{
+    const v = typeof p==='string'&&p.includes('|') ? p.split('|')[1] : p;
+    return v===currentVal;
+  });
+  const newIdx = idx + dir;
+  if(newIdx >= 0 && newIdx < hvAllPeriodos.length){
+    const p = hvAllPeriodos[newIdx];
+    const val = typeof p==='string'&&p.includes('|') ? p.split('|')[1] : p;
+    const lbl = typeof p==='string'&&p.includes('|') ? p.split('|')[0] : p;
+    setHvPeriodo(val, lbl);
+  }
+}
+
+// ══════════════════════════════════════
+// HISTORIAL COMPRAS — mes dropdown
+// ══════════════════════════════════════
+let cmpMesOpciones = [];
+
+function buildCmpMesDropdown(){
+  const rows = cmpHistTab==='inventario' ? COMPRAS_HIST : OTRAS_COMPRAS_HIST;
+  const meses = [...new Set(rows.map(r=>r.fecha.slice(0,7)))].sort().reverse();
+  const nombres = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  cmpMesOpciones = [{k:'todos',l:'Todos los períodos'}, ...meses.map(m=>{
+    const[y,mo]=m.split('-');
+    return {k:m, l:nombres[parseInt(mo)]+' '+y};
+  })];
+  populateCmpMesDropdown(cmpMesOpciones);
+}
+
+function populateCmpMesDropdown(opciones){
+  const dd = document.getElementById('cmp-mes-dropdown');
+  if(!dd) return;
+  dd.innerHTML = opciones.map(o=>
+    `<div class="prod-option" onmousedown="setCmpMes('${o.k}','${o.l}')">
+      <div class="po-name">${o.l}</div>
+    </div>`
+  ).join('');
+  dd.classList.add('open');
+}
+
+function searchCmpMes(q){
+  const f = q.toLowerCase();
+  const filtered = cmpMesOpciones.filter(o=>o.l.toLowerCase().includes(f));
+  populateCmpMesDropdown(filtered.length ? filtered : cmpMesOpciones);
+}
+
+function openCmpMesDropdown(){ buildCmpMesDropdown(); }
+function closeCmpMesDropdown(){ const dd=document.getElementById('cmp-mes-dropdown'); if(dd) dd.classList.remove('open'); }
+
+function setCmpMes(key, lbl){
+  closeCmpMesDropdown();
+  const inp = document.getElementById('cmp-mes-input');
+  if(inp) inp.value = '';
+  const labelEl = document.getElementById('cmp-mes-label');
+  if(labelEl) labelEl.textContent = lbl;
+  filterCmpHistSelect(key);
+}
+
+// Override buildCmpHist to also rebuild dropdown
+const _origBuildCmpHist = buildCmpHist;
+window.buildCmpHist = function(){
+  _origBuildCmpHist();
+  buildCmpMesDropdown();
+};
 
 </script>
 </body>
