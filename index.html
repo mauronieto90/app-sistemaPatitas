@@ -227,6 +227,43 @@ select:focus,input:focus{outline:none;border-color:var(--green)}
 .sbar-item{background:var(--surface2);border-radius:var(--radius);padding:10px 12px;text-align:center}
 .sbar-item .sv{font-size:16px;font-weight:700;color:var(--text)}
 .sbar-item .sl{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ── FACTURA ITEMS ── */
+.factura-header{background:var(--surface2);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+.factura-items-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.factura-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;position:relative}
+.factura-item .fi-name{font-weight:600;font-size:13px;color:var(--text);margin-bottom:6px}
+.factura-item .fi-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.factura-item .fi-field{flex:1;min-width:80px}
+.factura-item .fi-field label{font-size:10px;color:var(--text3);display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase}
+.factura-item .fi-field input,
+.factura-item .fi-field select{padding:6px 8px;font-size:12px;width:100%}
+.factura-item .fi-total{font-weight:700;font-size:14px;color:var(--blue);margin-left:auto;padding-top:16px;flex-shrink:0}
+.fi-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 5px;border-radius:5px}
+.fi-del:hover{background:var(--red-bg);color:var(--red)}
+.fi-granel-badge{display:inline-flex;align-items:center;gap:4px;background:var(--green-bg);color:var(--green-text);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:6px}
+.factura-total-bar{background:var(--blue-bg);border:1px solid var(--blue);border-radius:var(--radius);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.factura-total-bar .ft-label{font-size:13px;color:var(--blue-text)}
+.factura-total-bar .ft-val{font-size:20px;font-weight:800;color:var(--blue-text)}
+/* ── CONTABILIDAD ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.kpi{border-radius:var(--radius-lg);padding:16px;text-align:center;border:1px solid transparent}
+.kpi.verde{background:#E0F5EF;border-color:#a0ddc8}
+.kpi.rojo{background:#FDECEB;border-color:#f0b8b4}
+.kpi.azul{background:var(--blue-bg);border-color:#a8c8e8}
+.kpi.gris{background:var(--surface2);border-color:var(--border)}
+.kpi.dorado{background:#FEF6E0;border-color:#e8c880}
+.kpi .kv{font-size:22px;font-weight:800;font-family:'Nunito',sans-serif;line-height:1;margin-bottom:4px}
+.kpi .kl{font-size:11px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:.04em}
+.kpi .ks{font-size:11px;margin-top:3px;opacity:.6}
+.meta-bar-wrap{margin-bottom:6px}
+.meta-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px}
+.meta-bar-track{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.meta-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.costs-table{width:100%;border-collapse:collapse;font-size:13px}
+.costs-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.costs-table tr:last-child td{border-bottom:none;font-weight:700;padding-top:10px}
+.costs-table .cv{text-align:right;font-weight:600}
 </style>
 <script>
 // LOGIN — carga antes que Firebase y Chart.js
@@ -338,10 +375,12 @@ document.addEventListener('DOMContentLoaded',function(){
     <button class="nav-item" onclick="mobileGoTo('productos-top',this)"><span class="nav-icon">⭐</span> Top productos</button>
     <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:8px 8px 3px">Inventario</div>
     <button class="nav-item" onclick="mobileGoTo('inventario',this)"><span class="nav-icon">📦</span> Stock estimado</button>
-    <button class="nav-item" onclick="mobileGoTo('nueva-compra',this)"><span class="nav-icon">🛒</span> Nueva compra</button>
+    <button class="nav-item" onclick="mobileGoTo('nueva-compra',this)"><span class="nav-icon">🧾</span> Nueva compra</button>
     <button class="nav-item" onclick="mobileGoTo('nuevo-gasto',this)"><span class="nav-icon">💸</span> Nuevo gasto</button>
     <button class="nav-item" onclick="mobileGoTo('historial-compras',this)"><span class="nav-icon">📜</span> Historial compras</button>
     <button class="nav-item" onclick="mobileGoTo('catalogo',this)"><span class="nav-icon">📑</span> Catálogo</button>
+    <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:8px 8px 3px">Contabilidad</div>
+    <button class="nav-item" onclick="mobileGoTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
   </div>
 </div>
 
@@ -370,10 +409,14 @@ document.addEventListener('DOMContentLoaded',function(){
   <div class="nav-section">
     <div class="nav-label">Inventario</div>
     <button class="nav-item" onclick="goTo('inventario',this)"><span class="nav-icon">📦</span> Stock estimado</button>
-    <button class="nav-item" onclick="goTo('nueva-compra',this)"><span class="nav-icon">🛒</span> Nueva compra</button>
+    <button class="nav-item" onclick="goTo('nueva-compra',this)"><span class="nav-icon">🧾</span> Nueva compra</button>
     <button class="nav-item" onclick="goTo('nuevo-gasto',this)"><span class="nav-icon">💸</span> Nuevo gasto</button>
     <button class="nav-item" onclick="goTo('historial-compras',this)"><span class="nav-icon">📜</span> Historial compras</button>
     <button class="nav-item" onclick="goTo('catalogo',this)"><span class="nav-icon">📑</span> Catálogo</button>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Contabilidad</div>
+    <button class="nav-item" onclick="goTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
   </div>
   <div class="sidebar-footer">
     <strong>Patitas Peludas</strong>v2.0 — 
@@ -597,118 +640,130 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <!-- ══ NUEVA COMPRA ══ -->
 <section class="page" id="page-nueva-compra">
-  <div class="page-header"><h1>Nueva compra</h1><p>Registra compras de inventario — actualiza stock automáticamente</p></div>
+  <div class="page-header"><h1>Nueva compra</h1><p>Registra una factura completa con todos sus productos</p></div>
+
+  <!-- CABEZOTE FACTURA -->
   <div class="card">
-    <div class="card-title">¿Producto existente o nuevo?</div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <button class="btn btn-primary" id="btn-prod-exist" onclick="toggleNuevoProd(false)">Producto existente</button>
-      <button class="btn btn-secondary" id="btn-prod-nuevo" onclick="toggleNuevoProd(true)">+ Nuevo producto</button>
+    <div class="card-title">Datos de la factura</div>
+    <div class="form-grid">
+      <div class="field"><label>N° de factura</label>
+        <input type="text" id="fac-numero" placeholder="Ej: FAC-0042 o el que indica el proveedor">
+      </div>
+      <div class="field"><label>Proveedor</label>
+        <select id="fac-prov" onchange="checkNuevoProvFac()">
+          <option>AnimalHome</option><option>Monello</option><option>Nutivara</option>
+          <option>Villapets</option><option>Dorado</option><option>Nagopets</option>
+          <option>Servicampo</option><option>Jambo</option><option>Porvenir</option>
+          <option>Tauro</option><option>megamarcas</option>
+          <option value="__nuevo__">+ Nuevo proveedor…</option>
+        </select>
+      </div>
+      <div class="field" id="fac-prov-nuevo-field" style="display:none">
+        <label>Nombre nuevo proveedor</label>
+        <input type="text" id="fac-prov-nuevo" placeholder="Nombre del proveedor">
+      </div>
+      <div class="field"><label>Fecha</label>
+        <input type="date" id="fac-fecha" value="2026-04-03">
+      </div>
+    </div>
+  </div>
+
+  <!-- AGREGAR PRODUCTOS A LA FACTURA -->
+  <div class="card">
+    <div class="card-title">Agregar productos a la factura</div>
+
+    <!-- Nuevo producto toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-primary" id="btn-fac-exist" onclick="toggleFacNuevoProd(false)" style="font-size:12px;padding:7px 14px">Producto existente</button>
+      <button class="btn btn-secondary" id="btn-fac-nuevo" onclick="toggleFacNuevoProd(true)" style="font-size:12px;padding:7px 14px">+ Nuevo producto</button>
     </div>
 
-    <!-- Producto existente -->
-    <div id="cmp-exist-block">
+    <!-- Buscar producto existente -->
+    <div id="fac-exist-block">
       <div class="prod-search-wrap">
-        <input class="prod-search-input" id="cmp-search" type="text" placeholder="Busca producto del catálogo..." autocomplete="off" oninput="searchProds(this.value,'cmp')" onfocus="openDropdown('cmp')" onblur="setTimeout(()=>closeDropdown('cmp'),180)">
-        <div class="prod-dropdown" id="cmp-dropdown"></div>
+        <input class="prod-search-input" id="fac-search" type="text" placeholder="Busca producto del catálogo…"
+          autocomplete="off" oninput="searchProds(this.value,'fac')" onfocus="openDropdown('fac')" onblur="setTimeout(()=>closeDropdown('fac'),180)">
+        <div class="prod-dropdown" id="fac-dropdown"></div>
       </div>
-      <div class="prod-selected" id="cmp-selected">
-        <div><div class="ps-name" id="cmp-sel-name">—</div><div class="ps-meta" id="cmp-sel-meta"></div></div>
-        <button class="btn-icon" onclick="clearProdSel('cmp')">✕</button>
+      <div class="prod-selected" id="fac-selected">
+        <div><div class="ps-name" id="fac-sel-name">—</div><div class="ps-meta" id="fac-sel-meta"></div></div>
+        <button class="btn-icon" onclick="clearProdSel('fac')">✕</button>
       </div>
     </div>
 
     <!-- Nuevo producto -->
-    <div id="cmp-nuevo-block" style="display:none">
+    <div id="fac-nuevo-block" style="display:none">
       <div class="alert alert-blue">Se creará un nuevo producto en el catálogo con código automático.</div>
       <div class="form-grid">
-        <div class="field"><label>Nombre del producto</label><input type="text" id="np-nombre" placeholder="Ej: Purina Pro Plan adulto"></div>
+        <div class="field"><label>Nombre</label><input type="text" id="fnp-nombre" placeholder="Ej: Purina Pro Plan adulto"></div>
         <div class="field"><label>Categoría</label>
-          <select id="np-cat" onchange="updateNpSub()">
-            <option value="CON">Concentrado</option>
-            <option value="ASE">Aseo</option>
-            <option value="ACC">Accesorio</option>
-            <option value="SNK">Snack</option>
-            <option value="MED">Medicina</option>
+          <select id="fnp-cat" onchange="updateFnpSub()">
+            <option value="CON">Concentrado</option><option value="ASE">Aseo</option>
+            <option value="ACC">Accesorio</option><option value="SNK">Snack</option><option value="MED">Medicina</option>
           </select>
         </div>
         <div class="field"><label>Subcategoría</label>
-          <select id="np-sub" onchange="updateNpId()">
-            <option value="COP">Concentrado perro</option>
-            <option value="COG">Concentrado gato</option>
-            <option value="CHG">Comida húmeda gato</option>
-            <option value="CHP">Comida húmeda perro</option>
-            <option value="ARE">Arenas</option>
-            <option value="BOL">Bolsas</option>
-            <option value="TAP">Tapetes</option>
-            <option value="JAB">Jabones</option>
-            <option value="COR">Corta uñas</option>
-            <option value="JUG">Juguetes</option>
-            <option value="COM">Comederos</option>
-            <option value="CEP">Cepillos</option>
-            <option value="COL">Collares</option>
-            <option value="ARN">Arnés</option>
-            <option value="BEB">Bebederos</option>
-            <option value="TRA">Transporte</option>
-            <option value="GAL">Galletas</option>
-            <option value="DUL">Dulces</option>
-            <option value="GOM">Gomas</option>
-            <option value="CRE">Cremosos</option>
-            <option value="CRO">Croquetas</option>
-            <option value="HUE">Huesos</option>
+          <select id="fnp-sub" onchange="updateFnpId()">
+            <option value="COP">Concentrado perro</option><option value="COG">Concentrado gato</option>
+            <option value="CHG">Comida húmeda gato</option><option value="CHP">Comida húmeda perro</option>
+            <option value="ARE">Arenas</option><option value="BOL">Bolsas</option><option value="TAP">Tapetes</option>
+            <option value="JAB">Jabones</option><option value="JUG">Juguetes</option><option value="COM">Comederos</option>
+            <option value="CEP">Cepillos</option><option value="COL">Collares</option><option value="GAL">Galletas</option>
+            <option value="DUL">Dulces</option><option value="GOM">Gomas</option><option value="CRE">Cremosos</option>
             <option value="ANT">Antiparasitario</option>
           </select>
         </div>
-        <div class="field"><label>Unidad base</label>
-          <select id="np-unit"><option value="kg">kg</option><option value="und">und</option></select>
+        <div class="field"><label>Unidad</label>
+          <select id="fnp-unit"><option value="kg">kg</option><option value="und">und</option></select>
         </div>
         <div class="field"><label>Código generado</label>
-          <input type="text" id="np-id" readonly style="background:var(--bg);color:var(--text3)">
+          <input type="text" id="fnp-id" readonly style="background:var(--bg);color:var(--text3)">
         </div>
-        <div class="field"><label>Precio de venta ($)</label>
-          <input type="number" id="np-precio" min="0" step="100" placeholder="0">
+        <div class="field"><label>Precio venta ($)</label>
+          <input type="number" id="fnp-precio" min="0" step="100" placeholder="0">
         </div>
       </div>
     </div>
 
-    <div class="form-grid" style="margin-top:4px">
-      <div class="field"><label>Proveedor</label>
-        <select id="cmp-prov" onchange="checkNuevoProv()">
-          <option>AnimalHome</option><option>Monello</option><option>Nutivara</option>
-          <option>Villapets</option><option>Dorado</option><option>Nagopets</option>
-          <option>Servicampo</option><option>Jambo</option><option>Porvenir</option>
-          <option>Tauro</option><option>megamarcas</option><option value="__nuevo__">+ Nuevo proveedor…</option>
-        </select>
+    <!-- Detalles del ítem a agregar -->
+    <div id="fac-item-detail" style="display:none">
+      <div id="fac-granel-badge" class="fi-granel-badge" style="display:none">⚖️ Producto a granel — solo ingresa el costo</div>
+      <div class="form-grid" style="margin-top:8px">
+        <div class="field" id="fac-qty-field"><label>Cantidad</label>
+          <input type="number" id="fac-item-qty" min="0.1" step="0.1" value="1" oninput="updateFacItemCalc()">
+        </div>
+        <div class="field"><label>Unidad</label>
+          <select id="fac-item-und"><option>kg</option><option>und</option><option>bulto</option><option>caja</option><option>paquete</option></select>
+        </div>
+        <div class="field"><label>Costo unitario ($)</label>
+          <input type="number" id="fac-item-cu" min="0" step="100" placeholder="0" oninput="updateFacItemCalc()">
+        </div>
+        <div class="field"><label>Precio venta ($)</label>
+          <input type="number" id="fac-item-pv" min="0" step="100" placeholder="Autocompletado" oninput="updateFacItemCalc()">
+        </div>
       </div>
-      <div class="field" id="nuevo-prov-field" style="display:none"><label>Nombre del nuevo proveedor</label><input type="text" id="cmp-prov-nuevo" placeholder="Nombre del proveedor"></div>
-      <div class="field"><label>Cantidad comprada</label><input type="number" id="cmp-qty" min="0.1" step="0.1" value="1" oninput="updateCmpPreview()"></div>
-      <div class="field"><label>Unidad</label>
-        <select id="cmp-und"><option>kg</option><option>und</option><option>bulto</option><option>caja</option><option>paquete</option></select>
+      <div id="fac-item-preview" style="display:none;background:var(--surface2);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:13px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Subtotal ítem</span><span id="fac-item-subtotal" style="font-weight:700;color:var(--blue)">$0</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="color:var(--text2)">Margen estimado</span><span id="fac-item-margen" style="font-weight:700;color:var(--green-text)">—</span></div>
       </div>
-      <div class="field"><label>Costo unitario ($)</label><input type="number" id="cmp-cu" min="0" step="100" placeholder="0" oninput="updateCmpPreview()"></div>
-      <div class="field"><label>Precio venta ($)</label><input type="number" id="cmp-precio-vta" min="0" step="100" placeholder="0" oninput="updateCmpPreview()"></div>
-      <div class="field"><label>Fecha</label><input type="date" id="cmp-fecha" value="2026-03-25"></div>
+      <button class="btn btn-primary" onclick="agregarItemFactura()" style="width:100%">+ Agregar a la factura</button>
     </div>
-    <div class="preview-box" id="cmp-preview" style="display:none">
-      <div class="preview-row"><span>Producto</span><span id="cpv-prod" style="font-weight:500;color:var(--text)"></span></div>
-      <div class="preview-row"><span>Stock actual</span><span id="cpv-stk"></span></div>
-      <div class="preview-row"><span>Stock tras compra</span><span id="cpv-new" style="color:var(--green);font-weight:500"></span></div>
-      <div class="preview-row"><span>Margen estimado</span><span id="cpv-margen" style="color:var(--blue);font-weight:500"></span></div>
-      <div class="preview-total"><span>Total compra</span><span id="cpv-total" style="color:var(--blue)">$0</span></div>
-    </div>
-    <button class="btn btn-primary" onclick="registrarCompra()">Registrar compra</button>
   </div>
-  <div class="card">
-    <div class="card-title">Compras de esta sesión</div>
-    <div class="log-scroll">
-      <table><thead><tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cant.</th><th>Costo unit.</th><th>Total</th><th></th></tr></thead>
-      <tbody id="tbody-cmp-session"><tr><td colspan="7" style="text-align:center;padding:18px;color:var(--text3)">Sin compras en esta sesión</td></tr></tbody>
-      </table>
+
+  <!-- ITEMS DE LA FACTURA -->
+  <div class="card" id="fac-items-card" style="display:none">
+    <div class="card-title">Productos en esta factura</div>
+    <div class="factura-items-list" id="fac-items-list"></div>
+    <div class="factura-total-bar">
+      <div class="ft-label">Total factura</div>
+      <div class="ft-val" id="fac-total-val">$0</div>
     </div>
-    <div id="cmp-session-total" style="text-align:right;margin-top:9px;font-size:14px;font-weight:600;color:var(--blue)"></div>
+    <button class="btn btn-primary" onclick="guardarFactura()" style="width:100%;font-size:15px;padding:12px">
+      💾 Guardar factura completa
+    </button>
   </div>
 </section>
 
-<!-- ══ NUEVO GASTO ══ -->
 <section class="page" id="page-nuevo-gasto">
   <div class="page-header"><h1>Nuevo gasto operativo</h1><p>Parqueadero, empaques, servicios, herramientas…</p></div>
   <div class="card">
@@ -909,6 +964,87 @@ document.addEventListener('DOMContentLoaded',function(){
     </div>
   </div>
   <div id="cmp-hist-total" style="text-align:right;font-weight:700;font-size:14px;margin-top:10px;color:var(--red)"></div>
+</section>
+
+<!-- ══ CONTABILIDAD / UTILIDADES ══ -->
+<section class="page" id="page-contabilidad">
+  <div class="page-header"><h1>Utilidades y punto de equilibrio</h1><p>Consolidado financiero — costos fijos, márgenes y metas</p></div>
+
+  <!-- COSTOS FIJOS -->
+  <div class="card">
+    <div class="card-title">Costos fijos mensuales</div>
+    <table class="costs-table">
+      <tr><td>Arriendo + servicios (día 5 de cada mes)</td><td class="cv" style="color:var(--red)">$500.000</td></tr>
+      <tr><td>Salario simbólico inversionista 1</td><td class="cv" style="color:var(--red)">$500.000</td></tr>
+      <tr><td>Salario simbólico inversionista 2</td><td class="cv" style="color:var(--red)">$500.000</td></tr>
+      <tr><td><strong>Total costos fijos</strong></td><td class="cv" style="color:var(--red)"><strong>$1.500.000</strong></td></tr>
+    </table>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px">Los salarios son simbólicos al inicio. Se ajustarán según el crecimiento de la tienda.</p>
+  </div>
+
+  <!-- KPIs ACTUALES -->
+  <div class="kpi-grid">
+    <div class="kpi verde"><div class="kv" style="color:#006E67">$174.800</div><div class="kl">Venta diaria real</div><div class="ks">promedio feb–abr</div></div>
+    <div class="kpi azul"><div class="kv" style="color:var(--blue-text)">$5.244K</div><div class="kl">Venta mensual est.</div><div class="ks">ritmo actual × 30d</div></div>
+    <div class="kpi dorado"><div class="kv" style="color:#7A4E00">29.6%</div><div class="kl">Margen bruto</div><div class="ks">estimado por mezcla</div></div>
+    <div class="kpi verde"><div class="kv" style="color:#006E67">$50.136</div><div class="kl">Utilidad neta/mes</div><div class="ks">ritmo actual</div></div>
+  </div>
+
+  <!-- PUNTO DE EQUILIBRIO -->
+  <div class="card">
+    <div class="card-title">Punto de equilibrio</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px">¿Cuánto necesitas vender para cubrir todos los costos fijos?</p>
+
+    <div class="meta-bar-wrap">
+      <div class="meta-bar-label"><span>Meta mínima/día</span><span style="font-weight:700;color:var(--amber)">$169.147</span></div>
+      <div class="meta-bar-track"><div class="meta-bar-fill" style="width:100%;background:var(--amber)"></div></div>
+    </div>
+    <div class="meta-bar-wrap" style="margin-top:10px">
+      <div class="meta-bar-label"><span>Venta real/día</span><span style="font-weight:700;color:var(--green)">$174.800</span></div>
+      <div class="meta-bar-track"><div class="meta-bar-fill" style="width:100%;background:var(--green)"></div></div>
+    </div>
+
+    <div class="alert alert-green" style="margin-top:12px">
+      ✓ Al ritmo actual estás <strong>superando el punto de equilibrio en $5.653/día</strong>. La tienda es rentable, aunque con margen ajustado.
+    </div>
+
+    <table class="costs-table" style="margin-top:14px">
+      <tr style="background:var(--surface2)"><td colspan="3" style="font-weight:700;font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:8px 10px">Ventas necesarias para distintas utilidades netas</td></tr>
+      <tr><td>Para cubrir costos (utilidad $0)</td><td class="cv" style="color:var(--amber)">$5.074.425/mes</td><td class="cv" style="color:var(--amber)">$169.147/día</td></tr>
+      <tr><td>Para utilidad neta de $500.000/mes</td><td class="cv" style="color:var(--blue-text)">$6.765.900/mes</td><td class="cv" style="color:var(--blue-text)">$225.530/día</td></tr>
+      <tr><td>Para utilidad neta de $1.000.000/mes</td><td class="cv" style="color:var(--blue-text)">$8.457.375/mes</td><td class="cv" style="color:var(--blue-text)">$281.912/día</td></tr>
+      <tr><td>Para utilidad neta de $2.000.000/mes</td><td class="cv" style="color:var(--text)">$11.840.325/mes</td><td class="cv" style="color:var(--text)">$394.677/día</td></tr>
+    </table>
+  </div>
+
+  <!-- CONSOLIDADO POR PERÍODO -->
+  <div class="card">
+    <div class="card-title">Consolidado de ventas registradas</div>
+    <div class="htabs">
+      <button class="htab on" onclick="setCont('dia',this)">Hoy</button>
+      <button class="htab" onclick="setCont('semana',this)">Esta semana</button>
+      <button class="htab" onclick="setCont('mes',this)">Este mes</button>
+      <button class="htab" onclick="setCont('historico',this)">Histórico</button>
+    </div>
+    <div class="kpi-grid" id="cont-kpis" style="margin-top:12px"></div>
+    <div class="card-title" style="margin-top:4px">Desglose por medio de pago</div>
+    <div id="cont-pago-desglose"></div>
+  </div>
+
+  <!-- CALCULADORA META -->
+  <div class="card">
+    <div class="card-title">Calculadora de meta personalizada</div>
+    <div class="form-grid">
+      <div class="field"><label>Utilidad neta deseada/mes ($)</label>
+        <input type="number" id="meta-utilidad" value="1000000" step="100000" oninput="calcMeta()">
+      </div>
+      <div class="field"><label>Margen bruto estimado (%)</label>
+        <input type="number" id="meta-margen" value="29.6" step="0.5" min="1" max="80" oninput="calcMeta()">
+      </div>
+    </div>
+    <div id="meta-resultado" style="background:var(--surface2);border-radius:var(--radius);padding:14px 16px;font-size:14px"></div>
+  </div>
+
 </section>
 </main>
 </div>
@@ -1483,7 +1619,7 @@ let gstSessionTotal=0;
 let vtaSessionTotal=0;
 
 // selected prod state per context
-const selState={vta:null,cmp:null};
+const selState={vta:null,cmp:null,fac:null};
 let catFilterVta='todos';
 let historialChart=null;
 let diarioChart=null;
@@ -2031,7 +2167,7 @@ const PAGE_NAMES = {
   'resumen':'Resumen','finanzas':'Finanzas','nueva-venta':'Nueva venta',
   'ventas-dia':'Ventas del día','historial-ventas':'Historial ventas','historial':'Historial','productos-top':'Top productos','inventario':'Stock estimado',
   'nueva-compra':'Nueva compra','nuevo-gasto':'Nuevo gasto',
-  'compras':'Historial compras','historial-compras':'Historial compras','catalogo':'Catálogo'
+  'compras':'Historial compras','historial-compras':'Historial compras','catalogo':'Catálogo','contabilidad':'Utilidades'
 };
 
 function toggleMobileDrawer(){
@@ -2530,6 +2666,326 @@ window.buildCmpHist = function(){
   _origBuildCmpHist();
   buildCmpMesDropdown();
 };
+
+
+// ══════════════════════════════════════
+// SISTEMA DE FACTURAS
+// ══════════════════════════════════════
+const GRANEL_CATS = ['Concentrado perro','Conc. perro','Concentrado gato','Conc. gato','Comida húmeda gato','Húmeda gato','Comida húmeda perro','Húmeda perro','Arenas'];
+let facItems = [];
+let facNuevoProd = false;
+let selState_fac = null; // selected product for invoice
+
+// Expose fac to searchProds system
+selState['fac'] = null;
+
+function toggleFacNuevoProd(nuevo){
+  facNuevoProd = nuevo;
+  document.getElementById('fac-exist-block').style.display = nuevo?'none':'block';
+  document.getElementById('fac-nuevo-block').style.display = nuevo?'block':'none';
+  document.getElementById('btn-fac-exist').className = 'btn '+(nuevo?'btn-secondary':'btn-primary')+' ';
+  document.getElementById('btn-fac-nuevo').className = 'btn '+(nuevo?'btn-primary':'btn-secondary');
+  document.getElementById('fac-item-detail').style.display = 'none';
+  if(nuevo){ updateFnpSub(); updateFnpId(); showFacItemDetail(null); }
+}
+
+function checkNuevoProvFac(){
+  const v = document.getElementById('fac-prov').value;
+  document.getElementById('fac-prov-nuevo-field').style.display = v==='__nuevo__'?'block':'none';
+}
+
+// Called when a product is selected from dropdown for invoice
+function selectProd(id, ctx){
+  const item = INV.find(r=>r.id===id);
+  if(!item) return;
+  selState[ctx] = item;
+  const nameEl = document.getElementById(ctx+'-sel-name');
+  const metaEl = document.getElementById(ctx+'-sel-meta');
+  const selEl  = document.getElementById(ctx+'-selected');
+  if(nameEl) nameEl.textContent = item.p;
+  if(metaEl) metaEl.textContent = item.id+' · '+item.sub+' · Stock: '+fmtN(getStock(item))+' '+item.unit;
+  if(selEl)  selEl.classList.add('show');
+  const inp = document.getElementById(ctx==='vta'?'vta-search':ctx==='cmp'?'cmp-search':'fac-search');
+  if(inp) inp.value='';
+  document.getElementById(ctx+'-dropdown').classList.remove('open');
+
+  if(ctx==='vta'){ updateVtaPreview(); }
+  if(ctx==='cmp'){ updateCmpPreview(); }
+  if(ctx==='fac'){ showFacItemDetail(item); }
+}
+
+function showFacItemDetail(item){
+  const detail = document.getElementById('fac-item-detail');
+  if(!item && !facNuevoProd){ detail.style.display='none'; return; }
+  detail.style.display = 'block';
+  const isGranel = item && GRANEL_CATS.some(c=>item.cat.includes(c.split(' ')[0])||item.sub.includes('granel')||item.unit==='kg');
+  const granelBadge = document.getElementById('fac-granel-badge');
+  const qtyField = document.getElementById('fac-qty-field');
+  if(granelBadge) granelBadge.style.display = isGranel?'flex':'none';
+  if(qtyField) qtyField.style.display = isGranel?'none':'block';
+  // Autocomplete price if item has precio
+  if(item && item.precio){
+    const pvEl = document.getElementById('fac-item-pv');
+    if(pvEl && !pvEl.value) pvEl.value = item.precio;
+  }
+  updateFacItemCalc();
+}
+
+function updateFacItemCalc(){
+  const item = selState['fac'];
+  const cu = parseFloat(document.getElementById('fac-item-cu').value)||0;
+  const pv = parseFloat(document.getElementById('fac-item-pv').value)||0;
+  const qty = parseFloat(document.getElementById('fac-item-qty').value)||1;
+  const isGranel = item && item.unit==='kg';
+  const effQty = isGranel ? 1 : qty;
+  const subtotal = cu * effQty;
+  const margen = cu>0&&pv>0 ? ((pv-cu)/cu*100).toFixed(1)+'%' : '—';
+  const prev = document.getElementById('fac-item-preview');
+  if(cu>0){ prev.style.display='block'; }
+  document.getElementById('fac-item-subtotal').textContent = fmt(subtotal);
+  document.getElementById('fac-item-margen').textContent = margen;
+}
+
+function agregarItemFactura(){
+  const item = facNuevoProd ? null : selState['fac'];
+  const cu  = parseFloat(document.getElementById('fac-item-cu').value)||0;
+  const pv  = parseFloat(document.getElementById('fac-item-pv').value)||0;
+  const und = document.getElementById('fac-item-und').value;
+
+  let nombre, id, cat, sub, unit;
+
+  if(facNuevoProd){
+    nombre = document.getElementById('fnp-nombre').value.trim();
+    if(!nombre){ alert('Escribe el nombre del producto'); return; }
+    id   = document.getElementById('fnp-id').value;
+    const catCode = document.getElementById('fnp-cat').value;
+    cat  = {CON:'Concentrado',ASE:'Aseo',ACC:'Accesorio',SNK:'Snack',MED:'Medicina'}[catCode];
+    const subEl = document.getElementById('fnp-sub');
+    sub  = subEl.options[subEl.selectedIndex]?.text || cat;
+    unit = document.getElementById('fnp-unit').value;
+    // Create in INV
+    const newItem = {id,cat,sub,p:nombre,bought:0,sold:0,unit,precio:pv||0};
+    INV.push(newItem);
+    renderCatalogo(INV); renderInv(INV);
+    selState['fac'] = newItem;
+  } else {
+    if(!item){ alert('Selecciona un producto'); return; }
+    nombre = item.p; id = item.id; cat = item.cat; sub = item.sub; unit = item.unit;
+  }
+
+  const isGranel = unit==='kg';
+  const qty = isGranel ? 1 : (parseFloat(document.getElementById('fac-item-qty').value)||1);
+  const subtotal = cu * qty;
+  if(cu<=0){ alert('Ingresa el costo unitario'); return; }
+
+  facItems.push({id,nombre,cat,sub,unit,qty,und,cu,pv,subtotal,isGranel});
+  renderFacturaItems();
+
+  // Reset item fields
+  selState['fac'] = null;
+  document.getElementById('fac-selected').classList.remove('show');
+  document.getElementById('fac-item-detail').style.display='none';
+  document.getElementById('fac-item-cu').value='';
+  document.getElementById('fac-item-pv').value='';
+  document.getElementById('fac-item-qty').value=1;
+  document.getElementById('fac-item-preview').style.display='none';
+  document.getElementById('fac-search').value='';
+  if(facNuevoProd){ document.getElementById('fnp-nombre').value=''; }
+}
+
+function renderFacturaItems(){
+  const card = document.getElementById('fac-items-card');
+  card.style.display = facItems.length ? 'block' : 'none';
+  const total = facItems.reduce((s,i)=>s+i.subtotal,0);
+  document.getElementById('fac-total-val').textContent = fmt(total);
+  document.getElementById('fac-items-list').innerHTML = facItems.map((item,idx)=>`
+    <div class="factura-item">
+      <button class="fi-del" onclick="eliminarItemFactura(${idx})">✕</button>
+      ${item.isGranel?'<div class="fi-granel-badge">⚖️ Granel</div>':''}
+      <div class="fi-name">${item.nombre}</div>
+      <div class="fi-row">
+        ${!item.isGranel?`<div class="fi-field"><label>Cant.</label><span>${fmtN(item.qty)} ${item.und}</span></div>`:''}
+        <div class="fi-field"><label>Costo unit.</label><span>${fmt(item.cu)}</span></div>
+        ${item.pv?`<div class="fi-field"><label>Precio venta</label><span>${fmt(item.pv)}</span></div>`:''}
+        <div class="fi-total">${fmt(item.subtotal)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function eliminarItemFactura(idx){
+  facItems.splice(idx,1);
+  renderFacturaItems();
+}
+
+async function guardarFactura(){
+  const numero = document.getElementById('fac-numero').value.trim();
+  const fecha  = document.getElementById('fac-fecha').value || getTodayISO();
+  let prov = document.getElementById('fac-prov').value;
+  if(prov==='__nuevo__') prov = document.getElementById('fac-prov-nuevo').value.trim()||'Nuevo';
+
+  if(!numero){ alert('Ingresa el número de factura'); return; }
+  if(!facItems.length){ alert('Agrega al menos un producto'); return; }
+
+  const total = facItems.reduce((s,i)=>s+i.subtotal,0);
+
+  // Update stock + prices for each item
+  facItems.forEach(fi=>{
+    const inv = INV.find(r=>r.id===fi.id);
+    if(inv){
+      inv.bought = parseFloat((inv.bought + fi.qty).toFixed(1));
+      if(fi.pv>0) inv.precio = fi.pv;
+      saveCatalogoItem && saveCatalogoItem(inv);
+    }
+    // Add to historial
+    COMPRAS_HIST.unshift({
+      fecha, producto:fi.nombre, id:fi.id, cat:fi.cat, sub:fi.sub,
+      prov, qty:fi.qty, und:fi.und, cu:fi.cu, t:fi.subtotal,
+      factura:numero, ts:Date.now()
+    });
+  });
+
+  // Save to Firebase if available
+  if(typeof db !== 'undefined' && typeof addDoc !== 'undefined'){
+    try{
+      await addDoc(collection(db,'compras'), {
+        factura:numero, proveedor:prov, fecha, total,
+        items:facItems.map(i=>({...i})), ts:Date.now()
+      });
+      toast('Factura guardada en Firebase ✓');
+    } catch(e){ toast('Guardado local ✓ (sin Firebase)','var(--amber)'); }
+  }
+
+  // Update historial compras
+  cmpHistRows = [];
+  buildCmpHist();
+  renderInv(INV);
+  renderCatalogo(INV);
+
+  // Show in session log (old table)
+  facItems.forEach(fi=>{
+    COMPRAS.unshift({p:fi.nombre,cat:fi.cat,prov,q:fi.qty,und:fi.und,cu:fi.cu,t:fi.subtotal,fecha});
+  });
+  renderCompras(COMPRAS);
+
+  toast(`Factura ${numero} guardada — ${facItems.length} productos, ${fmt(total)}`);
+
+  // Reset
+  facItems = [];
+  renderFacturaItems();
+  document.getElementById('fac-numero').value='';
+  document.getElementById('fac-prov-nuevo-field').style.display='none';
+}
+
+// New product helpers for invoice
+function updateFnpSub(){
+  const cat = document.getElementById('fnp-cat').value;
+  const subMap = {CON:['COP','COG','CHG','CHP'],ASE:['ARE','BOL','TAP','JAB'],ACC:['JUG','COM','CEP','COL','ARN','BEB'],SNK:['GAL','DUL','GOM','CRE','CRO','HUE'],MED:['ANT']};
+  const sub = document.getElementById('fnp-sub');
+  const allowed = subMap[cat]||[];
+  Array.from(sub.options).forEach(o=>{o.hidden=allowed.length?!allowed.includes(o.value):false;});
+  const first = Array.from(sub.options).find(o=>!o.hidden);
+  if(first) sub.value=first.value;
+  updateFnpId();
+}
+function updateFnpId(){
+  const cat=document.getElementById('fnp-cat').value;
+  const sub=document.getElementById('fnp-sub').value;
+  const prefix=cat+'-'+sub;
+  const existing=INV.filter(r=>r.id.startsWith(prefix+'-')).map(r=>{const n=parseInt(r.id.split('-').pop());return isNaN(n)?0:n;});
+  const next=String(Math.max(0,...existing)+1).padStart(3,'0');
+  document.getElementById('fnp-id').value=prefix+'-'+next;
+}
+
+// ══════════════════════════════════════
+// CONTABILIDAD
+// ══════════════════════════════════════
+const COSTOS_FIJOS = 1_500_000;
+const MARGEN_BRUTO = 0.296;
+
+function setCont(periodo, btn){
+  document.querySelectorAll('#page-contabilidad .htab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderContKpis(periodo);
+}
+
+function renderContKpis(periodo){
+  const hoy = getTodayISO();
+  const semana = getSemanaStart(hoy);
+  const mes = hoy.slice(0,7);
+
+  let rows;
+  if(periodo==='dia') rows = VENTAS_HIST.filter(v=>v.fecha===hoy);
+  else if(periodo==='semana') rows = VENTAS_HIST.filter(v=>v.fecha>=semana&&v.fecha<=hoy);
+  else if(periodo==='mes') rows = VENTAS_HIST.filter(v=>v.fecha.startsWith(mes));
+  else rows = VENTAS_HIST;
+
+  const totalVentas = rows.reduce((s,v)=>s+v.valor,0);
+  const utilBruta   = Math.round(totalVentas * MARGEN_BRUTO);
+  const ef = rows.filter(v=>(v.pago||'').toLowerCase()==='efectivo').reduce((s,v)=>s+v.valor,0);
+  const nq = rows.filter(v=>(v.pago||'').toLowerCase()==='nequi').reduce((s,v)=>s+v.valor,0);
+  const bulto = rows.filter(v=>v.esBulto).reduce((s,v)=>s+v.valor,0);
+
+  // Prorate fixed costs
+  let costoProp = 0;
+  if(periodo==='dia') costoProp = Math.round(COSTOS_FIJOS/30);
+  else if(periodo==='semana') costoProp = Math.round(COSTOS_FIJOS/4.3);
+  else if(periodo==='mes') costoProp = COSTOS_FIJOS;
+  else costoProp = Math.round(COSTOS_FIJOS * (rows.length>0 ? (new Set(rows.map(v=>v.fecha)).size/30) : 1));
+
+  const utilNeta = utilBruta - costoProp;
+
+  document.getElementById('cont-kpis').innerHTML=`
+    <div class="kpi azul"><div class="kv" style="color:var(--blue-text)">${fmt(totalVentas)}</div><div class="kl">Ventas</div><div class="ks">${rows.length} transacciones</div></div>
+    <div class="kpi dorado"><div class="kv" style="color:#7A4E00">${fmt(utilBruta)}</div><div class="kl">Utilidad bruta</div><div class="ks">${(MARGEN_BRUTO*100).toFixed(1)}% margen</div></div>
+    <div class="kpi gris"><div class="kv">${fmt(costoProp)}</div><div class="kl">Costos fijos</div><div class="ks">proporcional</div></div>
+    <div class="kpi ${utilNeta>=0?'verde':'rojo'}"><div class="kv" style="color:${utilNeta>=0?'#006E67':'var(--red-text)'}">${utilNeta>=0?'+':''}${fmt(utilNeta)}</div><div class="kl">Utilidad neta est.</div><div class="ks">${utilNeta>=0?'Positivo ✓':'Cubre costos ✗'}</div></div>
+  `;
+
+  document.getElementById('cont-pago-desglose').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
+      <div style="background:var(--green-bg);border-radius:var(--radius);padding:10px;text-align:center">
+        <div style="font-size:14px;font-weight:700;color:var(--green-text)">${fmt(ef)}</div>
+        <div style="font-size:10px;color:var(--green-text);opacity:.7">Efectivo</div>
+      </div>
+      <div style="background:var(--blue-bg);border-radius:var(--radius);padding:10px;text-align:center">
+        <div style="font-size:14px;font-weight:700;color:var(--blue-text)">${fmt(nq)}</div>
+        <div style="font-size:10px;color:var(--blue-text);opacity:.7">Nequi</div>
+      </div>
+      <div style="background:#FEF6E0;border-radius:var(--radius);padding:10px;text-align:center">
+        <div style="font-size:14px;font-weight:700;color:#7A4E00">${fmt(bulto)}</div>
+        <div style="font-size:10px;color:#7A4E00;opacity:.7">Bulto</div>
+      </div>
+    </div>`;
+}
+
+function getSemanaStart(fecha){
+  const d=new Date(fecha+'T00:00:00');
+  const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1);
+  const lun=new Date(d); lun.setDate(diff);
+  const p=n=>String(n).padStart(2,'0');
+  return lun.getFullYear()+'-'+p(lun.getMonth()+1)+'-'+p(lun.getDate());
+}
+
+function calcMeta(){
+  const util = parseFloat(document.getElementById('meta-utilidad').value)||0;
+  const margen = (parseFloat(document.getElementById('meta-margen').value)||29.6)/100;
+  const ventaMes = Math.round((COSTOS_FIJOS+util)/margen);
+  const ventaDia = Math.round(ventaMes/30);
+  const ventaSem = Math.round(ventaMes/4.3);
+  document.getElementById('meta-resultado').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px">Por día</div><div style="font-size:18px;font-weight:800;color:var(--teal)">${fmt(ventaDia)}</div></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px">Por semana</div><div style="font-size:18px;font-weight:800;color:var(--blue-text)">${fmt(ventaSem)}</div></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:3px">Por mes</div><div style="font-size:18px;font-weight:800;color:var(--text)">${fmt(ventaMes)}</div></div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px">Con margen bruto de ${(margen*100).toFixed(1)}% y costos fijos de ${fmt(COSTOS_FIJOS)}/mes.</p>`;
+}
+
+// Init contabilidad on first visit
+document.getElementById('page-contabilidad').addEventListener('click', function initCont(){
+  renderContKpis('dia');
+  calcMeta();
+}, {once:true});
 
 </script>
 </body>
