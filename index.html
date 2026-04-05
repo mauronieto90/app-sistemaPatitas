@@ -1461,19 +1461,20 @@ try {
   hideLoading();
   toast('Conectado a Firebase ✓');
 
-  // Expose Firebase save functions to regular script
+  // Expose Firebase functions to regular script
   window.guardarFacturaFirebase = async function(data){
     await addDoc(collection(db, COL_COMPRAS), data);
+  };
+  window.saveCatalogoItemFB = async function(item){
+    await saveCatalogoItem(item);
   };
 
 } catch(e){
   hideLoading();
   toast('Sin conexión — modo offline','var(--amber)');
   console.error(e);
-  // Still allow local usage
-  window.guardarFacturaFirebase = async function(data){
-    console.log('Local save (no Firebase):', data);
-  };
+  window.guardarFacturaFirebase = async function(){ };
+  window.saveCatalogoItemFB = async function(){ };
 }
 
 </script>
@@ -2835,80 +2836,73 @@ function eliminarItemFactura(idx){
   renderFacturaItems();
 }
 
-async function guardarFactura(){
-  const numero = document.getElementById('fac-numero').value.trim();
+function guardarFactura(){
+  const numero = (document.getElementById('fac-numero').value||'').trim();
   const fecha  = document.getElementById('fac-fecha').value || getTodayISO();
   let prov = document.getElementById('fac-prov').value;
-  if(prov==='__nuevo__') prov = document.getElementById('fac-prov-nuevo').value.trim()||'Nuevo';
+  if(prov==='__nuevo__'){
+    const pnEl = document.getElementById('fac-prov-nuevo');
+    prov = (pnEl&&pnEl.value.trim()) || 'Nuevo';
+  }
 
   if(!numero){ alert('Ingresa el número de factura'); return; }
-  if(!facItems.length){ alert('Agrega al menos un producto'); return; }
+  if(!facItems.length){ alert('Agrega al menos un producto a la factura'); return; }
 
   const total = facItems.reduce((s,i)=>s+i.subtotal,0);
 
-  // Update stock + prices for each item
-  facItems.forEach(fi=>{
-    const inv = INV.find(r=>r.id===fi.id);
+  // 1. Update INV stock & price, add to COMPRAS_HIST
+  facItems.forEach(function(fi){
+    const inv = INV.find(function(r){ return r.id===fi.id; });
     if(inv){
       inv.bought = parseFloat((inv.bought + fi.qty).toFixed(1));
       if(fi.pv>0) inv.precio = fi.pv;
-      saveCatalogoItem && saveCatalogoItem(inv);
+      // Save to Firebase async (fire and forget)
+      if(typeof window.saveCatalogoItemFB==='function') window.saveCatalogoItemFB(inv);
     }
-    // Add to historial
     COMPRAS_HIST.unshift({
-      fecha, producto:fi.nombre, id:fi.id, cat:fi.cat, sub:fi.sub,
-      prov, qty:fi.qty, und:fi.und, cu:fi.cu, t:fi.subtotal,
+      fecha:fecha, producto:fi.nombre, id:fi.id, cat:fi.cat, sub:fi.sub,
+      prov:prov, qty:fi.qty, und:fi.und, cu:fi.cu, t:fi.subtotal,
       factura:numero, ts:Date.now()
     });
+    COMPRAS.unshift({p:fi.nombre, cat:fi.cat, prov:prov, q:fi.qty, und:fi.und, cu:fi.cu, t:fi.subtotal, fecha:fecha});
   });
 
-  // Save to Firebase via window-exposed function
-  if(typeof window.guardarFacturaFirebase === 'function'){
-    try{
-      await window.guardarFacturaFirebase({
-        factura:numero, proveedor:prov, fecha, total,
-        items:facItems.map(i=>({...i})), ts:Date.now()
-      });
-      toast('Factura ' + numero + ' guardada ✓');
-    } catch(e){ toast('Guardada localmente ✓','var(--amber)'); }
-  } else {
-    toast('Factura ' + numero + ' guardada localmente ✓');
+  // 2. Save factura to Firebase (fire and forget)
+  if(typeof window.guardarFacturaFirebase==='function'){
+    window.guardarFacturaFirebase({
+      factura:numero, proveedor:prov, fecha:fecha, total:total,
+      items:facItems.slice(), ts:Date.now()
+    });
   }
 
-  // Update historial compras
+  // 3. Refresh all views
   cmpHistRows = [];
   buildCmpHist();
   renderInv(INV);
   renderCatalogo(INV);
-
-  // Show in session log (old table)
-  facItems.forEach(fi=>{
-    COMPRAS.unshift({p:fi.nombre,cat:fi.cat,prov,q:fi.qty,und:fi.und,cu:fi.cu,t:fi.subtotal,fecha});
-  });
   renderCompras(COMPRAS);
 
-  toast(`Factura ${numero} guardada — ${facItems.length} productos, ${fmt(total)}`);
+  // 4. Show success toast
+  toast('Factura ' + numero + ' guardada — ' + facItems.length + ' productos · ' + fmt(total));
 
-  // Full reset for new invoice
+  // 5. Full reset
   facItems = [];
-  renderFacturaItems(); // hides card, clears list
-  document.getElementById('fac-numero').value='';
-  document.getElementById('fac-prov').value='AnimalHome';
-  document.getElementById('fac-prov-nuevo-field').style.display='none';
-  document.getElementById('fac-item-detail').style.display='none';
-  document.getElementById('fac-exist-block').style.display='block';
-  document.getElementById('fac-nuevo-block').style.display='none';
+  renderFacturaItems();
+  document.getElementById('fac-numero').value = '';
+  document.getElementById('fac-fecha').value = getTodayISO();
+  document.getElementById('fac-prov').value = 'AnimalHome';
+  document.getElementById('fac-prov-nuevo-field').style.display = 'none';
+  document.getElementById('fac-item-detail').style.display = 'none';
   document.getElementById('fac-selected').classList.remove('show');
-  document.getElementById('fac-search').value='';
-  document.getElementById('fac-item-cu').value='';
-  document.getElementById('fac-item-pv').value='';
-  document.getElementById('fac-item-qty').value=1;
-  document.getElementById('fac-item-preview').style.display='none';
+  document.getElementById('fac-search').value = '';
+  document.getElementById('fac-item-cu').value = '';
+  document.getElementById('fac-item-pv').value = '';
+  document.getElementById('fac-item-qty').value = 1;
+  document.getElementById('fac-item-preview').style.display = 'none';
   selState['fac'] = null;
   facNuevoProd = false;
-  // Reset fecha to today
-  document.getElementById('fac-fecha').value = getTodayISO();
 }
+
 
 // New product helpers for invoice
 function updateFnpSub(){
