@@ -264,6 +264,13 @@ select:focus,input:focus{outline:none;border-color:var(--green)}
 .costs-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
 .costs-table tr:last-child td{border-bottom:none;font-weight:700;padding-top:10px}
 .costs-table .cv{text-align:right;font-weight:600}
+
+/* ── EDIT COMPRA MODAL ── */
+.cmp-edit-modal{position:fixed;inset:0;background:rgba(0,20,20,0.5);z-index:300;display:none;align-items:center;justify-content:center;padding:16px}
+.cmp-edit-modal.open{display:flex}
+.cmp-edit-box{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.cmp-edit-box h3{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)}
+.cmp-edit-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
 </style>
 <script>
 // LOGIN — carga antes que Firebase y Chart.js
@@ -959,7 +966,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
   <div class="card" style="padding:0;overflow:hidden">
     <div class="tbl-wrap">
-      <table><thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Proveedor</th><th>Cant.</th><th>Costo unit.</th><th>Total</th></tr></thead>
+      <table><thead><tr><th>Fecha / Factura</th><th>Producto</th><th>Categoría</th><th>Proveedor</th><th>Cant.</th><th>Costo unit.</th><th>Total</th><th></th></tr></thead>
       <tbody id="tbody-cmp-hist"></tbody></table>
     </div>
   </div>
@@ -2529,18 +2536,25 @@ function renderCmpHist(rows, q=''){
       `<div class="sbar-item"><div class="sv">${fmt2(v)}</div><div class="sl">${c}</div></div>`
     ).join('');
 
-  // Table
-  document.getElementById('tbody-cmp-hist').innerHTML = filtered.sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(r=>
-    `<tr>
-      <td style="font-size:11px;color:var(--text3)">${r.fecha}</td>
+  // Table — with edit/delete for session entries (those with factura field)
+  const sorted = filtered.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  document.getElementById('tbody-cmp-hist').innerHTML = sorted.map((r,i)=>{
+    const globalIdx = COMPRAS_HIST.indexOf(r);
+    const canEdit = globalIdx !== -1; // all rows in COMPRAS_HIST are editable
+    return `<tr>
+      <td style="font-size:11px;color:var(--text3)">${r.fecha}${r.factura?'<br><span style="color:var(--blue-text);font-weight:600">'+r.factura+'</span>':''}</td>
       <td>${r.producto||''}</td>
       <td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat||'Gasto'}</span></td>
       <td>${r.prov||''}</td>
       <td style="color:var(--text2)">${r.qty||''} ${r.und||''}</td>
       <td style="color:var(--text2)">${r.cu?fmt2(r.cu):''}</td>
       <td style="font-weight:600">${fmt2(r.t||0)}</td>
-    </tr>`
-  ).join('');
+      <td style="white-space:nowrap">
+        ${canEdit?`<button class="btn-icon btn-sm" title="Editar" onclick="abrirCmpEdit(${globalIdx})">✏️</button>
+        <button class="btn-icon btn-sm" title="Eliminar" onclick="eliminarCmpHist(${globalIdx})">🗑</button>`:''}
+      </td>
+    </tr>`;
+  }).join('');
   document.getElementById('cmp-hist-total').textContent = `Total: ${fmt2(total)} (${filtered.length} registros)`;
 }
 
@@ -3016,5 +3030,99 @@ document.getElementById('page-contabilidad').addEventListener('click', function 
 }, {once:true});
 
 </script>
+<script>
+// ══════════════════════════════════════
+// EDITAR / ELIMINAR COMPRAS HISTORIAL
+// ══════════════════════════════════════
+function abrirCmpEdit(idx){
+  const r = COMPRAS_HIST[idx];
+  if(!r) return;
+  document.getElementById('cem-idx').value = idx;
+  document.getElementById('cem-fecha').value = r.fecha||'';
+  document.getElementById('cem-producto').value = r.producto||'';
+  document.getElementById('cem-prov').value = r.prov||'';
+  document.getElementById('cem-qty').value = r.qty||1;
+  document.getElementById('cem-und').value = r.und||'und';
+  document.getElementById('cem-cu').value = r.cu||0;
+  document.getElementById('cem-factura').value = r.factura||'';
+  actualizarCemTotal();
+  document.getElementById('cmp-edit-modal').classList.add('open');
+}
+function actualizarCemTotal(){
+  const qty = parseFloat(document.getElementById('cem-qty').value)||0;
+  const cu  = parseFloat(document.getElementById('cem-cu').value)||0;
+  const total = qty*cu;
+  document.getElementById('cem-total-preview').textContent = total>0?'Total: $'+Math.round(total).toLocaleString('es-CO'):'';
+}
+function guardarCmpEdit(){
+  const idx = parseInt(document.getElementById('cem-idx').value);
+  if(isNaN(idx)||!COMPRAS_HIST[idx]) return;
+  const r = COMPRAS_HIST[idx];
+  const qty = parseFloat(document.getElementById('cem-qty').value)||r.qty||1;
+  const cu  = parseFloat(document.getElementById('cem-cu').value)||r.cu||0;
+  COMPRAS_HIST[idx] = {
+    ...r,
+    fecha:    document.getElementById('cem-fecha').value||r.fecha,
+    producto: document.getElementById('cem-producto').value||r.producto,
+    prov:     document.getElementById('cem-prov').value||r.prov,
+    qty, und: document.getElementById('cem-und').value,
+    cu, t: qty*cu,
+    factura:  document.getElementById('cem-factura').value||r.factura,
+  };
+  closeCmpEdit();
+  cmpHistRows=[];
+  buildCmpHist();
+  toast('Registro actualizado ✓');
+}
+function eliminarCmpHist(idx){
+  const r = COMPRAS_HIST[idx];
+  if(!r) return;
+  if(!confirm('¿Eliminar "'+( r.producto||'este registro')+'" del '+r.fecha+'?')) return;
+  const inv = INV.find(x=>x.id===r.id);
+  if(inv && r.qty) inv.bought = Math.max(0, parseFloat((inv.bought-r.qty).toFixed(1)));
+  COMPRAS_HIST.splice(idx,1);
+  cmpHistRows=[];
+  buildCmpHist();
+  toast('Registro eliminado');
+}
+function closeCmpEdit(){
+  document.getElementById('cmp-edit-modal').classList.remove('open');
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') closeCmpEdit();
+});
+// Live preview in modal
+setTimeout(function(){
+  ['cem-qty','cem-cu'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.addEventListener('input', actualizarCemTotal);
+  });
+},500);
+
+</script>
+
+<!-- EDIT COMPRA MODAL -->
+<div class="cmp-edit-modal" id="cmp-edit-modal" onclick="if(event.target===this)closeCmpEdit()">
+  <div class="cmp-edit-box">
+    <h3>✏️ Editar registro de compra</h3>
+    <input type="hidden" id="cem-idx">
+    <div class="form-grid">
+      <div class="field"><label>Fecha</label><input type="date" id="cem-fecha"></div>
+      <div class="field"><label>Producto</label><input type="text" id="cem-producto"></div>
+      <div class="field"><label>Proveedor</label><input type="text" id="cem-prov"></div>
+      <div class="field"><label>Cantidad</label><input type="number" id="cem-qty" step="0.1" min="0"></div>
+      <div class="field"><label>Unidad</label>
+        <select id="cem-und"><option>kg</option><option>und</option><option>bulto</option><option>caja</option><option>paquete</option></select>
+      </div>
+      <div class="field"><label>Costo unitario ($)</label><input type="number" id="cem-cu" step="100" min="0"></div>
+      <div class="field"><label>N° Factura</label><input type="text" id="cem-factura" placeholder="Opcional"></div>
+    </div>
+    <div id="cem-total-preview" style="text-align:right;font-size:14px;font-weight:700;color:var(--blue);margin-top:4px"></div>
+    <div class="cmp-edit-footer">
+      <button class="btn btn-secondary" onclick="closeCmpEdit()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCmpEdit()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
