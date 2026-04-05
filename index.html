@@ -1098,6 +1098,9 @@ const COL_VENTAS   = 'ventas';
 const COL_COMPRAS  = 'compras';
 const COL_GASTOS   = 'gastos';
 const COL_CATALOGO = 'catalogo';
+const COL_VENTAS    = 'ventas';
+const COL_COMPRAS   = 'compras';
+const COL_GASTOS    = 'gastos';
 
 // ── TOAST NOTIFICATION ──
 function toast(msg, color='var(--green)'){
@@ -1144,6 +1147,7 @@ async function initCatalogo(){
 
 // Save single product to Firestore
 async function saveCatalogoItem(item){
+  // Use item.id as Firestore doc id so it's idempotent
   await setDoc(doc(db, COL_CATALOGO, item.id), {
     id:item.id, cat:item.cat, sub:item.sub, p:item.p,
     bought:item.bought, sold:item.sold, unit:item.unit, precio:item.precio||0
@@ -1171,6 +1175,21 @@ async function actualizarVenta(fbId, data){
 }
 
 // Real-time listener for ventas del día
+async function cargarVentasHistorial(){
+  // Load all historical sales into VENTAS_HIST for historial module
+  try{
+    const snap = await getDocs(collection(db, COL_VENTAS));
+    if(!snap.empty){
+      VENTAS_HIST.length = 0;
+      snap.forEach(d=> VENTAS_HIST.push({...d.data(), fbId:d.id}));
+      // Sort by date desc
+      VENTAS_HIST.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+      // Rebuild historial ventas if module already rendered
+      if(typeof buildHvFiltros === 'function') buildHvFiltros();
+    }
+  }catch(e){ console.log('cargarVentasHistorial error:', e); }
+}
+
 function escucharVentasHoy(){
   // Real-time listener — fires on ANY change from ANY device
   const q = query(collection(db, COL_VENTAS), orderBy('ts','desc'));
@@ -1226,6 +1245,16 @@ function escucharVentasHoy(){
     if(rmBul) rmBul.textContent = bultoHoy>0?fmt(bultoHoy):'$0';
     // Also update ventas-dia page
     if(typeof updateVentasDiaPage === 'function') updateVentasDiaPage(hoyRows);
+    
+    // Sync all ventas into VENTAS_HIST for historial
+    VENTAS_HIST.length = 0;
+    snap.forEach(d => {
+      const v = d.data();
+      VENTAS_HIST.push({...v, fbId:d.id});
+    });
+    VENTAS_HIST.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+    // Refresh historial ventas if it's open
+    if(typeof buildHvFiltros==='function' && hvFiltroActual) buildHvFiltros();
   });
 }
 
@@ -1456,12 +1485,45 @@ window.registrarGasto = async function(){
 // CARGAR COMPRAS HISTÓRICAS DESDE FIRESTORE
 // ══════════════════════════════════════
 async function cargarCompras(){
+  // Load compras → COMPRAS_HIST (for historial)
   const snap = await getDocs(query(collection(db, COL_COMPRAS), orderBy('ts','desc')));
   if(!snap.empty){
-    COMPRAS.length=0;
-    snap.forEach(d=>COMPRAS.push({...d.data(),fbId:d.id}));
+    COMPRAS_HIST.length = 0;
+    COMPRAS.length = 0;
+    snap.forEach(d=>{
+      const data = {...d.data(), fbId:d.id};
+      // If it's a factura doc (has .items array), expand into individual rows
+      if(data.items && Array.isArray(data.items)){
+        data.items.forEach(item=>{
+          const row = {
+            fecha: data.fecha, producto: item.nombre||item.p||'',
+            id: item.id||'', cat: item.cat||'', sub: item.sub||'',
+            prov: data.proveedor||data.prov||'', qty: item.qty||0,
+            und: item.und||'', cu: item.cu||0, t: item.subtotal||item.t||0,
+            factura: data.factura||'', ts: data.ts||0, fbId: d.id
+          };
+          COMPRAS_HIST.push(row);
+          COMPRAS.push({p:row.producto,cat:row.cat,prov:row.prov,q:row.qty,und:row.und,cu:row.cu,t:row.t,fecha:row.fecha});
+        });
+      } else {
+        // Single-item row
+        COMPRAS_HIST.push(data);
+        COMPRAS.push({p:data.producto||data.p,cat:data.cat,prov:data.prov,q:data.qty,und:data.und,cu:data.cu,t:data.t,fecha:data.fecha});
+      }
+    });
     renderCompras(COMPRAS);
+    // Rebuild historial if already rendered
+    if(typeof buildCmpHist === 'function'){ cmpHistRows=[]; buildCmpHist(); }
   }
+
+  // Load gastos → OTRAS_COMPRAS_HIST
+  try{
+    const gSnap = await getDocs(query(collection(db, COL_GASTOS), orderBy('ts','desc')));
+    if(!gSnap.empty){
+      OTRAS_COMPRAS_HIST.length = 0;
+      gSnap.forEach(d=>OTRAS_COMPRAS_HIST.push({...d.data(), fbId:d.id}));
+    }
+  }catch(e){ console.log('No gastos col yet'); }
 }
 
 // ══════════════════════════════════════
@@ -1471,16 +1533,26 @@ showLoading('Conectando con la base de datos…');
 try {
   await initCatalogo();
   await cargarCompras();
+  await cargarVentasHistorial();
   escucharVentasHoy();
   hideLoading();
   toast('Conectado a Firebase ✓');
 
   // Expose Firebase functions to regular script
   window.guardarFacturaFirebase = async function(data){
-    await addDoc(collection(db, COL_COMPRAS), data);
+    const ref = await addDoc(collection(db, COL_COMPRAS), data);
+    // Reload compras after save
+    await cargarCompras();
+    return ref;
   };
   window.saveCatalogoItemFB = async function(item){
     await saveCatalogoItem(item);
+  };
+  window.recargarVentas = async function(){
+    await cargarVentasHistorial();
+  };
+  window.recargarCompras = async function(){
+    await cargarCompras();
   };
 
 } catch(e){
@@ -1489,6 +1561,8 @@ try {
   console.error(e);
   window.guardarFacturaFirebase = async function(){ };
   window.saveCatalogoItemFB = async function(){ };
+  window.recargarVentas = async function(){ };
+  window.recargarCompras = async function(){ };
 }
 
 </script>
