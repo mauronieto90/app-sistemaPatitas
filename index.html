@@ -889,7 +889,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="card-title">Transacciones de hoy</div>
     <div class="tbl-wrap">
       <table><thead><tr><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
-      <tbody id="tbody-vd-hoy"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Cargando…</td></tr></tbody>
+      <tbody id="tbody-vd-hoy"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">No hay ventas registradas hoy</td></tr></tbody>
       </table>
     </div>
     <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:8px;border-top:1px solid var(--border);font-weight:700;font-size:15px">
@@ -1178,7 +1178,7 @@ async function actualizarVenta(fbId, data){
 async function cargarVentasHistorial(){
   // Load all historical sales into VENTAS_HIST for historial module
   try{
-    const snap = await getDocs(collection(db, COL_VENTAS));
+    const snap = await getDocs(collection(db, COL_VENTAS)); // no orderBy = no index needed
     if(!snap.empty){
       VENTAS_HIST.length = 0;
       snap.forEach(d=> VENTAS_HIST.push({...d.data(), fbId:d.id}));
@@ -1191,9 +1191,11 @@ async function cargarVentasHistorial(){
 }
 
 function escucharVentasHoy(){
-  // Real-time listener — fires on ANY change from ANY device
-  const q = query(collection(db, COL_VENTAS), orderBy('ts','desc'));
-  onSnapshot(q, snap => {
+  // Real-time listener — no orderBy to avoid index requirement
+  // Sorting is done client-side
+  const q = collection(db, COL_VENTAS);
+  onSnapshot(q,
+    snap => {
     const hoy = window.getTodayISO ? window.getTodayISO() : new Date().toISOString().slice(0,10);
     const tbody = document.getElementById('tbody-hist-hoy');
     if(!tbody) return;
@@ -1255,6 +1257,16 @@ function escucharVentasHoy(){
     VENTAS_HIST.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
     // Refresh historial ventas if it's open
     if(typeof buildHvFiltros==='function' && hvFiltroActual) buildHvFiltros();
+  },
+  error => {
+    // Error callback — show message instead of silent fail
+    console.error('onSnapshot error:', error);
+    const tbody = document.getElementById('tbody-hist-hoy');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--red);font-size:13px">⚠️ Error cargando ventas: ' + error.message + '</td></tr>';
+    const vdTbody = document.getElementById('tbody-vd-hoy');
+    if(vdTbody) vdTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--red);font-size:13px">⚠️ Error al conectar con Firebase</td></tr>';
+    // Try reloading once after 3s
+    setTimeout(() => escucharVentasHoy(), 3000);
   });
 }
 
@@ -1486,7 +1498,7 @@ window.registrarGasto = async function(){
 // ══════════════════════════════════════
 async function cargarCompras(){
   // Load compras → COMPRAS_HIST (for historial)
-  const snap = await getDocs(query(collection(db, COL_COMPRAS), orderBy('ts','desc')));
+  const snap = await getDocs(collection(db, COL_COMPRAS)); // no orderBy
   if(!snap.empty){
     COMPRAS_HIST.length = 0;
     COMPRAS.length = 0;
