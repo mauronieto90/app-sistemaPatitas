@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded',function(){
         <select id="vta-pago"><option>Efectivo</option><option>Nequi</option><option>Daviplata</option><option>Fiado</option></select>
       </div>
       <div class="field"><label>Fecha</label>
-        <input type="date" id="vta-fecha" value="2026-03-25">
+        <input type="date" id="vta-fecha">
       </div>
     </div>
     <div class="preview-box" id="vta-preview" style="display:none">
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded',function(){
         <input type="text" id="fac-prov-nuevo" placeholder="Nombre del proveedor">
       </div>
       <div class="field"><label>Fecha</label>
-        <input type="date" id="fac-fecha" value="2026-04-03">
+        <input type="date" id="fac-fecha">
       </div>
     </div>
   </div>
@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="field"><label>Proveedor / Lugar</label><input type="text" id="gst-prov" placeholder="Ej: Corabastos"></div>
       <div class="field"><label>Cantidad</label><input type="number" id="gst-qty" min="1" step="1" value="1"></div>
       <div class="field"><label>Valor unitario ($)</label><input type="number" id="gst-val" min="0" step="100" placeholder="0"></div>
-      <div class="field"><label>Fecha</label><input type="date" id="gst-fecha" value="2026-03-25"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="gst-fecha"></div>
     </div>
     <button class="btn btn-primary" onclick="registrarGasto()">Registrar gasto</button>
   </div>
@@ -1197,15 +1197,12 @@ function escucharVentasHoy(){
   onSnapshot(q,
     snap => {
     const hoy = window.getTodayISO ? window.getTodayISO() : new Date().toISOString().slice(0,10);
-    const tbody = document.getElementById('tbody-hist-hoy');
-    if(!tbody) return;
 
     const hoyRows = [];
     let totalHoy=0, menudeoHoy=0, bultoHoy=0;
 
     snap.forEach(d => {
       const v = d.data();
-      // Compare local date portion only
       const ventaFecha = v.fecha ? v.fecha.slice(0,10) : '';
       if(ventaFecha === hoy){
         hoyRows.push({...v, fbId: d.id});
@@ -1215,8 +1212,9 @@ function escucharVentasHoy(){
       }
     });
 
-    // Update historial table
-    if(hoyRows.length > 0){
+    // Update historial table — get tbody fresh each time
+    const tbody = document.getElementById('tbody-hist-hoy');
+    if(hoyRows.length > 0 && tbody){
       tbody.innerHTML = hoyRows.map(v =>
         `<tr data-fbid="${v.fbId}">
           <td>${v.producto||''}</td>
@@ -1229,7 +1227,7 @@ function escucharVentasHoy(){
           </td>
         </tr>`
       ).join('');
-    } else {
+    } else if(tbody) {
       tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3);font-size:13px">No hay ventas registradas hoy</td></tr>`;
     }
 
@@ -2314,7 +2312,7 @@ window.goTo = function(id, btn){
 // ══════════════════════════════════════
 (function initDates(){
   const iso = getTodayISO(), leg = getTodayLabel();
-  ['vta-fecha','cmp-fecha','gst-fecha'].forEach(id=>{
+  ['vta-fecha','cmp-fecha','gst-fecha','fac-fecha'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value=iso;
   });
   const fl=document.getElementById('fecha-hoy-label'); if(fl) fl.textContent=leg;
