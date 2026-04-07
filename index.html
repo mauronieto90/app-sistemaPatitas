@@ -1093,6 +1093,13 @@ const firebaseConfig = {
 const fireApp = initializeApp(firebaseConfig);
 const db = getFirestore(fireApp);
 
+// Date helper — defined inside module, never depends on window
+function getHoyISO(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
 // ── COLECCIONES FIRESTORE ──
 const COL_VENTAS   = 'ventas';
 const COL_COMPRAS  = 'compras';
@@ -1193,7 +1200,7 @@ function escucharVentasHoy(){
   const q = collection(db, COL_VENTAS);
   onSnapshot(q,
     snap => {
-    const hoy = window.getTodayISO ? window.getTodayISO() : new Date().toISOString().slice(0,10);
+    const hoy = getHoyISO(); // always use module's own date function
 
     const hoyRows = [];
     let totalHoy=0, menudeoHoy=0, bultoHoy=0;
@@ -1359,8 +1366,11 @@ window.registrarVenta = async function(){
   const valor = parseFloat(document.getElementById('vta-val').value)||0;
   const tipo  = document.getElementById('vta-tipo').value;
   const pago  = document.getElementById('vta-pago').value;
-  const fechaInput = document.getElementById('vta-fecha').value;
-  const fecha = fechaInput || window.getTodayISO();
+  // Always use real device date — never trust the input field
+  const fecha = getHoyISO();
+  // Also update the input field to show the correct date
+  const vtaFechaEl = document.getElementById('vta-fecha');
+  if(vtaFechaEl) vtaFechaEl.value = fecha;
   const esBulto = tipo==='Bulto';
 
   // Save to Firestore
@@ -1547,14 +1557,16 @@ try {
 
   // Expose Firebase functions to regular script
   window.guardarFacturaFirebase = async function(data){
+    // Override fecha with real today from module
+    data.fecha = data.fecha || getHoyISO();
     const ref = await addDoc(collection(db, COL_COMPRAS), data);
-    // Reload compras after save
     await cargarCompras();
     return ref;
   };
   window.saveCatalogoItemFB = async function(item){
     await saveCatalogoItem(item);
   };
+  window.getHoyISO = getHoyISO; // expose to regular script
   window.recargarVentas = async function(){
     await cargarVentasHistorial();
   };
