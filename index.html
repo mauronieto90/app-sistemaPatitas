@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <button class="nav-item" onclick="goTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
   </div>
   <div class="sidebar-footer">
-    <strong>Patitas Peludas</strong>v2.0 — 
+    <strong>Patitas Peludas</strong> v14 — 
   </div>
 </aside>
 
@@ -1092,6 +1092,7 @@ const firebaseConfig = {
 };
 const fireApp = initializeApp(firebaseConfig);
 const db = getFirestore(fireApp);
+console.log('🐾 Patitas Peludas Firebase module v14 — loaded OK');
 
 // Date helper — defined inside module, never depends on window
 function getHoyISO(){
