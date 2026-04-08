@@ -1526,7 +1526,7 @@ async function cargarCompras(){
       } else {
         // Single-item row
         COMPRAS_HIST.push(data);
-        COMPRAS.push({p:data.producto||data.p,cat:data.cat,prov:data.prov,q:data.qty,und:data.und,cu:data.cu,t:data.t,fecha:data.fecha});
+        COMPRAS.push({p:data.producto||data.p||'',cat:data.cat||'',prov:data.prov||'',q:data.qty||data.q||0,und:data.und||'',cu:data.cu||0,t:data.t||0,fecha:data.fecha});
       }
     });
     renderCompras(COMPRAS);
@@ -1728,7 +1728,7 @@ const dailyLabels=["15/2","16/2","17/2","18/2","19/2","20/2","21/2","22/2","23/2
 const sessionDelta={};
 const catPill={Aseo:'pill-green',Snack:'pill-amber',Accesorio:'pill-purple',Concentrado:'pill-blue',Medicina:'pill-red'};
 const fmt=v=>'$'+Math.round(v).toLocaleString('es-CO');
-const fmtN=v=>v%1===0?v:parseFloat(v.toFixed(1));
+const fmtN=v=>{const n=parseFloat(v)||0;return n%1===0?n:parseFloat(n.toFixed(1));};
 window.fmt=fmt; window.fmtN=fmtN;
 let gastosAcum=519792;
 let comprasTotal=8952324;
@@ -1930,9 +1930,16 @@ renderCatalogo(INV);
 
 // ── COMPRAS ──
 function renderCompras(data){
-  document.getElementById('tbody-cmp').innerHTML=data.map((r,i)=>
-    `<tr><td>${r.p}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td>${r.prov}</td><td>${fmtN(r.q)} ${r.und||''}</td><td>${fmt(r.cu)}</td><td style="font-weight:600">${fmt(r.t)}</td><td><button class="btn-icon btn-sm" onclick="openEditCompra(${i})">✏️</button><button class="btn-icon btn-sm" onclick="deleteCompra(${i})">🗑</button></td></tr>`
-  ).join('');
+  document.getElementById('tbody-cmp').innerHTML=data.map((r,i)=>{
+    const q = r.q||r.qty||0;
+    const cu = r.cu||0;
+    const t = r.t||0;
+    const p = r.p||r.producto||'';
+    const cat = r.cat||'';
+    const prov = r.prov||'';
+    const und = r.und||'';
+    return `<tr><td>${p}</td><td><span class="pill ${catPill[cat]||'pill-gray'}">${cat}</span></td><td>${prov}</td><td>${fmtN(q)} ${und}</td><td>${fmt(cu)}</td><td style="font-weight:600">${fmt(t)}</td><td><button class="btn-icon btn-sm" onclick="openEditCompra(${i})">✏️</button><button class="btn-icon btn-sm" onclick="deleteCompra(${i})">🗑</button></td></tr>`;
+  }).join('');
 }
 renderCompras(COMPRAS);
 function filtrarCompras(q){const f=q.toLowerCase();renderCompras(COMPRAS.filter(r=>r.p.toLowerCase().includes(f)||r.prov.toLowerCase().includes(f)||r.cat.toLowerCase().includes(f)));}
