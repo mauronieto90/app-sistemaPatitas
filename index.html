@@ -271,6 +271,11 @@ select:focus,input:focus{outline:none;border-color:var(--green)}
 .cmp-edit-box{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
 .cmp-edit-box h3{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)}
 .cmp-edit-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* ── GRANEL MODE ── */
+.granel-note{font-size:11px;color:var(--green-text);background:var(--green-bg);
+  border-radius:8px;padding:5px 10px;margin-bottom:8px;display:none}
+.granel-note.show{display:block}
 </style>
 <script>
 // LOGIN — carga antes que Firebase y Chart.js
@@ -388,6 +393,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <button class="nav-item" onclick="mobileGoTo('catalogo',this)"><span class="nav-icon">📑</span> Catálogo</button>
     <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:8px 8px 3px">Contabilidad</div>
     <button class="nav-item" onclick="mobileGoTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
+    <button class="nav-item" onclick="mobileGoTo('exportar',this)"><span class="nav-icon">⬇️</span> Exportar datos</button>
   </div>
 </div>
 
@@ -424,6 +430,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <div class="nav-section">
     <div class="nav-label">Contabilidad</div>
     <button class="nav-item" onclick="goTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
+    <button class="nav-item" onclick="goTo('exportar',this)"><span class="nav-icon">⬇️</span> Exportar datos</button>
   </div>
   <div class="sidebar-footer">
     <strong>Patitas Peludas</strong> v14 — 
@@ -545,12 +552,12 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="chips" id="vta-cat-chips"></div>
     <div class="form-grid">
       <div class="field"><label>Tipo de venta</label>
-        <select id="vta-tipo">
+        <select id="vta-tipo" onchange="onTipoChange()">
           <option>Granel</option><option>Paquete</option><option>Bulto</option>
           <option>Und</option><option>Sobre</option><option>Caja</option><option>Accesorio</option>
         </select>
       </div>
-      <div class="field"><label>Cantidad</label>
+      <div class="field" id="vta-qty-field"><label>Cantidad</label>
         <input type="number" id="vta-qty" min="0.1" step="0.1" value="1" oninput="updateVtaPreview()">
       </div>
       <div class="field"><label>Valor ($)</label>
@@ -877,11 +884,49 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
 
   <div class="card">
-    <div class="card-title">Sobrante en caja</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Si al cuadrar la caja hay un sobrante, regístralo aquí para llevar el control.</p>
-    <div class="sobrante-row">
-      <input type="number" id="inp-sobrante" placeholder="Valor del sobrante ($)" step="100" min="0">
-      <button class="btn btn-primary btn-sm" onclick="guardarSobrante()">Guardar</button>
+    <div class="card-title">Cierre del día</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Registra el cuadre final al cerrar el día. Queda guardado en el historial.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label>Efectivo en caja ($)</label>
+        <input type="number" id="cierre-efectivo" placeholder="0" step="100" min="0" oninput="calcCierre()">
+      </div>
+      <div class="field">
+        <label>Saldo Nequi ($)</label>
+        <input type="number" id="cierre-nequi" placeholder="0" step="100" min="0" oninput="calcCierre()">
+      </div>
+      <div class="field">
+        <label>Otros (Daviplata, etc.) ($)</label>
+        <input type="number" id="cierre-otros" placeholder="0" step="100" min="0" oninput="calcCierre()">
+      </div>
+      <div class="field">
+        <label>Observaciones</label>
+        <input type="text" id="cierre-obs" placeholder="Ej: domingo tranquilo">
+      </div>
+    </div>
+    <div id="cierre-resumen" style="background:var(--surface2);border-radius:var(--radius);padding:12px 14px;margin:10px 0;font-size:13px;display:none">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="color:var(--text2)">Total registrado en ventas</span>
+        <span id="cr-ventas" style="font-weight:600"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="color:var(--text2)">Total contado en caja</span>
+        <span id="cr-contado" style="font-weight:600"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);font-weight:700">
+        <span>Diferencia</span>
+        <span id="cr-diff" style="font-weight:800"></span>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarCierre()" style="width:100%">💾 Guardar cierre del día</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Historial de cierres</div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Fecha</th><th>Efectivo</th><th>Nequi</th><th>Otros</th><th>Ventas</th><th>Diferencia</th><th>Nota</th></tr></thead>
+      <tbody id="tbody-cierres"><tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text3)">Sin cierres registrados</td></tr></tbody>
+      </table>
     </div>
   </div>
 
@@ -943,7 +988,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="card-title">Detalle de transacciones</div>
     <input class="search-bar" type="text" id="hv-search" placeholder="Buscar producto…" oninput="filtrarHv(this.value)" style="margin-bottom:10px">
     <div class="tbl-wrap">
-      <table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th></tr></thead>
+      <table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
       <tbody id="tbody-hv"></tbody></table>
     </div>
     <div id="hv-total-row" style="text-align:right;font-weight:700;font-size:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--teal)"></div>
@@ -1060,6 +1105,99 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
 
 </section>
+
+<!-- ══ EXPORTAR DATOS ══ -->
+<section class="page" id="page-exportar">
+  <div class="page-header">
+    <h1>Exportar datos</h1>
+    <p>Descarga la información en Excel o PDF</p>
+  </div>
+
+  <!-- SELECTOR DE RANGO DE FECHAS -->
+  <div class="card">
+    <div class="card-title">Rango de fechas</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Desde</label>
+        <input type="date" id="exp-desde" value="2026-02-15">
+      </div>
+      <div class="field">
+        <label>Hasta</label>
+        <input type="date" id="exp-hasta">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="setExpRango('hoy')">Hoy</button>
+      <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="setExpRango('semana')">Esta semana</button>
+      <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="setExpRango('mes')">Este mes</button>
+      <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="setExpRango('todo')">Todo</button>
+    </div>
+  </div>
+
+  <!-- GRUPOS DISPONIBLES -->
+  <div class="card">
+    <div class="card-title">Selecciona qué exportar</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1.5px solid var(--border)">
+        <input type="checkbox" id="exp-ventas" checked style="width:16px;height:16px;accent-color:var(--teal)">
+        <div>
+          <div style="font-weight:600;font-size:13px">💰 Ventas</div>
+          <div style="font-size:11px;color:var(--text3)">Todas las transacciones: fecha, producto, tipo, valor, medio de pago</div>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1.5px solid var(--border)">
+        <input type="checkbox" id="exp-compras" checked style="width:16px;height:16px;accent-color:var(--teal)">
+        <div>
+          <div style="font-weight:600;font-size:13px">🛒 Compras de inventario</div>
+          <div style="font-size:11px;color:var(--text3)">Facturas y compras: fecha, factura, producto, proveedor, cantidad, costo, total</div>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1.5px solid var(--border)">
+        <input type="checkbox" id="exp-gastos" style="width:16px;height:16px;accent-color:var(--teal)">
+        <div>
+          <div style="font-weight:600;font-size:13px">💸 Gastos operativos</div>
+          <div style="font-size:11px;color:var(--text3)">Gastos fijos y operativos: fecha, concepto, proveedor, valor</div>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1.5px solid var(--border)">
+        <input type="checkbox" id="exp-inventario" style="width:16px;height:16px;accent-color:var(--teal)">
+        <div>
+          <div style="font-weight:600;font-size:13px">📦 Inventario actual</div>
+          <div style="font-size:11px;color:var(--text3)">Estado del catálogo: producto, categoría, precio, comprado, vendido, stock</div>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1.5px solid var(--border)">
+        <input type="checkbox" id="exp-resumen" style="width:16px;height:16px;accent-color:var(--teal)">
+        <div>
+          <div style="font-weight:600;font-size:13px">📊 Resumen financiero</div>
+          <div style="font-size:11px;color:var(--text3)">Ventas por día, totales por medio de pago, utilidad estimada</div>
+        </div>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- PREVIEW Y BOTONES -->
+  <div id="exp-preview" style="display:none" class="card">
+    <div class="card-title">Vista previa</div>
+    <div id="exp-preview-content" style="font-size:12px;color:var(--text2)"></div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="exportarExcel()" style="flex:1;min-width:140px;padding:13px;font-size:14px">
+      📊 Descargar Excel
+    </button>
+    <button class="btn btn-secondary" onclick="exportarPDF()" style="flex:1;min-width:140px;padding:13px;font-size:14px">
+      📄 Descargar PDF
+    </button>
+  </div>
+  <div id="exp-status" style="text-align:center;font-size:12px;color:var(--text3);margin-top:8px"></div>
+</section>
 </main>
 </div>
 
@@ -1141,9 +1279,16 @@ async function initCatalogo(){
     }
     toast('Catálogo cargado ✓');
   } else {
-    // Load from Firestore into INV array
+    // Load from Firestore — deduplicate by id
     INV.length = 0;
-    snap.forEach(d => INV.push(d.data()));
+    const seen = new Set();
+    snap.forEach(d => {
+      const item = d.data();
+      if(item.id && !seen.has(item.id)){
+        seen.add(item.id);
+        INV.push(item);
+      }
+    });
     INV.sort((a,b)=>a.id.localeCompare(b.id));
   }
   renderInv(INV);
@@ -1822,8 +1967,15 @@ function setVtaCat(cat,btn){
 // ── NUEVA VENTA ──
 function updateVtaPreview(){
   const item=selState.vta;
-  const qty=parseFloat(document.getElementById('vta-qty').value)||0;
+  const tipo=document.getElementById('vta-tipo').value;
+  const isGranel = tipo==='Granel';
   const val=parseFloat(document.getElementById('vta-val').value)||0;
+  let qty=parseFloat(document.getElementById('vta-qty').value)||0;
+  // For granel: auto-calc kg from value/price
+  if(isGranel && item && item.precio>0 && val>0){
+    qty = parseFloat((val / item.precio).toFixed(2));
+    document.getElementById('vta-qty').value = qty;
+  }
   if(!item){document.getElementById('vta-preview').style.display='none';return;}
   const stk=getStock(item);
   const newStk=parseFloat((stk-qty).toFixed(1));
@@ -2293,7 +2445,7 @@ const PAGE_NAMES = {
   'resumen':'Resumen','finanzas':'Finanzas','nueva-venta':'Nueva venta',
   'ventas-dia':'Ventas del día','historial-ventas':'Historial ventas','historial':'Historial','productos-top':'Top productos','inventario':'Stock estimado',
   'nueva-compra':'Nueva compra','nuevo-gasto':'Nuevo gasto',
-  'compras':'Historial compras','historial-compras':'Historial compras','catalogo':'Catálogo','contabilidad':'Utilidades'
+  'compras':'Historial compras','historial-compras':'Historial compras','catalogo':'Catálogo','contabilidad':'Utilidades','exportar':'Exportar datos'
 };
 
 function toggleMobileDrawer(){
@@ -2399,7 +2551,7 @@ function renderVentasDia(rows){
     return;
   }
   tbody.innerHTML = rows.map(v=>
-    `<tr><td>${v.producto||''}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${v.pago||''}</td><td><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId||''}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button></td></tr>`
+    `<tr><td>${v.producto||''}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${v.pago||''}</td><td style="white-space:nowrap"><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId||''}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId||''}',${v.valor||0})">🗑</button></td></tr>`
   ).join('');
 }
 
@@ -2572,7 +2724,16 @@ function renderHvTable(rows, q=''){
   const fmt2=v=>'$'+Math.round(v).toLocaleString('es-CO');
   const filtered = q ? rows.filter(v=>(v.producto||'').toLowerCase().includes(q.toLowerCase())) : rows;
   document.getElementById('tbody-hv').innerHTML = filtered.map(v=>
-    `<tr><td style="color:var(--text3);font-size:11px">${v.fecha}</td><td>${v.producto||''}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${v.pago||''}</td></tr>`
+    `<tr>
+      <td style="color:var(--text3);font-size:11px">${v.fecha}</td>
+      <td>${v.producto||''}</td>
+      <td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td>
+      <td style="font-weight:600">${fmt2(v.valor)}</td>
+      <td>${v.pago||''}</td>
+      <td style="white-space:nowrap">
+        ${v.fbId?`<button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor||0},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId}',${v.valor||0})">🗑</button>`:''}
+      </td>
+    </tr>`
   ).join('');
   const total=filtered.reduce((s,v)=>s+v.valor,0);
   document.getElementById('hv-total-row').textContent = `Total: ${fmt2(total)} (${filtered.length} transacciones)`;
@@ -3226,6 +3387,330 @@ setTimeout(function(){
     if(el) el.addEventListener('input', actualizarCemTotal);
   });
 },500);
+
+
+// ══════════════════════════════════════
+// GRANEL MODE
+// ══════════════════════════════════════
+function onTipoChange(){
+  const tipo = document.getElementById('vta-tipo').value;
+  const isGranel = tipo === 'Granel';
+  const qtyField = document.getElementById('vta-qty-field');
+  const granelNote = document.getElementById('granel-note');
+  if(qtyField) qtyField.style.display = isGranel ? 'none' : '';
+  if(granelNote) granelNote.classList.toggle('show', isGranel);
+  if(isGranel){
+    document.getElementById('vta-qty').value = 0;
+  } else {
+    const qEl = document.getElementById('vta-qty');
+    if(!qEl.value || parseFloat(qEl.value) === 0) qEl.value = 1;
+  }
+  updateVtaPreview();
+}
+
+// ══════════════════════════════════════
+// CIERRE DEL DÍA
+// ══════════════════════════════════════
+const CIERRES_KEY = 'pp_cierres';
+
+function calcCierre(){
+  const ef = parseFloat(document.getElementById('cierre-efectivo').value)||0;
+  const nq = parseFloat(document.getElementById('cierre-nequi').value)||0;
+  const ot = parseFloat(document.getElementById('cierre-otros').value)||0;
+  const contado = ef + nq + ot;
+  const ventas = todayHoyTotal || 0;
+  const diff = contado - ventas;
+  const res = document.getElementById('cierre-resumen');
+  if(contado > 0 || ventas > 0){
+    res.style.display = 'block';
+    document.getElementById('cr-ventas').textContent = fmt(ventas);
+    document.getElementById('cr-contado').textContent = fmt(contado);
+    const diffEl = document.getElementById('cr-diff');
+    diffEl.textContent = (diff >= 0 ? '+' : '') + fmt(diff);
+    diffEl.style.color = diff === 0 ? 'var(--green)' : diff > 0 ? 'var(--blue-text)' : 'var(--red)';
+  } else {
+    res.style.display = 'none';
+  }
+}
+
+function guardarCierre(){
+  const ef = parseFloat(document.getElementById('cierre-efectivo').value)||0;
+  const nq = parseFloat(document.getElementById('cierre-nequi').value)||0;
+  const ot = parseFloat(document.getElementById('cierre-otros').value)||0;
+  const obs = document.getElementById('cierre-obs').value.trim();
+  const ventas = todayHoyTotal || 0;
+  const contado = ef + nq + ot;
+  const diff = contado - ventas;
+  const fecha = getTodayISO();
+
+  const cierre = { fecha, ef, nq, ot, contado, ventas, diff, obs, ts: Date.now() };
+
+  // Save to localStorage as backup
+  try {
+    const existing = JSON.parse(localStorage.getItem(CIERRES_KEY)||'[]');
+    existing.unshift(cierre);
+    localStorage.setItem(CIERRES_KEY, JSON.stringify(existing.slice(0,90)));
+  } catch(e){}
+
+  // Also save to Firebase if available
+  if(typeof window.guardarCierreFirebase === 'function'){
+    window.guardarCierreFirebase(cierre);
+  }
+
+  renderCierres();
+  toast('Cierre del ' + fecha + ' guardado ✓');
+
+  // Reset form
+  ['cierre-efectivo','cierre-nequi','cierre-otros','cierre-obs'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('cierre-resumen').style.display = 'none';
+}
+
+function renderCierres(){
+  const tbody = document.getElementById('tbody-cierres');
+  if(!tbody) return;
+  let cierres = [];
+  try { cierres = JSON.parse(localStorage.getItem(CIERRES_KEY)||'[]'); } catch(e){}
+  if(!cierres.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text3)">Sin cierres registrados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = cierres.map(c => {
+    const diffColor = c.diff===0?'var(--green)':c.diff>0?'var(--blue-text)':'var(--red)';
+    return `<tr>
+      <td style="font-size:11px;color:var(--text3)">${c.fecha}</td>
+      <td>${fmt(c.ef||0)}</td>
+      <td>${fmt(c.nq||0)}</td>
+      <td>${fmt(c.ot||0)}</td>
+      <td style="font-weight:600">${fmt(c.ventas||0)}</td>
+      <td style="font-weight:700;color:${diffColor}">${c.diff>=0?'+':''}${fmt(c.diff||0)}</td>
+      <td style="font-size:11px;color:var(--text3)">${c.obs||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Load cierres on page show
+document.getElementById('page-ventas-dia').addEventListener('click', function initVD(){
+  renderCierres();
+}, {once:true});
+
+
+// ══════════════════════════════════════════════════════
+// EXPORTAR DATOS — Excel y PDF
+// ══════════════════════════════════════════════════════
+function loadScript(src, cb){
+  if(document.querySelector('script[src="'+src+'"]')){ cb(); return; }
+  const s=document.createElement('script'); s.src=src; s.onload=cb; document.head.appendChild(s);
+}
+
+function setExpRango(tipo){
+  const p=n=>String(n).padStart(2,'0'), d=new Date(), hoy=getTodayISO();
+  let desde=hoy, hasta=hoy;
+  if(tipo==='semana'){
+    const day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);
+    const lun=new Date(d); lun.setDate(diff);
+    desde=lun.getFullYear()+'-'+p(lun.getMonth()+1)+'-'+p(lun.getDate());
+  } else if(tipo==='mes'){
+    desde=hoy.slice(0,7)+'-01';
+  } else if(tipo==='todo'){
+    desde='2026-01-01';
+  }
+  document.getElementById('exp-desde').value=desde;
+  document.getElementById('exp-hasta').value=hasta;
+}
+
+function getExpRango(){
+  return { desde:document.getElementById('exp-desde').value||'2026-01-01',
+           hasta:document.getElementById('exp-hasta').value||getTodayISO() };
+}
+
+function filterByRango(rows,campo='fecha'){
+  const {desde,hasta}=getExpRango();
+  return rows.filter(r=>{ const f=(r[campo]||'').slice(0,10); return f>=desde&&f<=hasta; });
+}
+
+function actualizarPreview(){
+  const {desde,hasta}=getExpRango();
+  const vRows=document.getElementById('exp-ventas').checked?filterByRango(VENTAS_HIST):[];
+  const cRows=document.getElementById('exp-compras').checked?filterByRango(COMPRAS_HIST):[];
+  const gRows=document.getElementById('exp-gastos').checked?filterByRango(OTRAS_COMPRAS_HIST):[];
+  const lines=[];
+  if(document.getElementById('exp-ventas').checked) lines.push('💰 '+vRows.length+' ventas ('+desde+' → '+hasta+')');
+  if(document.getElementById('exp-compras').checked) lines.push('🛒 '+cRows.length+' compras de inventario');
+  if(document.getElementById('exp-gastos').checked) lines.push('💸 '+gRows.length+' gastos operativos');
+  if(document.getElementById('exp-inventario').checked) lines.push('📦 '+INV.length+' productos del catálogo');
+  if(document.getElementById('exp-resumen').checked) lines.push('📊 Resumen diario de '+new Set(filterByRango(VENTAS_HIST).map(v=>v.fecha)).size+' días');
+  const prev=document.getElementById('exp-preview');
+  const cont=document.getElementById('exp-preview-content');
+  if(lines.length){ prev.style.display='block'; cont.innerHTML=lines.map(l=>'<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+l+'</div>').join(''); }
+  else prev.style.display='none';
+}
+
+['exp-ventas','exp-compras','exp-gastos','exp-inventario','exp-resumen','exp-desde','exp-hasta'].forEach(id=>{
+  const el=document.getElementById(id); if(el) el.addEventListener('change',actualizarPreview);
+});
+
+function exportarExcel(){
+  const status=document.getElementById('exp-status');
+  status.textContent='Generando Excel…';
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function(){
+    try{
+      const wb=XLSX.utils.book_new();
+      const {desde,hasta}=getExpRango();
+      const n=v=>Math.round(v||0);
+      const fmtCOP=v=>'$'+n(v).toLocaleString('es-CO');
+
+      if(document.getElementById('exp-ventas').checked){
+        const rows=filterByRango(VENTAS_HIST);
+        const data=[['Fecha','Día','Producto','Tipo','Valor ($)','Medio de pago','Bulto']];
+        rows.forEach(v=>data.push([v.fecha||'',v.dia||'',v.producto||'',v.tipo||'',n(v.valor),v.pago||'',v.esBulto?'Sí':'No']));
+        data.push([]);
+        data.push(['','','','TOTAL',n(rows.reduce((s,v)=>s+(v.valor||0),0)),'','']);
+        const ws=XLSX.utils.aoa_to_sheet(data);
+        ws['!cols']=[{wch:12},{wch:10},{wch:32},{wch:10},{wch:12},{wch:12},{wch:6}];
+        XLSX.utils.book_append_sheet(wb,ws,'Ventas');
+      }
+
+      if(document.getElementById('exp-compras').checked){
+        const rows=filterByRango(COMPRAS_HIST);
+        const data=[['Fecha','N° Factura','Producto','Categoría','Proveedor','Cantidad','Unidad','Costo unit. ($)','Total ($)']];
+        rows.forEach(r=>data.push([r.fecha||'',r.factura||'',r.producto||r.p||'',r.cat||'',r.prov||'',r.qty||r.q||0,r.und||'',n(r.cu),n(r.t)]));
+        data.push([]);
+        data.push(['','','','','','','','TOTAL',n(rows.reduce((s,r)=>s+(r.t||0),0))]);
+        const ws=XLSX.utils.aoa_to_sheet(data);
+        ws['!cols']=[{wch:12},{wch:12},{wch:30},{wch:14},{wch:14},{wch:8},{wch:8},{wch:14},{wch:12}];
+        XLSX.utils.book_append_sheet(wb,ws,'Compras');
+      }
+
+      if(document.getElementById('exp-gastos').checked){
+        const rows=filterByRango(OTRAS_COMPRAS_HIST);
+        const data=[['Fecha','Concepto','Proveedor','Cantidad','Total ($)']];
+        rows.forEach(r=>data.push([r.fecha||'',r.producto||r.concepto||'',r.prov||'',r.qty||r.cantidad||1,n(r.t||r['Total compra']||0)]));
+        data.push([]);
+        data.push(['','','','TOTAL',n(rows.reduce((s,r)=>s+(r.t||r['Total compra']||0),0))]);
+        const ws=XLSX.utils.aoa_to_sheet(data);
+        ws['!cols']=[{wch:12},{wch:30},{wch:18},{wch:8},{wch:12}];
+        XLSX.utils.book_append_sheet(wb,ws,'Gastos');
+      }
+
+      if(document.getElementById('exp-inventario').checked){
+        const data=[['ID','Categoría','Subcategoría','Producto','Precio venta ($)','Comprado','Vendido','Stock est.','Unidad']];
+        INV.forEach(r=>{
+          const stk=parseFloat(((r.bought||0)-(r.sold||0)).toFixed(1));
+          data.push([r.id||'',r.cat||'',r.sub||'',r.p||'',n(r.precio),r.bought||0,r.sold||0,stk,r.unit||'']);
+        });
+        const ws=XLSX.utils.aoa_to_sheet(data);
+        ws['!cols']=[{wch:14},{wch:14},{wch:14},{wch:30},{wch:14},{wch:10},{wch:10},{wch:10},{wch:8}];
+        XLSX.utils.book_append_sheet(wb,ws,'Inventario');
+      }
+
+      if(document.getElementById('exp-resumen').checked){
+        const vRows=filterByRango(VENTAS_HIST);
+        const byDay={};
+        vRows.forEach(v=>{
+          const f=v.fecha||''; if(!byDay[f]) byDay[f]={f,t:0,men:0,bul:0,ef:0,nq:0,ot:0,n:0};
+          byDay[f].t+=v.valor||0; byDay[f].n++;
+          if(v.esBulto) byDay[f].bul+=v.valor||0; else byDay[f].men+=v.valor||0;
+          const p=(v.pago||'').toLowerCase();
+          if(p==='efectivo') byDay[f].ef+=v.valor||0;
+          else if(p==='nequi') byDay[f].nq+=v.valor||0;
+          else byDay[f].ot+=v.valor||0;
+        });
+        const dias=Object.values(byDay).sort((a,b)=>a.f.localeCompare(b.f));
+        const data=[['Fecha','Total ($)','Menudeo ($)','Bulto ($)','Efectivo ($)','Nequi ($)','Otros ($)','# Trans.','Util. bruta est. ($)']];
+        dias.forEach(d=>data.push([d.f,n(d.t),n(d.men),n(d.bul),n(d.ef),n(d.nq),n(d.ot),d.n,n(d.t*0.296)]));
+        const tot=dias.reduce((s,d)=>({t:s.t+d.t,men:s.men+d.men,bul:s.bul+d.bul,ef:s.ef+d.ef,nq:s.nq+d.nq,ot:s.ot+d.ot,n:s.n+d.n}),{t:0,men:0,bul:0,ef:0,nq:0,ot:0,n:0});
+        data.push(['TOTAL',n(tot.t),n(tot.men),n(tot.bul),n(tot.ef),n(tot.nq),n(tot.ot),tot.n,n(tot.t*0.296)]);
+        const ws=XLSX.utils.aoa_to_sheet(data);
+        ws['!cols']=[{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:8},{wch:16}];
+        XLSX.utils.book_append_sheet(wb,ws,'Resumen diario');
+      }
+
+      if(wb.SheetNames.length===0){ status.textContent='⚠️ Selecciona al menos un grupo'; return; }
+      XLSX.writeFile(wb,'PatitasPeludas_'+getTodayISO()+'.xlsx');
+      status.textContent='✓ Excel descargado';
+      setTimeout(()=>status.textContent='',4000);
+    }catch(e){ status.textContent='✗ Error: '+e.message; console.error(e); }
+  });
+}
+
+function exportarPDF(){
+  const status=document.getElementById('exp-status');
+  status.textContent='Generando PDF…';
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',function(){
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js',function(){
+      try{
+        const {jsPDF}=window.jspdf;
+        const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+        const {desde,hasta}=getExpRango();
+        const n=v=>'$'+Math.round(v||0).toLocaleString('es-CO');
+        let pages=0;
+
+        function addSheet(titulo,headers,rows){
+          if(pages>0) doc.addPage();
+          doc.setFillColor(0,122,114); doc.rect(0,0,297,12,'F');
+          doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold');
+          doc.text('Patitas Peludas — '+titulo,8,8);
+          doc.setFontSize(7);
+          doc.text('Período: '+desde+' → '+hasta+'   Generado: '+getTodayISO(),190,8);
+          doc.setTextColor(0,0,0);
+          doc.autoTable({
+            startY:14, head:[headers], body:rows,
+            styles:{fontSize:7,cellPadding:1.5,font:'helvetica'},
+            headStyles:{fillColor:[0,153,144],textColor:255,fontStyle:'bold',fontSize:8},
+            alternateRowStyles:{fillColor:[240,251,250]},
+            margin:{left:5,right:5},
+            didDrawPage:function(){
+              doc.setFontSize(7); doc.setTextColor(150);
+              doc.text('Pág. '+doc.internal.getCurrentPageInfo().pageNumber,285,205);
+            }
+          });
+          pages++;
+        }
+
+        if(document.getElementById('exp-ventas').checked){
+          const rows=filterByRango(VENTAS_HIST).map(v=>[v.fecha||'',v.producto||'',v.tipo||'',n(v.valor),v.pago||'']);
+          addSheet('Ventas ('+rows.length+' registros)',['Fecha','Producto','Tipo','Valor','Pago'],rows);
+        }
+        if(document.getElementById('exp-compras').checked){
+          const rows=filterByRango(COMPRAS_HIST).map(r=>[r.fecha||'',r.factura||'',r.producto||r.p||'',r.prov||'',(r.qty||r.q||0)+' '+(r.und||''),n(r.cu),n(r.t)]);
+          addSheet('Compras ('+rows.length+')',['Fecha','Factura','Producto','Proveedor','Cant.','Costo unit.','Total'],rows);
+        }
+        if(document.getElementById('exp-gastos').checked){
+          const rows=filterByRango(OTRAS_COMPRAS_HIST).map(r=>[r.fecha||'',r.producto||r.concepto||'',r.prov||'',n(r.t||0)]);
+          addSheet('Gastos',['Fecha','Concepto','Proveedor','Total'],rows);
+        }
+        if(document.getElementById('exp-inventario').checked){
+          const rows=INV.map(r=>[r.id||'',r.cat||'',r.p||'',n(r.precio),r.bought||0,r.sold||0,parseFloat(((r.bought||0)-(r.sold||0)).toFixed(1))+' '+(r.unit||'')]);
+          addSheet('Inventario ('+rows.length+' productos)',['ID','Categoría','Producto','Precio','Comprado','Vendido','Stock'],rows);
+        }
+        if(document.getElementById('exp-resumen').checked){
+          const vRows=filterByRango(VENTAS_HIST);
+          const byDay={};
+          vRows.forEach(v=>{ const f=v.fecha||''; if(!byDay[f]) byDay[f]={f,t:0,ef:0,nq:0,n:0};
+            byDay[f].t+=v.valor||0; byDay[f].n++;
+            const p=(v.pago||'').toLowerCase();
+            if(p==='efectivo') byDay[f].ef+=v.valor||0; else if(p==='nequi') byDay[f].nq+=v.valor||0;
+          });
+          const rows=Object.values(byDay).sort((a,b)=>a.f.localeCompare(b.f)).map(d=>[d.f,n(d.t),n(d.ef),n(d.nq),d.n,n(d.t*0.296)]);
+          addSheet('Resumen diario',['Fecha','Total','Efectivo','Nequi','# Trans.','Util. est.'],rows);
+        }
+
+        if(pages===0){ status.textContent='⚠️ Selecciona al menos un grupo'; return; }
+        doc.save('PatitasPeludas_'+getTodayISO()+'.pdf');
+        status.textContent='✓ PDF descargado';
+        setTimeout(()=>status.textContent='',4000);
+      }catch(e){ status.textContent='✗ Error PDF: '+e.message; console.error(e); }
+    });
+  });
+}
+
+document.getElementById('page-exportar').addEventListener('click',function(){
+  if(!document.getElementById('exp-hasta').value) document.getElementById('exp-hasta').value=getTodayISO();
+  actualizarPreview();
+},{once:true});
 
 </script>
 
