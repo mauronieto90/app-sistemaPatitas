@@ -644,6 +644,38 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
   <input class="search-bar" type="text" placeholder="Buscar por nombre, ID o categoría..." oninput="filtrarInv(this.value)" id="inv-search">
   <div class="chips" id="inv-chips"></div>
+
+  <!-- STOCK FILTER TABS -->
+  <div class="htabs" style="margin-bottom:10px">
+    <button class="htab on" id="stk-tab-todos" onclick="setStockTab('todos',this)">🗂 Todos</button>
+    <button class="htab" id="stk-tab-bajo" onclick="setStockTab('bajo',this)">🟡 Stock bajo</button>
+    <button class="htab" id="stk-tab-agotado" onclick="setStockTab('agotado',this)">🔴 Agotados</button>
+    <button class="htab" id="stk-tab-ok" onclick="setStockTab('ok',this)">🟢 Con stock</button>
+  </div>
+
+  <!-- LISTA DE COMPRAS -->
+  <div id="lista-compras-panel" style="display:none" class="card" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="card-title" style="margin-bottom:2px">📋 Lista de compras sugerida</div>
+        <div style="font-size:11px;color:var(--text3)">Productos con stock bajo o agotado — ajusta cantidades antes de descargar</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px" onclick="marcarTodosListaCompras()">✓ Todos</button>
+        <button class="btn btn-primary" style="font-size:12px;padding:7px 12px" onclick="descargarListaCompras()">📊 Descargar Excel</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:32px"></th><th>ID</th><th>Producto</th><th>Categoría</th><th>Stock actual</th><th>Und</th><th>Cant. a comprar</th><th>Proveedor habitual</th></tr></thead>
+        <tbody id="tbody-lista-compras"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text3)">
+      💡 Al recibir la factura ve a <strong>Nueva compra</strong> — el producto ya estará en el catálogo con su precio.
+    </div>
+  </div>
+
   <div class="card" style="padding:0;overflow:hidden">
     <div class="tbl-wrap">
       <table><thead><tr><th>ID</th><th>Categoría</th><th>Producto</th><th>Precio venta</th><th>Comprado</th><th>Vendido</th><th>Stock est.</th><th>Und</th><th></th></tr></thead>
@@ -904,21 +936,37 @@ document.addEventListener('DOMContentLoaded',function(){
         <input type="text" id="cierre-obs" placeholder="Ej: domingo tranquilo">
       </div>
     </div>
-    <div id="cierre-resumen" style="background:var(--surface2);border-radius:var(--radius);padding:12px 14px;margin:10px 0;font-size:13px;display:none">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="color:var(--text2)">Total registrado en ventas</span>
+    <div id="cierre-resumen" style="background:var(--surface2);border-radius:var(--radius);padding:14px 16px;margin:10px 0;font-size:13px;display:none">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="color:var(--text2)">Ventas registradas en sistema</span>
         <span id="cr-ventas" style="font-weight:600"></span>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="color:var(--text2)">Total contado en caja</span>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="color:var(--text2)">Total contado (Efectivo + Nequi + Otros)</span>
         <span id="cr-contado" style="font-weight:600"></span>
       </div>
-      <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);font-weight:700">
-        <span>Diferencia</span>
-        <span id="cr-diff" style="font-weight:800"></span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:6px 0">
+        <span style="font-weight:700">Diferencia</span>
+        <span id="cr-diff" style="font-weight:800;font-size:18px"></span>
+      </div>
+      <div id="cr-diff-note" style="font-size:11px;margin-top:6px;padding:8px 10px;border-radius:8px"></div>
+    </div>
+
+    <!-- Sobrante / Faltante explícito -->
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">¿Hubo sobrante o faltante en caja?</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="btn btn-secondary" id="btn-sobrante" style="flex:1;font-size:12px;padding:8px" onclick="setSobranteTipo('sobrante')">📈 Sobrante</button>
+        <button class="btn btn-secondary" id="btn-faltante" style="flex:1;font-size:12px;padding:8px" onclick="setSobranteTipo('faltante')">📉 Faltante</button>
+        <button class="btn btn-secondary" id="btn-cuadre" style="flex:1;font-size:12px;padding:8px" onclick="setSobranteTipo('cuadre')">✓ Cuadró</button>
+      </div>
+      <div id="sobrante-input-row" style="display:none;gap:8px" class="sobrante-row">
+        <input type="number" id="inp-sobrante-monto" placeholder="Monto ($)" step="100" min="0" style="flex:1">
+        <input type="text" id="inp-sobrante-nota" placeholder="Motivo o nota" style="flex:2">
       </div>
     </div>
-    <button class="btn btn-primary" onclick="guardarCierre()" style="width:100%">💾 Guardar cierre del día</button>
+
+    <button class="btn btn-primary" onclick="guardarCierre()" style="width:100%;padding:13px;font-size:15px">💾 Guardar cierre del día</button>
   </div>
 
   <div class="card">
@@ -3739,3 +3787,287 @@ function exportarPDF(){
         doc.save('PatitasPeludas_'+getTodayISO()+'.pdf');
         status.textContent='✓ PDF descargado';
         setTimeout(()=>status.textContent='',4000);
+      }catch(e){ status.textContent='✗ Error PDF: '+e.message; console.error(e); }
+    });
+  });
+}
+
+document.getElementById('page-exportar').addEventListener('click',function(){
+  if(!document.getElementById('exp-hasta').value) document.getElementById('exp-hasta').value=getTodayISO();
+  actualizarPreview();
+},{once:true});
+
+
+
+// ══════════════════════════════════════
+// STOCK FILTER TABS
+// ══════════════════════════════════════
+let stockTabActivo = 'todos';
+let invSearchQ = '';
+
+function setStockTab(tab, btn){
+  stockTabActivo = tab;
+  document.querySelectorAll('#page-inventario .htab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  // Show/hide lista compras panel
+  const panel = document.getElementById('lista-compras-panel');
+  if(tab === 'bajo' || tab === 'agotado'){
+    panel.style.display = 'block';
+    buildListaCompras(tab);
+  } else {
+    panel.style.display = 'none';
+  }
+  renderInvFiltered();
+}
+
+function renderInvFiltered(){
+  const q = (document.getElementById('inv-search')||{value:''}).value.toLowerCase();
+  let data = INV.slice();
+  // Text search
+  if(q) data = data.filter(r => r.p.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || (r.cat||'').toLowerCase().includes(q));
+  // Category chip
+  const activeChip = document.querySelector('#inv-chips .chip.active');
+  if(activeChip && activeChip.dataset.cat !== 'Todos') data = data.filter(r => r.cat === activeChip.dataset.cat);
+  // Stock tab filter
+  if(stockTabActivo === 'bajo')    data = data.filter(r => { const s=getStock(r); return s>=1 && s<=3; });
+  if(stockTabActivo === 'agotado') data = data.filter(r => getStock(r) < 1);
+  if(stockTabActivo === 'ok')      data = data.filter(r => getStock(r) > 3);
+  renderInv(data);
+}
+
+// Override filtrarInv to use new filtered render
+const _origFiltrarInv = window.filtrarInv || function(){};
+window.filtrarInv = function(q){
+  _origFiltrarInv(q);
+  renderInvFiltered();
+};
+
+// ── Lista de compras ──
+function buildListaCompras(tab){
+  const tbody = document.getElementById('tbody-lista-compras');
+  if(!tbody) return;
+  let items = INV.filter(r => {
+    const s = getStock(r);
+    if(tab === 'agotado') return s < 1;
+    if(tab === 'bajo') return s >= 0 && s <= 3;
+    return s <= 3;
+  }).sort((a,b) => getStock(a) - getStock(b));
+
+  tbody.innerHTML = items.map((r,i) => {
+    const stk = getStock(r);
+    const stkColor = stk < 0 ? 'var(--red)' : stk === 0 ? 'var(--red)' : 'var(--amber)';
+    const provMap = {'Concentrado':'AnimalHome / Monello','Aseo':'Nutivara / Porvenir','Snack':'Nutivara','Accesorio':'Villapets'};
+    const provSugerido = provMap[r.cat] || '';
+    return `<tr>
+      <td><input type="checkbox" class="compra-check" data-idx="${i}" checked style="accent-color:var(--teal)"></td>
+      <td class="mono" style="font-size:11px">${r.id}</td>
+      <td style="font-weight:500">${r.p}</td>
+      <td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td>
+      <td style="font-weight:700;color:${stkColor}">${fmtN(stk)} ${r.unit}</td>
+      <td>${r.unit}</td>
+      <td><input type="number" class="compra-qty" data-id="${r.id}" value="${r.unit==='kg'?5:2}" min="0.5" step="${r.unit==='kg'?0.5:1}" style="width:70px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;font-family:'Nunito',sans-serif"></td>
+      <td><input type="text" class="compra-prov" data-id="${r.id}" value="${provSugerido}" style="width:140px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;font-family:'Nunito',sans-serif"></td>
+    </tr>`;
+  }).join('');
+
+  window._listaComprasItems = items;
+}
+
+function marcarTodosListaCompras(){
+  document.querySelectorAll('.compra-check').forEach(cb => cb.checked = true);
+}
+
+function descargarListaCompras(){
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function(){
+    const items = window._listaComprasItems || [];
+    const checks = document.querySelectorAll('.compra-check');
+    const qtys   = document.querySelectorAll('.compra-qty');
+    const provs  = document.querySelectorAll('.compra-prov');
+
+    const data = [['ID','Producto','Categoría','Stock actual','Unid.','Cant. a comprar','Precio venta actual','Proveedor','Observaciones']];
+    items.forEach((r, i) => {
+      if(!checks[i] || !checks[i].checked) return;
+      const qty  = qtys[i]  ? parseFloat(qtys[i].value)||0  : 0;
+      const prov = provs[i] ? provs[i].value : '';
+      const stk  = getStock(r);
+      data.push([
+        r.id, r.p, r.cat||'',
+        fmtN(stk)+' '+r.unit,
+        r.unit, qty,
+        r.precio ? '$'+Math.round(r.precio).toLocaleString('es-CO') : '—',
+        prov, ''
+      ]);
+    });
+
+    if(data.length <= 1){ toast('No hay productos seleccionados','var(--amber)'); return; }
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:14},{wch:32},{wch:14},{wch:12},{wch:6},{wch:14},{wch:16},{wch:20},{wch:20}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Lista de compras');
+
+    // Add a second sheet with instructions
+    const ws2 = XLSX.utils.aoa_to_sheet([
+      ['INSTRUCCIONES'],
+      [''],
+      ['1. Revisa la lista y ajusta las cantidades según tu criterio'],
+      ['2. Contacta a cada proveedor con los productos de su columna'],
+      ['3. Al recibir la factura, ve a Nueva Compra en la app'],
+      ['4. Los productos ya están en el catálogo — solo ingresa precio de costo y cantidad'],
+      [''],
+      ['Generado: '+getTodayISO()],
+    ]);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Instrucciones');
+
+    XLSX.writeFile(wb, 'ListaCompras_PatitasPeludas_'+getTodayISO()+'.xlsx');
+    toast('Lista de compras descargada ✓');
+  });
+}
+
+// ══════════════════════════════════════
+// CIERRE DE CAJA — sobrante/faltante
+// ══════════════════════════════════════
+let sobranteTipoCierre = null;
+
+function setSobranteTipo(tipo){
+  sobranteTipoCierre = tipo;
+  ['sobrante','faltante','cuadre'].forEach(t => {
+    const btn = document.getElementById('btn-'+t);
+    if(btn) btn.className = 'btn '+(tipo===t?'btn-primary':'btn-secondary')+' ';
+    if(btn) btn.style.flex = '1';
+    if(btn) btn.style.fontSize = '12px';
+    if(btn) btn.style.padding = '8px';
+  });
+  const row = document.getElementById('sobrante-input-row');
+  if(row) row.style.display = tipo === 'cuadre' ? 'none' : 'flex';
+  if(tipo === 'cuadre'){
+    const montoEl = document.getElementById('inp-sobrante-monto');
+    if(montoEl) montoEl.value = '';
+  }
+}
+
+// Patch calcCierre to also show diff note
+const _origCalcCierre = window.calcCierre;
+window.calcCierre = function(){
+  if(typeof _origCalcCierre === 'function') _origCalcCierre();
+  // Update diff note
+  const ef  = parseFloat(document.getElementById('cierre-efectivo').value)||0;
+  const nq  = parseFloat(document.getElementById('cierre-nequi').value)||0;
+  const ot  = parseFloat(document.getElementById('cierre-otros').value)||0;
+  const contado = ef+nq+ot;
+  const ventas  = todayHoyTotal||0;
+  const diff    = contado-ventas;
+  const noteEl  = document.getElementById('cr-diff-note');
+  if(noteEl && contado > 0){
+    if(diff > 0){
+      noteEl.style.background = '#E6F5EF';
+      noteEl.style.color = '#006E67';
+      noteEl.textContent = '📈 Hay '+fmt(diff)+' de más en caja. Puede ser un sobrante real o una venta no registrada.';
+    } else if(diff < 0){
+      noteEl.style.background = '#FDECEB';
+      noteEl.style.color = '#9B2A1A';
+      noteEl.textContent = '📉 Faltan '+fmt(Math.abs(diff))+' en caja. Revisa si hubo gastos no registrados o un error en el conteo.';
+    } else {
+      noteEl.style.background = '#E0F5EF';
+      noteEl.style.color = '#006E67';
+      noteEl.textContent = '✓ La caja cuadra perfectamente.';
+    }
+  }
+};
+
+// Patch guardarCierre to include sobrante/faltante
+const _origGuardarCierre = window.guardarCierre;
+window.guardarCierre = function(){
+  // Capture sobrante/faltante before calling original
+  const montoEl = document.getElementById('inp-sobrante-monto');
+  const notaEl  = document.getElementById('inp-sobrante-nota');
+  const monto   = montoEl ? parseFloat(montoEl.value)||0 : 0;
+  const notaSob = notaEl  ? notaEl.value.trim() : '';
+
+  // Inject into cierre data by temporarily patching localStorage
+  window._pendingSobrante = {
+    tipo: sobranteTipoCierre,
+    monto: monto,
+    nota: notaSob
+  };
+
+  if(typeof _origGuardarCierre === 'function') _origGuardarCierre();
+
+  // Reset sobrante UI
+  setSobranteTipo(null);
+  sobranteTipoCierre = null;
+  if(montoEl) montoEl.value = '';
+  if(notaEl)  notaEl.value = '';
+  ['sobrante','faltante','cuadre'].forEach(t=>{
+    const btn=document.getElementById('btn-'+t);
+    if(btn){ btn.className='btn btn-secondary'; btn.style.flex='1'; btn.style.fontSize='12px'; btn.style.padding='8px'; }
+  });
+  const row=document.getElementById('sobrante-input-row');
+  if(row) row.style.display='none';
+  window._pendingSobrante = null;
+};
+
+// Patch renderCierres to show sobrante/faltante
+const _origRenderCierres = window.renderCierres;
+window.renderCierres = function(){
+  const tbody = document.getElementById('tbody-cierres');
+  if(!tbody) return;
+  let cierres = [];
+  try { cierres = JSON.parse(localStorage.getItem('pp_cierres')||'[]'); } catch(e){}
+  if(!cierres.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--text3)">Sin cierres registrados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = cierres.map(c => {
+    const diffColor = c.diff===0?'var(--green)':c.diff>0?'var(--blue-text)':'var(--red)';
+    const sob = c.sobrante;
+    const sobCell = sob && sob.tipo && sob.tipo!=='cuadre'
+      ? `<span style="color:${sob.tipo==='sobrante'?'var(--blue-text)':'var(--red)'};font-weight:600">${sob.tipo==='sobrante'?'+':'-'}${fmt(sob.monto||0)}${sob.nota?' ('+sob.nota+')':''}</span>`
+      : '<span style="color:var(--text3)">—</span>';
+    return `<tr>
+      <td style="font-size:11px;color:var(--text3)">${c.fecha}</td>
+      <td>${fmt(c.ef||0)}</td><td>${fmt(c.nq||0)}</td><td>${fmt(c.ot||0)}</td>
+      <td style="font-weight:600">${fmt(c.ventas||0)}</td>
+      <td style="font-weight:700;color:${diffColor}">${c.diff>=0?'+':''}${fmt(c.diff||0)}</td>
+      <td>${sobCell}</td>
+      <td style="font-size:11px;color:var(--text3)">${c.obs||'—'}</td>
+    </tr>`;
+  }).join('');
+};
+
+// Update tbody-cierres header to include sobrante column
+setTimeout(function(){
+  const thead = document.querySelector('#tbody-cierres')?.closest('table')?.querySelector('thead tr');
+  if(thead && thead.children.length === 7){
+    const th = document.createElement('th'); th.textContent='Sobrante/Faltante';
+    thead.insertBefore(th, thead.children[6]);
+  }
+}, 200);
+
+</script>
+
+<!-- EDIT COMPRA MODAL -->
+<div class="cmp-edit-modal" id="cmp-edit-modal" onclick="if(event.target===this)closeCmpEdit()">
+  <div class="cmp-edit-box">
+    <h3>✏️ Editar registro de compra</h3>
+    <input type="hidden" id="cem-idx">
+    <div class="form-grid">
+      <div class="field"><label>Fecha</label><input type="date" id="cem-fecha"></div>
+      <div class="field"><label>Producto</label><input type="text" id="cem-producto"></div>
+      <div class="field"><label>Proveedor</label><input type="text" id="cem-prov"></div>
+      <div class="field"><label>Cantidad</label><input type="number" id="cem-qty" step="0.1" min="0"></div>
+      <div class="field"><label>Unidad</label>
+        <select id="cem-und"><option>kg</option><option>und</option><option>bulto</option><option>caja</option><option>paquete</option></select>
+      </div>
+      <div class="field"><label>Costo unitario ($)</label><input type="number" id="cem-cu" step="100" min="0"></div>
+      <div class="field"><label>N° Factura</label><input type="text" id="cem-factura" placeholder="Opcional"></div>
+    </div>
+    <div id="cem-total-preview" style="text-align:right;font-size:14px;font-weight:700;color:var(--blue);margin-top:4px"></div>
+    <div class="cmp-edit-footer">
+      <button class="btn btn-secondary" onclick="closeCmpEdit()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCmpEdit()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
