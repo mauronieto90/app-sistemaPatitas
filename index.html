@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="field"><label>Medio de pago</label>
         <select id="vta-pago"><option>Efectivo</option><option>Nequi</option><option>Daviplata</option><option>Fiado</option></select>
       </div>
-      <div class="field"><label>Fecha</label>
+      <div class="field" style="display:none"><label>Fecha</label>
         <input type="date" id="vta-fecha">
       </div>
     </div>
@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
   <div class="card">
     <div class="card-title">Ventas de hoy — <span id="fecha-hoy-label"></span></div>
-    <table><thead><tr><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
+    <table><thead><tr><th>Hora</th><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
     <tbody id="tbody-hist-hoy">
       <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Cargando ventas de hoy…</td></tr>
     </tbody></table>
@@ -933,7 +933,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <div class="card">
     <div class="card-title">Transacciones de hoy</div>
     <div class="tbl-wrap">
-      <table><thead><tr><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
+      <table><thead><tr><th>Hora</th><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
       <tbody id="tbody-vd-hoy"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">No hay ventas registradas hoy</td></tr></tbody>
       </table>
     </div>
@@ -988,7 +988,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="card-title">Detalle de transacciones</div>
     <input class="search-bar" type="text" id="hv-search" placeholder="Buscar producto…" oninput="filtrarHv(this.value)" style="margin-bottom:10px">
     <div class="tbl-wrap">
-      <table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
+      <table><thead><tr><th>Fecha / Hora</th><th>Producto</th><th>Tipo</th><th>Valor</th><th>Pago</th><th></th></tr></thead>
       <tbody id="tbody-hv"></tbody></table>
     </div>
     <div id="hv-total-row" style="text-align:right;font-weight:700;font-size:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--teal)"></div>
@@ -1238,6 +1238,16 @@ function getHoyISO(){
   const p = n => String(n).padStart(2,'0');
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
 }
+function getHoraISO(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+function getHoraCorta(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return p(d.getHours())+':'+p(d.getMinutes());
+}
 
 // ── COLECCIONES FIRESTORE ──
 const COL_VENTAS   = 'ventas';
@@ -1280,12 +1290,20 @@ async function initCatalogo(){
     toast('Catálogo cargado ✓');
   } else {
     // Load from Firestore — deduplicate by id
+    // For kg-unit items: cross-reference with hardcoded INV to get correct precio_kg
+    const invPriceMap = {};
+    INV.forEach(i => { if(i.unit==='kg') invPriceMap[i.id] = i.precio; });
     INV.length = 0;
     const seen = new Set();
     snap.forEach(d => {
       const item = d.data();
       if(item.id && !seen.has(item.id)){
         seen.add(item.id);
+        // If unit is kg, trust the hardcoded INV price over Firebase
+        if(item.unit==='kg' && invPriceMap[item.id]){
+          item.precio = invPriceMap[item.id];
+          item.precio_kg = invPriceMap[item.id];
+        }
         INV.push(item);
       }
     });
@@ -1365,8 +1383,11 @@ function escucharVentasHoy(){
     // Update historial table — get tbody fresh each time
     const tbody = document.getElementById('tbody-hist-hoy');
     if(hoyRows.length > 0 && tbody){
+      // Sort by ts desc (most recent first)
+      hoyRows.sort((a,b)=>(b.ts||0)-(a.ts||0));
       tbody.innerHTML = hoyRows.map(v =>
         `<tr data-fbid="${v.fbId}">
+          <td style="font-size:11px;color:var(--teal);font-weight:600">${v.hora||'—'}</td>
           <td>${v.producto||''}</td>
           <td><span class="pill ${v.tipo==='Bulto'?'pill-blue':'pill-green'}">${v.tipo||''}</span></td>
           <td style="font-weight:600">${fmt(v.valor||0)}</td>
@@ -1519,10 +1540,11 @@ window.registrarVenta = async function(){
   if(vtaFechaEl) vtaFechaEl.value = fecha;
   const esBulto = tipo==='Bulto';
 
-  // Save to Firestore
+  // Save to Firestore — include hora
+  const hora = getHoraCorta();
   const fbId = await guardarVenta({
     producto: item.p, productoId: item.id, tipo, valor, pago,
-    cantidad: qty, fecha, esBulto, ts: Date.now()
+    cantidad: qty, fecha, hora, esBulto, ts: Date.now()
   });
 
   // Update stock in Firestore
@@ -1537,7 +1559,7 @@ window.registrarVenta = async function(){
   if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
   const tr = document.createElement('tr');
   tr.dataset.fbid = fbId||'';
-  tr.innerHTML=`<td>${fecha}</td><td>${item.p}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${tipo}</span></td><td>${fmtN(qty)}</td><td style="font-weight:600;color:var(--green)">${fmt(valor)}</td><td>${pago}</td><td><button class="btn-icon btn-sm" onclick="editVentaFB('${fbId}','${tipo}',${valor},'${pago}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${fbId}',${valor})">🗑</button></td>`;
+  tr.innerHTML=`<td style="font-size:11px"><div>${fecha}</div><div style="color:var(--teal);font-weight:600">${hora}</div></td><td>${item.p}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${tipo}</span></td><td>${fmtN(qty)}</td><td style="font-weight:600;color:var(--green)">${fmt(valor)}</td><td>${pago}</td><td><button class="btn-icon btn-sm" onclick="editVentaFB('${fbId}','${tipo}',${valor},'${pago}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${fbId}',${valor})">🗑</button></td>`;
   tbody.appendChild(tr);
   document.getElementById('vta-session-total').textContent='Total sesión: '+fmt(vtaSessionTotal);
 
@@ -1972,9 +1994,13 @@ function updateVtaPreview(){
   const val=parseFloat(document.getElementById('vta-val').value)||0;
   let qty=parseFloat(document.getElementById('vta-qty').value)||0;
   // For granel: auto-calc kg from value/price
-  if(isGranel && item && item.precio>0 && val>0){
-    qty = parseFloat((val / item.precio).toFixed(2));
-    document.getElementById('vta-qty').value = qty;
+  // Use precio_kg if available, else use precio only when unit='kg'
+  if(isGranel && item && val>0){
+    const precioKg = item.precio_kg || (item.unit==='kg' ? item.precio : 0);
+    if(precioKg > 0){
+      qty = parseFloat((val / precioKg).toFixed(2));
+      document.getElementById('vta-qty').value = qty;
+    }
   }
   if(!item){document.getElementById('vta-preview').style.display='none';return;}
   const stk=getStock(item);
@@ -1982,6 +2008,16 @@ function updateVtaPreview(){
   document.getElementById('vpv-prod').textContent=item.p;
   document.getElementById('vpv-stk').textContent=fmtN(stk)+' '+item.unit;
   document.getElementById('vpv-new').innerHTML=`<span class="${stkClass(newStk)}">${fmtN(newStk)} ${item.unit}</span>`;
+  // Show precio/kg for granel items
+  const precioKgInfo = isGranel && (item.precio_kg||(item.unit==='kg'?item.precio:0));
+  const existingNote = document.getElementById('vpv-precio-kg');
+  if(precioKgInfo){
+    const note = existingNote || document.createElement('div');
+    note.id='vpv-precio-kg';
+    note.style.cssText='font-size:11px;color:var(--teal);margin-top:4px';
+    note.textContent='Precio granel: '+fmt(precioKgInfo)+'/kg → '+fmtN(qty)+' kg descontados del stock';
+    if(!existingNote) document.getElementById('vta-preview').appendChild(note);
+  } else if(existingNote){ existingNote.remove(); }
   document.getElementById('vpv-val').textContent=fmt(val);
   document.getElementById('vta-preview').style.display='block';
 }
@@ -2544,14 +2580,15 @@ function renderVentasDia(rows){
     options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}
   });
 
-  // Table
+  // Table — sort by ts desc
   const tbody = document.getElementById('tbody-vd-hoy');
   if(rows.length===0){
-    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">No hay ventas registradas hoy</td></tr>';
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">No hay ventas registradas hoy</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(v=>
-    `<tr><td>${v.producto||''}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${v.pago||''}</td><td style="white-space:nowrap"><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId||''}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId||''}',${v.valor||0})">🗑</button></td></tr>`
+  const sorted = rows.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  tbody.innerHTML = sorted.map(v=>
+    `<tr><td style="font-size:11px;color:var(--teal);font-weight:600">${v.hora||'—'}</td><td>${v.producto||''}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${v.pago||''}</td><td style="white-space:nowrap"><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId||''}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId||''}',${v.valor||0})">🗑</button></td></tr>`
   ).join('');
 }
 
@@ -2725,7 +2762,7 @@ function renderHvTable(rows, q=''){
   const filtered = q ? rows.filter(v=>(v.producto||'').toLowerCase().includes(q.toLowerCase())) : rows;
   document.getElementById('tbody-hv').innerHTML = filtered.map(v=>
     `<tr>
-      <td style="color:var(--text3);font-size:11px">${v.fecha}</td>
+      <td style="font-size:11px"><div style="color:var(--text3)">${v.fecha}</div>${v.hora?`<div style="color:var(--teal);font-weight:600">${v.hora}</div>`:''}</td>
       <td>${v.producto||''}</td>
       <td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td>
       <td style="font-weight:600">${fmt2(v.valor)}</td>
@@ -3702,40 +3739,3 @@ function exportarPDF(){
         doc.save('PatitasPeludas_'+getTodayISO()+'.pdf');
         status.textContent='✓ PDF descargado';
         setTimeout(()=>status.textContent='',4000);
-      }catch(e){ status.textContent='✗ Error PDF: '+e.message; console.error(e); }
-    });
-  });
-}
-
-document.getElementById('page-exportar').addEventListener('click',function(){
-  if(!document.getElementById('exp-hasta').value) document.getElementById('exp-hasta').value=getTodayISO();
-  actualizarPreview();
-},{once:true});
-
-</script>
-
-<!-- EDIT COMPRA MODAL -->
-<div class="cmp-edit-modal" id="cmp-edit-modal" onclick="if(event.target===this)closeCmpEdit()">
-  <div class="cmp-edit-box">
-    <h3>✏️ Editar registro de compra</h3>
-    <input type="hidden" id="cem-idx">
-    <div class="form-grid">
-      <div class="field"><label>Fecha</label><input type="date" id="cem-fecha"></div>
-      <div class="field"><label>Producto</label><input type="text" id="cem-producto"></div>
-      <div class="field"><label>Proveedor</label><input type="text" id="cem-prov"></div>
-      <div class="field"><label>Cantidad</label><input type="number" id="cem-qty" step="0.1" min="0"></div>
-      <div class="field"><label>Unidad</label>
-        <select id="cem-und"><option>kg</option><option>und</option><option>bulto</option><option>caja</option><option>paquete</option></select>
-      </div>
-      <div class="field"><label>Costo unitario ($)</label><input type="number" id="cem-cu" step="100" min="0"></div>
-      <div class="field"><label>N° Factura</label><input type="text" id="cem-factura" placeholder="Opcional"></div>
-    </div>
-    <div id="cem-total-preview" style="text-align:right;font-size:14px;font-weight:700;color:var(--blue);margin-top:4px"></div>
-    <div class="cmp-edit-footer">
-      <button class="btn btn-secondary" onclick="closeCmpEdit()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarCmpEdit()">Guardar cambios</button>
-    </div>
-  </div>
-</div>
-</body>
-</html>
