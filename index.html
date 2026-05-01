@@ -566,7 +566,11 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="field"><label>Medio de pago</label>
         <select id="vta-pago"><option>Efectivo</option><option>Nequi</option><option>Daviplata</option><option>Fiado</option></select>
       </div>
-      <div class="field" style="display:none"><label>Fecha</label>
+      <div class="field">
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Fecha de la venta</span>
+          <span style="font-size:10px;color:var(--teal);font-weight:600;cursor:pointer" onclick="document.getElementById('vta-fecha').value=getTodayISO()">📅 Hoy</span>
+        </label>
         <input type="date" id="vta-fecha">
       </div>
     </div>
@@ -581,6 +585,9 @@ document.addEventListener('DOMContentLoaded',function(){
       <label for="chk-cliente-nuevo" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">
         ¿Cliente nuevo? <span style="font-size:11px;font-weight:400;color:var(--text3)">(deja sin marcar si es cliente habitual)</span>
       </label>
+    </div>
+    <div id="vta-fecha-pasada-note" style="display:none;background:#FEF3D0;border-radius:8px;padding:7px 12px;font-size:11px;color:#7A4E00;margin-bottom:8px">
+      ⚠️ Estás registrando una venta de una fecha pasada — se guardará en Firebase con esa fecha.
     </div>
     <button class="btn btn-primary" onclick="registrarVenta()">Registrar venta</button>
   </div>
@@ -1601,11 +1608,12 @@ window.registrarVenta = async function(){
   const valor = parseFloat(document.getElementById('vta-val').value)||0;
   const tipo  = document.getElementById('vta-tipo').value;
   const pago  = document.getElementById('vta-pago').value;
-  // Always use real device date — never trust the input field
-  const fecha = getHoyISO();
-  // Also update the input field to show the correct date
+  // Use date from input if set (allows registering past sales), else today
   const vtaFechaEl = document.getElementById('vta-fecha');
-  if(vtaFechaEl) vtaFechaEl.value = fecha;
+  const fechaInput = vtaFechaEl ? vtaFechaEl.value : '';
+  const fecha = fechaInput || getHoyISO();
+  // If date is today, update input to show today
+  if(!fechaInput && vtaFechaEl) vtaFechaEl.value = fecha;
   const esBulto = tipo==='Bulto';
 
   // Save to Firestore — include hora
@@ -2592,8 +2600,12 @@ window.goTo = function(id, btn){
 (function initDates(){
   const iso = getTodayISO(), leg = getTodayLabel();
   ['vta-fecha','cmp-fecha','gst-fecha','fac-fecha'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value=iso;
+    const el=document.getElementById(id);
+    if(el && !el.value) el.value=iso; // only set if not already set
   });
+  // Always reset vta-fecha to today on load
+  const vtaF=document.getElementById('vta-fecha');
+  if(vtaF) vtaF.value=iso;
   const fl=document.getElementById('fecha-hoy-label'); if(fl) fl.textContent=leg;
   const rs=document.getElementById('resumen-sub'); if(rs) rs.textContent='Vista consolidada · Hoy '+leg;
   const mf=document.getElementById('rm-hoy-fecha'); if(mf) mf.textContent=leg;
@@ -2679,8 +2691,18 @@ window._lastVentasHoy = [];
 function updateVentasDiaPage(rows){
   window._lastVentasHoy = rows;
   renderVentasDia(rows);
+  // Update fecha label
   const leg = document.getElementById('vd-fecha-label');
   if(leg) leg.textContent = getTodayLabel();
+  // Update clientes nuevos
+  const nuevos = (rows||[]).filter(v=>v.clienteNuevo).length;
+  const cnEl = document.getElementById('vd-clientes-nuevos');
+  if(cnEl) cnEl.textContent = nuevos;
+  const cnSub = document.getElementById('vd-cn-sub');
+  if(cnSub) cnSub.textContent = nuevos===1?'cliente nuevo hoy':nuevos+' clientes nuevos hoy';
+  // Update resumen rm-clientes-nuevos
+  const rmCn = document.getElementById('rm-clientes-nuevos');
+  if(rmCn) rmCn.textContent = nuevos;
 }
 
 // ══════════════════════════════════════
@@ -4285,17 +4307,26 @@ function updateClientesNuevosResumen(rows){
   if(el) el.textContent = nuevos;
 }
 // Hook into the snapshot listener output
-const _origUpdateVentasDia = window.updateVentasDiaPage;
-window.updateVentasDiaPage = function(rows){
-  if(typeof _origUpdateVentasDia === 'function') _origUpdateVentasDia(rows);
-  updateClientesNuevosResumen(rows);
-};
+// updateVentasDiaPage unified below
 
 // ══════════════════════════════════════
 // CIERRE — Firebase save
 // ══════════════════════════════════════
 // This will be set by Firebase module after init
 window.guardarCierreFirebase = window.guardarCierreFirebase || function(){};
+
+
+// Show warning when registering past date
+document.addEventListener('DOMContentLoaded', function(){
+  const vtaFecha = document.getElementById('vta-fecha');
+  if(vtaFecha){
+    vtaFecha.addEventListener('change', function(){
+      const hoy = getTodayISO();
+      const note = document.getElementById('vta-fecha-pasada-note');
+      if(note) note.style.display = this.value && this.value < hoy ? 'block' : 'none';
+    });
+  }
+});
 
 </script>
 
