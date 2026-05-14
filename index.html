@@ -1545,7 +1545,6 @@ window.editVentaFB = function(fbId, tipo, valor, pago, producto, clienteNuevo){
 };
 
 // Override saveModal for ventaFB
-const _origSaveModal = window.saveModal;
 window.saveModal = async function(){
   if(modalCtx.type==='ventaFB'){
     const newTipo = document.getElementById('edit-tipo').value;
@@ -1594,13 +1593,11 @@ window.saveModal = async function(){
     }
     closeModal(); return;
   }
-  if(_origSaveModal) _origSaveModal();
 };
 
 // ══════════════════════════════════════
 // PATCH registrarVenta → Firebase
 // ══════════════════════════════════════
-const _origRegistrarVenta = window.registrarVenta;
 window.registrarVenta = async function(){
   const item = selState.vta;
   if(!item){alert('Selecciona un producto');return;}
@@ -1656,7 +1653,6 @@ window.registrarVenta = async function(){
 // ══════════════════════════════════════
 // PATCH registrarCompra → Firebase
 // ══════════════════════════════════════
-const _origRegistrarCompra = window.registrarCompra;
 window.registrarCompra = async function(){
   const qty   = parseFloat(document.getElementById('cmp-qty').value)||0;
   const cu    = parseFloat(document.getElementById('cmp-cu').value)||0;
@@ -1715,7 +1711,6 @@ window.registrarCompra = async function(){
 // ══════════════════════════════════════
 // PATCH registrarGasto → Firebase
 // ══════════════════════════════════════
-const _origRegistrarGasto = window.registrarGasto;
 window.registrarGasto = async function(){
   const concepto=document.getElementById('gst-concepto').value.trim();
   if(!concepto){alert('Escribe el concepto');return;}
@@ -2630,13 +2625,14 @@ let sobranteHoy = 0;
 
 function renderVentasDia(rows){
   const fmt2 = v => '$' + Math.round(v).toLocaleString('es-CO');
-  let ef=0,nq=0,ot=0,efN=0,nqN=0,otN=0,total=0;
+  let ef=0,nq=0,ot=0,efN=0,nqN=0,otN=0,total=0,nuevos=0;
   rows.forEach(v=>{
     total += v.valor;
     const p = (v.pago||'').toLowerCase();
     if(p==='efectivo'){ef+=v.valor;efN++;}
     else if(p==='nequi'){nq+=v.valor;nqN++;}
     else{ot+=v.valor;otN++;}
+    if(v.clienteNuevo) nuevos++;
   });
 
   document.getElementById('vd-efectivo').textContent = fmt2(ef);
@@ -2646,6 +2642,8 @@ function renderVentasDia(rows){
   document.getElementById('vd-otros').textContent = fmt2(ot);
   document.getElementById('vd-ot-cant').textContent = otN+' transacción'+(otN!==1?'es':'');
   document.getElementById('vd-sobrante-val').textContent = fmt2(sobranteHoy);
+  const _cnEl=document.getElementById('vd-clientes-nuevos'); if(_cnEl) _cnEl.textContent=nuevos;
+  const _cnSub=document.getElementById('vd-cn-sub'); if(_cnSub) _cnSub.textContent=nuevos===1?'cliente nuevo hoy':nuevos+' clientes nuevos hoy';
   document.getElementById('vd-total').textContent = fmt2(total);
 
   // Legend
@@ -2807,13 +2805,15 @@ function renderHvSummary(rows){
   const ef=rows.filter(v=>(v.pago||'').toLowerCase()==='efectivo').reduce((s,v)=>s+v.valor,0);
   const nq=rows.filter(v=>(v.pago||'').toLowerCase()==='nequi').reduce((s,v)=>s+v.valor,0);
   const bulto=rows.filter(v=>v.esBulto).reduce((s,v)=>s+v.valor,0);
+  const nuevos=rows.filter(v=>v.clienteNuevo).length;
   document.getElementById('hv-summary').innerHTML=`
     <div class="sbar-item"><div class="sv">${fmt2(total)}</div><div class="sl">Total período</div></div>
     <div class="sbar-item"><div class="sv">${fmt2(ef)}</div><div class="sl">Efectivo</div></div>
     <div class="sbar-item"><div class="sv">${fmt2(nq)}</div><div class="sl">Nequi</div></div>
     <div class="sbar-item"><div class="sv">${fmt2(bulto)}</div><div class="sl">Bulto</div></div>
     <div class="sbar-item"><div class="sv">${rows.length}</div><div class="sl">Transacciones</div></div>
-  `;
+    <div class="sbar-item"><div class="sv" style="color:var(--teal)">${nuevos}</div><div class="sl">Clientes nuevos</div></div>
+  \`;
 }
 
 function renderHvCharts(rows){
@@ -2908,6 +2908,7 @@ function buildCmpHist(){
     sel.value = 'todos';
   }
   filterCmpHistSelect('todos');
+  buildCmpMesDropdown();
 }
 
 function filterCmpHistSelect(key){
@@ -3093,11 +3094,7 @@ function setCmpMes(key, lbl){
 }
 
 // Override buildCmpHist to also rebuild dropdown
-const _origBuildCmpHist = buildCmpHist;
-window.buildCmpHist = function(){
-  _origBuildCmpHist();
-  buildCmpMesDropdown();
-};
+
 
 
 // ══════════════════════════════════════
@@ -3574,6 +3571,12 @@ function calcCierre(){
     const diffEl = document.getElementById('cr-diff');
     diffEl.textContent = (diff >= 0 ? '+' : '') + fmt(diff);
     diffEl.style.color = diff === 0 ? 'var(--green)' : diff > 0 ? 'var(--blue-text)' : 'var(--red)';
+    const _note=document.getElementById('cr-diff-note');
+    if(_note){
+      if(diff>0){_note.style.cssText='background:#E6F5EF;color:#006E67;font-size:11px;margin-top:6px;padding:8px 10px;border-radius:8px';_note.textContent='📈 Hay '+fmt(diff)+' de más. Puede ser sobrante real o venta no registrada.';}
+      else if(diff<0){_note.style.cssText='background:#FDECEB;color:#9B2A1A;font-size:11px;margin-top:6px;padding:8px 10px;border-radius:8px';_note.textContent='📉 Faltan '+fmt(Math.abs(diff))+'. Revisa gastos no registrados o error en el conteo.';}
+      else{_note.style.cssText='background:#E0F5EF;color:#006E67;font-size:11px;margin-top:6px;padding:8px 10px;border-radius:8px';_note.textContent='✓ La caja cuadra perfectamente.';}
+    }
   } else {
     res.style.display = 'none';
   }
@@ -3897,11 +3900,7 @@ function renderInvFiltered(){
 }
 
 // Override filtrarInv to use new filtered render
-const _origFiltrarInv = window.filtrarInv || function(){};
-window.filtrarInv = function(q){
-  _origFiltrarInv(q);
-  renderInvFiltered();
-};
+window.filtrarInv = function(q){ renderInvFiltered(); };
 
 // ── Lista de compras ──
 function buildListaCompras(tab){
@@ -4008,9 +4007,7 @@ function setSobranteTipo(tipo){
 }
 
 // Patch calcCierre to also show diff note
-const _origCalcCierre = window.calcCierre;
 window.calcCierre = function(){
-  if(typeof _origCalcCierre === 'function') _origCalcCierre();
   // Update diff note
   const ef  = parseFloat(document.getElementById('cierre-efectivo').value)||0;
   const nq  = parseFloat(document.getElementById('cierre-nequi').value)||0;
@@ -4037,8 +4034,7 @@ window.calcCierre = function(){
 };
 
 // Patch guardarCierre to include sobrante/faltante
-const _origGuardarCierre = window.guardarCierre;
-window.guardarCierre = function(){
+function guardarCierre(){
   // Capture sobrante/faltante before calling original
   const montoEl = document.getElementById('inp-sobrante-monto');
   const notaEl  = document.getElementById('inp-sobrante-nota');
@@ -4052,7 +4048,6 @@ window.guardarCierre = function(){
     nota: notaSob
   };
 
-  if(typeof _origGuardarCierre === 'function') _origGuardarCierre();
 
   // Reset sobrante UI
   setSobranteTipo(null);
@@ -4069,8 +4064,7 @@ window.guardarCierre = function(){
 };
 
 // Patch renderCierres to show sobrante/faltante
-const _origRenderCierres = window.renderCierres;
-window.renderCierres = function(){
+function renderCierres(){
   const tbody = document.getElementById('tbody-cierres');
   if(!tbody) return;
   let cierres = [];
@@ -4244,24 +4238,10 @@ window.getClienteNuevo = function(){
   return val;
 };
 
-// Patch session row to show cliente nuevo badge
-const _origRegistrarVenta = window.registrarVenta;
-
-// Patch renderVentasDia to show clientes nuevos count
-const _origRenderVentasDia = window.renderVentasDia;
-window.renderVentasDia = function(rows){
-  if(typeof _origRenderVentasDia === 'function') _origRenderVentasDia(rows);
-  const nuevos = rows.filter(v=>v.clienteNuevo).length;
-  const cnEl = document.getElementById('vd-clientes-nuevos');
-  if(cnEl) cnEl.textContent = nuevos;
-  const cnSubEl = document.getElementById('vd-cn-sub');
-  if(cnSubEl) cnSubEl.textContent = nuevos===1?'cliente nuevo hoy':nuevos+' clientes nuevos hoy';
-};
+// clienteNuevo integrated into renderVentasDia and renderHvSummary directly
 
 // Patch renderHvSummary to show clientes nuevos
-const _origRenderHvSummary = window.renderHvSummary;
 window.renderHvSummary = function(rows){
-  if(typeof _origRenderHvSummary === 'function') _origRenderHvSummary(rows);
   const nuevos = rows.filter(v=>v.clienteNuevo).length;
   // Inject into hv-summary
   const sumEl = document.getElementById('hv-summary');
@@ -4277,9 +4257,7 @@ window.renderHvSummary = function(rows){
 };
 
 // Patch renderHvTable to show cliente nuevo badge in row
-const _origRenderHvTable = window.renderHvTable;
 window.renderHvTable = function(rows, q){
-  if(typeof _origRenderHvTable === 'function') _origRenderHvTable(rows, q);
   // Add 🆕 badge to rows with clienteNuevo
   document.querySelectorAll('#tbody-hv tr').forEach((tr, i) => {
     const filtered = q ? rows.filter(v=>(v.producto||'').toLowerCase().includes(q.toLowerCase())) : rows;
