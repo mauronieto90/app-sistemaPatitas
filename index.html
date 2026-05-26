@@ -294,6 +294,18 @@ function showApp(){
   var a=document.getElementById('app-shell'), l=document.getElementById('login-screen');
   if(l) l.style.display='none';
   if(a) a.style.display='flex';
+  // Update dates now that the app is visible
+  var iso = getTodayISO ? getTodayISO() : new Date().toISOString().slice(0,10);
+  var leg = getTodayLabel ? getTodayLabel() : iso;
+  var rs = document.getElementById('resumen-sub');
+  if(rs) rs.textContent = 'Vista consolidada · Hoy ' + leg;
+  var fl = document.getElementById('fecha-hoy-label');
+  if(fl) fl.textContent = leg;
+  // Set date fields
+  ['vta-fecha','cmp-fecha','gst-fecha','fac-fecha'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el && !el.value) el.value = iso;
+  });
 }
 function doLogin(){
   var u=document.getElementById('li-user');
