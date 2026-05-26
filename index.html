@@ -280,8 +280,8 @@ select:focus,input:focus{outline:none;border-color:var(--green)}
 <script>
 // LOGIN — carga antes que Firebase y Chart.js
 var USERS = {
-  'admin':    { pass: 'patitas2026', nombre: 'Administrador', rol: 'admin' },
-  'vendedor': { pass: 'tienda123',   nombre: 'Vendedor',      rol: 'vendedor' }
+  'admin':    { pass: 'PatPel@2026!', nombre: 'Administrador', rol: 'admin' },
+  'vendedor': { pass: 'Vend@2026!',   nombre: 'Vendedor',      rol: 'vendedor' }
 };
 var currentUser = null;
 
@@ -1289,6 +1289,8 @@ import { getFirestore, collection, addDoc, getDocs, doc,
          from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── CONFIG ──────────────────────────────────────────────
+// Firebase API Key: en apps web es público por diseño.
+// La seguridad real viene de las REGLAS de Firestore (console.firebase.google.com)
 const firebaseConfig = {
   apiKey:            "AIzaSyBchsyVUUHZcKsqPV0bRBwHZ_j5-pLaFhg",
   authDomain:        "patitas-peludas-4089f.firebaseapp.com",
@@ -1449,10 +1451,10 @@ function escucharVentasHoy() {
           ? hoyRows.map(v => `
               <tr data-fbid="${v.fbId}">
                 <td style="font-size:11px;color:var(--teal);font-weight:600">${v.hora||'—'}</td>
-                <td>${v.producto||''}</td>
+                <td>${san(v.producto)}</td>
                 <td><span class="pill ${v.tipo==='Bulto'?'pill-blue':'pill-green'}">${v.tipo||''}</span></td>
                 <td style="font-weight:600">${fmt(v.valor||0)}</td>
-                <td>${v.pago||''}</td>
+                <td>${san(v.pago)}</td>
                 <td style="white-space:nowrap">
                   <button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId}','${(v.tipo||'').replace(/'/g,"\\'")}',${v.valor||0},'${(v.pago||'').replace(/'/g,"\\'")}',${v.clienteNuevo||false})">✏️</button>
                   <button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId}',${v.valor||0})">🗑</button>
@@ -1590,31 +1592,19 @@ window.borrarVentaFB = async function(fbId, valor) {
 };
 
 window.editVentaFB = function(fbId, tipo, valor, pago, clienteNuevo) {
-  openModal('Editar venta', `
-    <div class="form-grid" style="grid-template-columns:1fr 1fr">
-      <div class="field"><label>Tipo</label>
-        <select id="edit-tipo">
-          ${['Granel','Paquete','Bulto','Und','Sobre','Caja','Accesorio']
-            .map(t => `<option ${t===tipo?'selected':''}>${t}</option>`).join('')}
-        </select>
-      </div>
-      <div class="field"><label>Valor ($)</label>
-        <input type="number" id="edit-valor" value="${valor}" min="0" step="100">
-      </div>
-      <div class="field"><label>Medio de pago</label>
-        <select id="edit-pago">
-          ${['Efectivo','Nequi','Daviplata','Fiado']
-            .map(p => `<option ${p===pago?'selected':''}>${p}</option>`).join('')}
-        </select>
-      </div>
-      <div class="field" style="grid-column:1/-1">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" id="edit-cliente-nuevo" ${clienteNuevo?'checked':''} style="width:16px;height:16px;accent-color:var(--teal)">
-          <span>Cliente nuevo</span>
-        </label>
-      </div>
-    </div>
-  `, { type: 'ventaFB', fbId });
+  var tipoOpts = ['Granel','Paquete','Bulto','Und','Sobre','Caja','Accesorio']
+    .map(function(t){ return '<option'+(t===tipo?' selected':'')+'>'+t+'</option>'; }).join('');
+  var pagoOpts = ['Efectivo','Nequi','Daviplata','Fiado']
+    .map(function(p){ return '<option'+(p===pago?' selected':'')+'>'+p+'</option>'; }).join('');
+  openModal('Editar venta',
+    '<div class="form-grid" style="grid-template-columns:1fr 1fr">'+
+    '<div class="field"><label>Tipo</label><select id="edit-tipo">'+tipoOpts+'</select></div>'+
+    '<div class="field"><label>Valor ($)</label><input type="number" id="edit-valor" value="'+valor+'" min="0" step="100"></div>'+
+    '<div class="field"><label>Medio de pago</label><select id="edit-pago">'+pagoOpts+'</select></div>'+
+    '<div class="field" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">'+
+    '<input type="checkbox" id="edit-cliente-nuevo" '+(clienteNuevo?'checked':'')+' style="width:16px;height:16px;accent-color:var(--teal)">'+
+    '<span>Cliente nuevo</span></label></div></div>',
+    { type: 'ventaFB', fbId });
 };
 
 window.saveModal = async function() {
@@ -1867,6 +1857,18 @@ const dailyLabels=["15/2","16/2","17/2","18/2","19/2","20/2","21/2","22/2","23/2
 const sessionDelta={};
 const catPill={Aseo:'pill-green',Snack:'pill-amber',Accesorio:'pill-purple',Concentrado:'pill-blue',Medicina:'pill-red'};
 const fmt=v=>'$'+Math.round(v).toLocaleString('es-CO');
+
+// ── SANITIZACIÓN XSS ─────────────────────────────────────
+function san(str) {
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;');
+}
+
 const fmtN=v=>{const n=parseFloat(v)||0;return n%1===0?n:parseFloat(n.toFixed(1));};
 window.fmt=fmt; window.fmtN=fmtN;
 let gastosAcum=519792;
@@ -2566,7 +2568,7 @@ function renderVentasDia(rows){
   }
   const sorted = rows.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
   tbody.innerHTML = sorted.map(v=>
-    `<tr><td style="font-size:11px;color:var(--teal);font-weight:600">${v.hora||'—'}</td><td>${v.producto||''}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${v.pago||''}</td><td style="white-space:nowrap"><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId||''}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId||''}',${v.valor||0})">🗑</button></td></tr>`
+    `<tr><td style="font-size:11px;color:var(--teal);font-weight:600">${v.hora||'—'}</td><td>${san(v.producto)}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${san(v.pago)}</td><td style="white-space:nowrap"><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId||''}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId||''}',${v.valor||0})">🗑</button></td></tr>`
   ).join('');
 }
 
@@ -2752,18 +2754,18 @@ function renderHvTable(rows, q=''){
   const filtered = q ? rows.filter(v=>(v.producto||'').toLowerCase().includes(q.toLowerCase())) : rows;
   document.getElementById('tbody-hv').innerHTML = filtered.map(v=>
     v.esCierre ? `<tr style="background:#E0F5EF">
-      <td style="font-size:11px"><div style="color:var(--text3)">${v.fecha}</div>${v.hora?`<div style="color:var(--teal);font-weight:600">${v.hora}</div>`:''}</td>
+      <td style="font-size:11px"><div style="color:var(--text3)">${v.fecha}</div>${v.hora?'<div style="color:var(--teal);font-weight:600">'+v.hora+'</div>':''}</td>
       <td colspan="3" style="font-weight:600;color:var(--teal-dark)">${v.producto} <span style="font-size:11px;font-weight:400;color:var(--text2)">${v.resumen||''}</span></td>
       <td></td><td></td>
     </tr>` :
     `<tr>
-      <td style="font-size:11px"><div style="color:var(--text3)">${v.fecha}</div>${v.hora?`<div style="color:var(--teal);font-weight:600">${v.hora}</div>`:''}</td>
-      <td>${v.producto||''}</td>
+      <td style="font-size:11px"><div style="color:var(--text3)">${v.fecha}</div>${v.hora?'<div style="color:var(--teal);font-weight:600">'+v.hora+'</div>':''}</td>
+      <td>${san(v.producto)}</td>
       <td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td>
       <td style="font-weight:600">${fmt2(v.valor)}</td>
-      <td>${v.pago||''}</td>
+      <td>${san(v.pago)}</td>
       <td style="white-space:nowrap">
-        ${v.fbId&&!v.esCierre?`<button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor||0},'${(v.pago||'').replace(/'/g,"\'")}',${v.clienteNuevo||false})">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId}',${v.valor||0})">🗑</button>`:''}
+        ${v.fbId&&!v.esCierre?'<button class="btn-icon btn-sm" onclick="editVentaFB(\''+v.fbId+'\',\''+String(v.tipo||'').replace(/\'/g,"\\'")+'\','+Number(v.valor||0)+',\''+String(v.pago||'').replace(/\'/g,"\\'")+'\',' +(v.clienteNuevo||false)+')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB(\''+v.fbId+'\','+Number(v.valor||0)+')">🗑</button>':''}
       </td>
     </tr>`
   ).join('');
@@ -2845,15 +2847,14 @@ function renderCmpHist(rows, q=''){
     const canEdit = globalIdx !== -1; // all rows in COMPRAS_HIST are editable
     return `<tr>
       <td style="font-size:11px;color:var(--text3)">${r.fecha}${r.factura?'<br><span style="color:var(--blue-text);font-weight:600">'+r.factura+'</span>':''}</td>
-      <td>${r.producto||''}</td>
+      <td>${san(r.producto)}</td>
       <td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat||'Gasto'}</span></td>
-      <td>${r.prov||''}</td>
+      <td>${san(r.prov)}</td>
       <td style="color:var(--text2)">${r.qty||''} ${r.und||''}</td>
       <td style="color:var(--text2)">${r.cu?fmt2(r.cu):''}</td>
       <td style="font-weight:600">${fmt2(r.t||0)}</td>
       <td style="white-space:nowrap">
-        ${canEdit?`<button class="btn-icon btn-sm" title="Editar" onclick="abrirCmpEdit(${globalIdx})">✏️</button>
-        <button class="btn-icon btn-sm" title="Eliminar" onclick="eliminarCmpHist(${globalIdx})">🗑</button>`:''}
+        ${canEdit?'<button class="btn-icon btn-sm" onclick="abrirCmpEdit('+globalIdx+')">✏️</button><button class="btn-icon btn-sm" onclick="eliminarCmpHist('+globalIdx+')">🗑</button>':''}
       </td>
     </tr>`;
   }).join('');
@@ -3135,9 +3136,9 @@ function renderFacturaItems(){
       ${item.isGranel?'<div class="fi-granel-badge">⚖️ Granel</div>':''}
       <div class="fi-name">${item.nombre}</div>
       <div class="fi-row">
-        ${!item.isGranel?`<div class="fi-field"><label>Cant.</label><span>${fmtN(item.qty)} ${item.und}</span></div>`:''}
+        ${!item.isGranel?'<div class="fi-field"><label>Cant.</label><span>'+fmtN(item.qty)+' '+item.und+'</span></div>':''}
         <div class="fi-field"><label>Costo unit.</label><span>${fmt(item.cu)}</span></div>
-        ${item.pv?`<div class="fi-field"><label>Precio venta</label><span>${fmt(item.pv)}</span></div>`:''}
+        ${item.pv?'<div class="fi-field"><label>Precio venta</label><span>'+fmt(item.pv)+'</span></div>':''}
         <div class="fi-total">${fmt(item.subtotal)}</div>
       </div>
     </div>`).join('');
@@ -4062,7 +4063,7 @@ window.guardarCierre = function(){
         <span>Diferencia</span>
         <span style="color:${diffColor}">${diff>=0?'+':''}${fmt(diff)}</span>
       </div>
-      ${obs?`<div style="margin-top:8px;font-size:11px;color:var(--text3)">📝 ${obs}</div>`:''}
+      ${obs?'<div style="margin-top:8px;font-size:11px;color:var(--text3)">📝 '+obs+'</div>':''}
     </div>
   `;
   document.getElementById('cierre-confirm-modal').classList.add('open');
