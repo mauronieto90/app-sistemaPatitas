@@ -26,6 +26,16 @@ Cubre las materias de **Science** e **English**. Sin login, sin cuentas: es solo
 Cada juego da **feedback inmediato** (correcto/incorrecto, colores y sonido suave) y un
 **puntaje con estrellas** al final, con mensajes motivadores para un niño de 6–7 años.
 
+**Cada tema tiene varios juegos y niveles.** Al entrar a un tema (ej. *Vocabulary*)
+aparece una lista de actividades: distintos formatos + niveles de dificultad
+🟢 **Fácil** / 🟡 **Medio** / 🔴 **Difícil**, cada uno con más palabras y ejemplos.
+
+### 🖼️ Dibujos
+La mayoría de dibujos son **emoji grandes** en tarjetas tipo flashcard. Para conceptos
+que el emoji no representa bien (raíz, tallo, esófago, estómago, intestinos) se usan
+**ilustraciones SVG** propias (`js/icons.js`), livianas y que funcionan sin internet.
+En los datos se escriben como `"svg:root"`, `"svg:stomach"`, etc.
+
 ## 🧩 Arquitectura — el contenido vive aparte del código
 
 El código de la app **no** tiene preguntas hardcodeadas. Todo el contenido está en archivos de datos:
@@ -35,29 +45,37 @@ owen-repaso/
 ├─ index.html          ← página principal
 ├─ css/styles.css      ← estilos (grande, colorido, responsive)
 ├─ js/app.js           ← MOTOR: navegación + cómo se juega cada tipo (NO contiene contenido)
+├─ js/icons.js         ← dibujos SVG para conceptos sin buen emoji
 └─ data/
-   ├─ science.js       ← CONTENIDO de Science  (por término → tema)
-   └─ english.js       ← CONTENIDO de English (por término → tema)
+   ├─ science.js       ← CONTENIDO de Science  (por término → tema → actividades)
+   └─ english.js       ← CONTENIDO de English (por término → tema → actividades)
 ```
 
-Estructura de los datos: **materia → término (`terms`) → tema (`topics`) → items/pairs/steps**.
-Cada tema indica su `cycle` (ciclo) y su `gameType`.
+Estructura de los datos: **materia → término (`terms`) → tema (`topics`) → actividades
+(`activities`)**. Cada tema indica su `cycle`; cada actividad tiene su `format`, su
+`level` (Fácil/Medio/Difícil) y su contenido (`items` / `pairs` / `steps`).
 
-### ➕ Cómo agregar temas nuevos (próximos ciclos o términos)
+### ➕ Cómo agregar temas o juegos nuevos (próximos ciclos o términos)
 
 Solo se editan los archivos de `data/`. **No hay que tocar `app.js`.**
-Añade un objeto `topic` dentro del `term` correspondiente:
+Añade un objeto `topic` (o una nueva actividad a un tema existente):
 
 ```js
-// Trivia / Completar
-{ id:"nuevo-tema", title:"Título", emoji:"🌟", cycle:"Cycle 8", gameType:"trivia",
-  instructions:"Instrucción para Owen en español.",
-  items:[ { question:"Cat", emoji:"🐈", options:["Alive","Not alive"], answer:0 } ] }
-
-// fill: usa "___" en la oración e "items" igual que trivia, pero con "sentence"
-// matching / memory: usa "pairs": [ { a:"Palabra", b:"🍎" }, ... ]
-// order: usa "prompt" y "steps": [ "Paso 1 🌰", "Paso 2 🌱", ... ]  (en orden correcto)
+{
+  id:"nuevo-tema", title:"Título", emoji:"🌟", cycle:"Cycle 8",
+  activities:[
+    // Trivia / Completar
+    { format:"trivia", level:"Fácil", instructions:"Instrucción en español.",
+      items:[ { question:"Cat", img:"🐈", options:["Alive","Not alive"], answer:0 } ] },
+    // fill: igual que trivia pero con "sentence" que incluye "___"
+    // matching / memory: pairs:[ { a:"Palabra", b:"🍎" }, ... ]   (b puede ser "svg:root")
+    // order: prompt:"...", steps:[ "Seed 🌰", "Sprout 🌱", ... ]   (en orden correcto)
+  ]
+}
 ```
+
+`level` puede ser `"Fácil"`, `"Medio"` o `"Difícil"`. Las imágenes (`img` / `b` / `steps`)
+pueden ser un emoji o `"svg:nombre"` (definido en `js/icons.js`).
 
 Para crear una **materia nueva**, copia un archivo de `data/`, cámbiale el `id`/`title`,
 y enlázalo en `index.html` con un `<script src="data/loquesea.js"></script>`. La pantalla
