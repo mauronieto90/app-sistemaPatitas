@@ -41,6 +41,10 @@
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  // Toma n elementos al azar (para que cada partida sea distinta).
+  function sample(arr, n) { var s = shuffle(arr); return (n && n < s.length) ? s.slice(0, n) : s; }
+  // Cuántas preguntas/parejas mostrar por partida (si el banco es más grande).
+  var PICK = { trivia: 6, fill: 6, matching: 6, memory: 6 };
 
   // Convierte un valor de imagen (emoji o "svg:nombre") en HTML para mostrar.
   function pic(val) {
@@ -276,7 +280,7 @@
 
   // ============================ JUEGO: Trivia / Completar ============================
   function playQuiz(act, wrap) {
-    var items = shuffle(act.items);
+    var items = sample(act.items, act.pick || PICK[act.format]);
     var idx = 0, score = 0;
     var isFill = act.format === "fill";
 
@@ -299,12 +303,16 @@
       var nOpt = item.options.length;
       var optClass = nOpt === 2 ? "options two" : "options multi";
 
+      // Mezclamos el orden de las opciones para que la respuesta correcta
+      // no quede siempre en el mismo lugar (y para variar entre partidas).
+      var shown = shuffle(item.options.map(function (o, i) { return { text: o, ok: i === item.answer }; }));
+
       stage.innerHTML = "";
       stage.appendChild(el('<div class="question-card">' + qHtml + '</div>'));
       var opts = el('<div class="' + optClass + '"></div>');
-      item.options.forEach(function (o, i) {
-        var b = el('<button class="opt">' + esc(o) + '</button>');
-        b.addEventListener("click", function () { choose(i, opts, item); });
+      shown.forEach(function (o, i) {
+        var b = el('<button class="opt">' + esc(o.text) + '</button>');
+        b.addEventListener("click", function () { choose(i, opts, shown); });
         opts.appendChild(b);
       });
       stage.appendChild(opts);
@@ -318,13 +326,13 @@
       stage.appendChild(next);
     }
 
-    function choose(i, opts, item) {
+    function choose(i, opts, shown) {
       var buttons = opts.querySelectorAll(".opt");
       if (buttons[0].disabled) return;
-      var correct = i === item.answer;
+      var correct = shown[i].ok;
       buttons.forEach(function (b, bi) {
         b.disabled = true;
-        if (bi === item.answer) b.classList.add("correct");
+        if (shown[bi].ok) b.classList.add("correct");
         else if (bi === i) b.classList.add("wrong");
         else b.classList.add("dim");
       });
@@ -340,7 +348,7 @@
 
   // ============================ JUEGO: Emparejar ============================
   function playMatching(act, wrap) {
-    var pairs = act.pairs;
+    var pairs = sample(act.pairs, act.pick || PICK.matching);
     var left = shuffle(pairs.map(function (p, i) { return { id: i, txt: p.a }; }));
     var right = shuffle(pairs.map(function (p, i) { return { id: i, img: p.b }; }));
     var matched = 0, mistakes = 0, selectedLeft = null, selectedRight = null, locked = false;
@@ -399,10 +407,11 @@
 
   // ============================ JUEGO: Memoria ============================
   function playMemory(act, wrap) {
-    var cards = shuffle(act.pairs.reduce(function (acc, p, i) {
+    var basePairs = sample(act.pairs, act.pick || PICK.memory);
+    var cards = shuffle(basePairs.reduce(function (acc, p, i) {
       acc.push({ id: i, face: p.a }); acc.push({ id: i, face: p.b }); return acc;
     }, []));
-    var totalPairs = act.pairs.length, matched = 0, moves = 0, first = null, locked = false;
+    var totalPairs = basePairs.length, matched = 0, moves = 0, first = null, locked = false;
 
     var progress = el('<div class="progress-row"><div class="progress-track"><div class="progress-fill"></div></div><div class="progress-txt"></div></div>');
     wrap.appendChild(progress);

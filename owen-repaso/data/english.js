@@ -2,7 +2,8 @@
    DATOS — ENGLISH
    -------------------------------------------------------------------------
    Mismo formato que science.js. Cada tema tiene varias actividades
-   (formato + nivel de dificultad). Ver comentarios en science.js/app.js.
+   (formato + nivel). Cada actividad tiene un banco grande y el juego
+   muestra un subconjunto al azar (variación en cada partida).
    ========================================================================= */
 window.OWEN_DATA = window.OWEN_DATA || {};
 window.OWEN_DATA.english = {
@@ -31,7 +32,8 @@ window.OWEN_DATA.english = {
               instructions: "Encuentra la palabra y su dibujo.",
               pairs: [
                 { a: "Green", b: "🟢" }, { a: "Yellow", b: "🟡" }, { a: "Dog", b: "🐕" },
-                { a: "Duck", b: "🦆" }, { a: "Banana", b: "🍌" }, { a: "Cat", b: "🐈" }
+                { a: "Duck", b: "🦆" }, { a: "Banana", b: "🍌" }, { a: "Cat", b: "🐈" },
+                { a: "Bear", b: "🐻" }, { a: "Frog", b: "🐸" }
               ]
             },
             {
@@ -50,36 +52,37 @@ window.OWEN_DATA.english = {
           activities: [
             {
               format: "fill", level: "Fácil",
-              instructions: "¿Qué número falta? Toca el correcto.",
+              instructions: "¿Qué número falta?",
               items: [
                 { sentence: "1, 2, 3, ___, 5", img: "🔢", options: ["4", "6", "8"], answer: 0 },
                 { sentence: "2, 3, ___, 5", img: "🔢", options: ["4", "1", "7"], answer: 0 },
                 { sentence: "6, 7, 8, ___", img: "🔢", options: ["9", "10", "5"], answer: 0 },
                 { sentence: "1, ___, 3, 4", img: "🔢", options: ["2", "5", "9"], answer: 0 },
-                { sentence: "8, 9, ___", img: "🔢", options: ["10", "7", "12"], answer: 0 }
+                { sentence: "8, 9, ___", img: "🔢", options: ["10", "7", "12"], answer: 0 },
+                { sentence: "3, 4, 5, ___", img: "🔢", options: ["6", "2", "9"], answer: 0 },
+                { sentence: "___, 2, 3, 4", img: "🔢", options: ["1", "5", "8"], answer: 0 },
+                { sentence: "7, 8, ___, 10", img: "🔢", options: ["9", "6", "11"], answer: 0 }
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Cuenta de 2 en 2, de 5 en 5 y de 10 en 10.",
+              format: "trivia", level: "Medio",
+              instructions: "¿Qué número sigue?",
               items: [
-                { sentence: "10, 20, ___, 40", img: "🔟", options: ["25", "30", "35"], answer: 1 },
-                { sentence: "5, 10, 15, ___", img: "🖐️", options: ["16", "20", "25"], answer: 1 },
-                { sentence: "2, 4, 6, ___", img: "✌️", options: ["7", "8", "9"], answer: 1 },
-                { sentence: "10, 20, 30, ___", img: "🔢", options: ["40", "45", "50"], answer: 0 },
-                { sentence: "40, 30, 20, ___", img: "⬇️", options: ["10", "15", "0"], answer: 0 }
+                { question: "After 10 comes…", img: "🔟", options: ["11", "20", "9"], answer: 0 },
+                { question: "After 19 comes…", img: "🔢", options: ["20", "21", "18"], answer: 0 },
+                { question: "After 29 comes…", img: "🔢", options: ["30", "40", "28"], answer: 0 },
+                { question: "Count by 10: 30 then…", img: "🔢", options: ["40", "35", "31"], answer: 0 },
+                { question: "After 9 comes…", img: "🔢", options: ["10", "11", "8"], answer: 0 },
+                { question: "Before 20 is…", img: "🔢", options: ["19", "21", "10"], answer: 0 },
+                { question: "Count by 5: 15 then…", img: "🖐️", options: ["20", "16", "25"], answer: 0 },
+                { question: "After 25 comes…", img: "🔢", options: ["26", "30", "24"], answer: 0 }
               ]
             },
             {
-              format: "fill", level: "Difícil",
-              instructions: "Secuencias más difíciles. ¿Qué número falta?",
-              items: [
-                { sentence: "5, 10, ___, 20, 25", img: "🖐️", options: ["12", "15", "18"], answer: 1 },
-                { sentence: "___, 20, 30, 40, 50", img: "⬆️", options: ["5", "10", "15"], answer: 1 },
-                { sentence: "2, 4, ___, 8, 10", img: "✌️", options: ["5", "6", "7"], answer: 1 },
-                { sentence: "50, 40, ___, 20", img: "⬇️", options: ["25", "30", "35"], answer: 1 },
-                { sentence: "3, 6, 9, ___", img: "🔢", options: ["10", "12", "15"], answer: 1 }
-              ]
+              format: "order", level: "Difícil",
+              instructions: "Ordena los números de menor a mayor. ¡Toca en orden!",
+              prompt: "Cuenta de 10 en 10 🔢",
+              steps: ["10", "20", "30", "40", "50"]
             }
           ]
         },
@@ -95,19 +98,21 @@ window.OWEN_DATA.english = {
                 { sentence: "He ___ tall.", img: "👦", options: ["am", "is", "are"], answer: 1 },
                 { sentence: "She ___ nice.", img: "👧", options: ["am", "is", "are"], answer: 1 },
                 { sentence: "It ___ a cat.", img: "🐈", options: ["am", "is", "are"], answer: 1 },
-                { sentence: "We ___ friends.", img: "👫", options: ["am", "is", "are"], answer: 2 }
+                { sentence: "We ___ friends.", img: "🧑‍🤝‍🧑", options: ["am", "is", "are"], answer: 2 },
+                { sentence: "They ___ sisters.", img: "👭", options: ["am", "is", "are"], answer: 2 },
+                { sentence: "The dog ___ big.", img: "🐕", options: ["am", "is", "are"], answer: 1 }
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Piensa en el sujeto y completa con am, is o are.",
+              format: "trivia", level: "Medio",
+              instructions: "¿Cuál está bien escrita?",
               items: [
-                { sentence: "They ___ sisters.", img: "👭", options: ["am", "is", "are"], answer: 2 },
-                { sentence: "The dog ___ big.", img: "🐕", options: ["am", "is", "are"], answer: 1 },
-                { sentence: "My friends ___ here.", img: "🧑‍🤝‍🧑", options: ["am", "is", "are"], answer: 2 },
-                { sentence: "I ___ six years old.", img: "6️⃣", options: ["am", "is", "are"], answer: 0 },
-                { sentence: "Owen ___ my son.", img: "🧒", options: ["am", "is", "are"], answer: 1 },
-                { sentence: "You and I ___ a team.", img: "🤝", options: ["am", "is", "are"], answer: 2 }
+                { question: "Choose the correct one:", img: "👦", options: ["He are happy", "He is happy"], answer: 1 },
+                { question: "Choose the correct one:", img: "👬", options: ["They are friends", "They is friends"], answer: 0 },
+                { question: "Choose the correct one:", img: "6️⃣", options: ["I is six", "I am six"], answer: 1 },
+                { question: "Choose the correct one:", img: "👧", options: ["She is tall", "She are tall"], answer: 0 },
+                { question: "Choose the correct one:", img: "🧑‍🤝‍🧑", options: ["We is a team", "We are a team"], answer: 1 },
+                { question: "Choose the correct one:", img: "🐈", options: ["It is a cat", "It are a cat"], answer: 0 }
               ]
             },
             {
@@ -115,11 +120,13 @@ window.OWEN_DATA.english = {
               instructions: "Preguntas y frases negativas. Elige la palabra correcta.",
               items: [
                 { sentence: "___ she your sister?", img: "❓", options: ["Is", "Are", "Am"], answer: 0 },
-                { sentence: "___ they friends?", img: "❓", options: ["Is", "Are", "Am"], answer: 1 },
+                { sentence: "___ they friends?", img: "👨‍👩‍👧‍👦", options: ["Is", "Are", "Am"], answer: 1 },
                 { sentence: "___ I late?", img: "❓", options: ["Is", "Are", "Am"], answer: 2 },
                 { sentence: "She is ___ a boy.", img: "🚫", options: ["not", "no", "are"], answer: 0 },
-                { sentence: "We ___ not ready.", img: "🚫", options: ["is", "are", "am"], answer: 1 },
-                { sentence: "It ___ not big.", img: "🚫", options: ["is", "are", "am"], answer: 0 }
+                { sentence: "We ___ not ready.", img: "🧑‍🤝‍🧑", options: ["is", "are", "am"], answer: 1 },
+                { sentence: "It ___ not big.", img: "🚫", options: ["is", "are", "am"], answer: 0 },
+                { sentence: "___ you happy?", img: "🙂", options: ["Are", "Is", "Am"], answer: 0 },
+                { sentence: "They ___ not here.", img: "👬", options: ["is", "are", "am"], answer: 1 }
               ]
             }
           ]
@@ -136,7 +143,9 @@ window.OWEN_DATA.english = {
                 { question: "Can a dog run?", img: "🐕", options: ["Yes", "No"], answer: 0 },
                 { question: "Can a car eat?", img: "🚗", options: ["Yes", "No"], answer: 1 },
                 { question: "Can a cat jump?", img: "🐈", options: ["Yes", "No"], answer: 0 },
-                { question: "Can a rock sing?", img: "🪨", options: ["Yes", "No"], answer: 1 }
+                { question: "Can a rock sing?", img: "🪨", options: ["Yes", "No"], answer: 1 },
+                { question: "Can a duck swim?", img: "🦆", options: ["Yes", "No"], answer: 0 },
+                { question: "Can a chair talk?", img: "🪑", options: ["Yes", "No"], answer: 1 }
               ]
             },
             {
@@ -148,19 +157,23 @@ window.OWEN_DATA.english = {
                 { sentence: "A kangaroo ___ jump.", img: "🦘", options: ["can", "can't"], answer: 0 },
                 { sentence: "A pig ___ fly.", img: "🐷", options: ["can", "can't"], answer: 1 },
                 { sentence: "A monkey ___ climb.", img: "🐒", options: ["can", "can't"], answer: 0 },
-                { sentence: "A turtle ___ run fast.", img: "🐢", options: ["can", "can't"], answer: 1 }
+                { sentence: "A turtle ___ run fast.", img: "🐢", options: ["can", "can't"], answer: 1 },
+                { sentence: "A dog ___ bark.", img: "🐕", options: ["can", "can't"], answer: 0 },
+                { sentence: "A cow ___ fly.", img: "🐄", options: ["can", "can't"], answer: 1 }
               ]
             },
             {
               format: "trivia", level: "Difícil",
-              instructions: "¿Qué SÍ puede hacer? Toca la respuesta.",
+              instructions: "¿Qué SÍ puede hacer?",
               items: [
                 { question: "A fish can…", img: "🐟", options: ["swim", "fly", "walk"], answer: 0 },
                 { question: "A bird can…", img: "🐦", options: ["swim", "fly", "drive"], answer: 1 },
                 { question: "A cheetah can…", img: "🐆", options: ["read", "cook", "run fast"], answer: 2 },
                 { question: "A frog can…", img: "🐸", options: ["jump", "drive", "sing"], answer: 0 },
                 { question: "A bat can…", img: "🦇", options: ["fly", "swim", "talk"], answer: 0 },
-                { question: "A snake can…", img: "🐍", options: ["clap", "slither", "walk"], answer: 1 }
+                { question: "A snake can…", img: "🐍", options: ["clap", "slither", "walk"], answer: 1 },
+                { question: "A kangaroo can…", img: "🦘", options: ["hop", "drive", "read"], answer: 0 },
+                { question: "A dolphin can…", img: "🐬", options: ["swim", "walk", "fly"], answer: 0 }
               ]
             }
           ]
@@ -172,7 +185,8 @@ window.OWEN_DATA.english = {
               format: "matching", level: "Fácil",
               instructions: "Empareja cada emoción con su cara.",
               pairs: [
-                { a: "Happy", b: "😄" }, { a: "Sad", b: "😢" }, { a: "Angry", b: "😠" }, { a: "Scared", b: "😱" }
+                { a: "Happy", b: "😄" }, { a: "Sad", b: "😢" }, { a: "Angry", b: "😠" },
+                { a: "Scared", b: "😱" }, { a: "Sleepy", b: "😴" }, { a: "Surprised", b: "😮" }
               ]
             },
             {
@@ -180,19 +194,22 @@ window.OWEN_DATA.english = {
               instructions: "Encuentra la emoción y su cara.",
               pairs: [
                 { a: "Happy", b: "😄" }, { a: "Sad", b: "😢" }, { a: "Angry", b: "😠" },
-                { a: "Scared", b: "😱" }, { a: "Sleepy", b: "😴" }, { a: "Surprised", b: "😮" }
+                { a: "Scared", b: "😱" }, { a: "Sleepy", b: "😴" }, { a: "Surprised", b: "😮" },
+                { a: "Excited", b: "🤩" }, { a: "Sick", b: "🤒" }
               ]
             },
             {
               format: "trivia", level: "Difícil",
-              instructions: "¿Cómo se siente? Toca la respuesta.",
+              instructions: "¿Cómo se siente?",
               items: [
                 { question: "Owen got a gift. He is…", img: "🎁", options: ["happy", "sad", "angry"], answer: 0 },
                 { question: "Her ice cream fell. She is…", img: "🍦", options: ["happy", "sad", "sleepy"], answer: 1 },
                 { question: "It is very late. He is…", img: "🌙", options: ["sleepy", "angry", "scared"], answer: 0 },
                 { question: "A big spider! She is…", img: "🕷️", options: ["scared", "happy", "hungry"], answer: 0 },
                 { question: "The opposite of happy is…", img: "🙂", options: ["sad", "big", "fast"], answer: 0 },
-                { question: "The opposite of big is…", img: "📏", options: ["small", "tall", "hot"], answer: 0 }
+                { question: "The opposite of big is…", img: "📏", options: ["small", "tall", "hot"], answer: 0 },
+                { question: "She won a prize. She is…", img: "🏆", options: ["happy", "sad", "scared"], answer: 0 },
+                { question: "He lost his toy. He is…", img: "🧸", options: ["sad", "happy", "sleepy"], answer: 0 }
               ]
             }
           ]
@@ -208,7 +225,8 @@ window.OWEN_DATA.english = {
                 { sentence: "(you) That is ___ dog.", img: "🐕", options: ["my", "your"], answer: 1 },
                 { sentence: "(I) Here is ___ book.", img: "📕", options: ["my", "your"], answer: 0 },
                 { sentence: "(you) Is this ___ pen?", img: "🖊️", options: ["my", "your"], answer: 1 },
-                { sentence: "(I) I love ___ family.", img: "👨‍👩‍👦", options: ["my", "your"], answer: 0 }
+                { sentence: "(I) I love ___ family.", img: "👨‍👩‍👦", options: ["my", "your"], answer: 0 },
+                { sentence: "(you) Where is ___ bag?", img: "🎒", options: ["my", "your"], answer: 1 }
               ]
             },
             {
@@ -220,19 +238,21 @@ window.OWEN_DATA.english = {
                 { sentence: "(I) This is ___ toy.", img: "🧸", options: ["my", "your", "his", "her"], answer: 0 },
                 { sentence: "(you) Where is ___ bag?", img: "🎒", options: ["my", "your", "his", "her"], answer: 1 },
                 { sentence: "(he) That is ___ bike.", img: "🚲", options: ["my", "your", "his", "her"], answer: 2 },
-                { sentence: "(she) I like ___ dress.", img: "👗", options: ["my", "your", "his", "her"], answer: 3 }
+                { sentence: "(she) I like ___ dress.", img: "👗", options: ["my", "your", "his", "her"], answer: 3 },
+                { sentence: "(I) These are ___ shoes.", img: "👟", options: ["my", "your", "his", "her"], answer: 0 },
+                { sentence: "(you) Is that ___ hat?", img: "🧢", options: ["my", "your", "his", "her"], answer: 1 }
               ]
             },
             {
-              format: "fill", level: "Difícil",
-              instructions: "Completa con his, her, its, our o their.",
+              format: "trivia", level: "Difícil",
+              instructions: "¿Cuál está bien escrita?",
               items: [
-                { sentence: "(it) The cat licks ___ paw.", img: "🐈", options: ["his", "her", "its", "our", "their"], answer: 2 },
-                { sentence: "(they) The kids ride ___ bikes.", img: "🚲", options: ["his", "her", "its", "our", "their"], answer: 4 },
-                { sentence: "(we) This is ___ house.", img: "🏠", options: ["his", "her", "its", "our", "their"], answer: 3 },
-                { sentence: "(she) She brushes ___ hair.", img: "💇‍♀️", options: ["his", "her", "its", "our", "their"], answer: 1 },
-                { sentence: "(he) He kicks ___ ball.", img: "⚽", options: ["his", "her", "its", "our", "their"], answer: 0 },
-                { sentence: "(it) The dog wags ___ tail.", img: "🐕", options: ["his", "her", "its", "our", "their"], answer: 2 }
+                { question: "Choose the correct one:", img: "👧", options: ["She brushes his hair", "She brushes her hair"], answer: 1 },
+                { question: "Choose the correct one:", img: "👦", options: ["He kicks his ball", "He kicks her ball"], answer: 0 },
+                { question: "Choose the correct one:", img: "👨‍👩‍👧‍👦", options: ["They ride his bikes", "They ride their bikes"], answer: 1 },
+                { question: "Choose the correct one:", img: "🧑‍🤝‍🧑", options: ["We clean our room", "We clean their room"], answer: 0 },
+                { question: "Choose the correct one:", img: "🐕", options: ["The dog wags your tail", "The dog wags its tail"], answer: 1 },
+                { question: "Choose the correct one:", img: "❤️", options: ["I love my mom", "I love your mom"], answer: 0 }
               ]
             }
           ]
@@ -244,27 +264,31 @@ window.OWEN_DATA.english = {
               format: "memory", level: "Fácil",
               instructions: "Encuentra la letra y el dibujo con ese sonido.",
               pairs: [
-                { a: "Aa", b: "🍎" }, { a: "Bb", b: "⚽" }, { a: "Cc", b: "🐈" }, { a: "Dd", b: "🐕" }
-              ]
-            },
-            {
-              format: "memory", level: "Medio",
-              instructions: "Encuentra la letra y el dibujo con ese sonido.",
-              pairs: [
                 { a: "Aa", b: "🍎" }, { a: "Bb", b: "⚽" }, { a: "Cc", b: "🐈" },
                 { a: "Dd", b: "🐕" }, { a: "Ss", b: "☀️" }, { a: "Ff", b: "🐟" }
               ]
             },
             {
+              format: "matching", level: "Medio",
+              instructions: "Empareja cada letra con un dibujo con ese sonido.",
+              pairs: [
+                { a: "Aa", b: "🍎" }, { a: "Bb", b: "⚽" }, { a: "Cc", b: "🐈" },
+                { a: "Dd", b: "🐕" }, { a: "Ss", b: "☀️" }, { a: "Ff", b: "🐟" },
+                { a: "Mm", b: "🌙" }, { a: "Tt", b: "🌳" }
+              ]
+            },
+            {
               format: "trivia", level: "Difícil",
-              instructions: "¿Qué palabra empieza con ese sonido? Toca la respuesta.",
+              instructions: "¿Qué palabra empieza con ese sonido?",
               items: [
                 { question: "Which starts with B?", img: "🔤", options: ["Ball", "Apple", "Sun"], answer: 0 },
                 { question: "Which starts with S?", img: "🔤", options: ["Fish", "Sun", "Cat"], answer: 1 },
                 { question: "Which starts with A?", img: "🔤", options: ["Dog", "Apple", "Ball"], answer: 1 },
                 { question: "Which starts with F?", img: "🔤", options: ["Fish", "Cat", "Sun"], answer: 0 },
                 { question: "Which starts with C?", img: "🔤", options: ["Apple", "Cat", "Ball"], answer: 1 },
-                { question: "Which starts with D?", img: "🔤", options: ["Dog", "Sun", "Fish"], answer: 0 }
+                { question: "Which starts with D?", img: "🔤", options: ["Dog", "Sun", "Fish"], answer: 0 },
+                { question: "Which starts with M?", img: "🔤", options: ["Moon", "Ball", "Fish"], answer: 0 },
+                { question: "Which starts with T?", img: "🔤", options: ["Tree", "Apple", "Sun"], answer: 0 }
               ]
             }
           ]
@@ -276,7 +300,8 @@ window.OWEN_DATA.english = {
               format: "matching", level: "Fácil",
               instructions: "Palabras de la historia. Empareja con su dibujo.",
               pairs: [
-                { a: "Robot", b: "🤖" }, { a: "Fix", b: "🛠️" }, { a: "Battery", b: "🔋" }, { a: "Light", b: "💡" }
+                { a: "Robot", b: "🤖" }, { a: "Fix", b: "🛠️" }, { a: "Battery", b: "🔋" },
+                { a: "Light", b: "💡" }, { a: "Gear", b: "⚙️" }, { a: "Rocket", b: "🚀" }
               ]
             },
             {
@@ -284,7 +309,8 @@ window.OWEN_DATA.english = {
               instructions: "Encuentra la palabra de la historia y su dibujo.",
               pairs: [
                 { a: "Robot", b: "🤖" }, { a: "Fix", b: "🛠️" }, { a: "Battery", b: "🔋" },
-                { a: "Light", b: "💡" }, { a: "Gear", b: "⚙️" }, { a: "Rocket", b: "🚀" }
+                { a: "Light", b: "💡" }, { a: "Gear", b: "⚙️" }, { a: "Rocket", b: "🚀" },
+                { a: "Magnet", b: "🧲" }, { a: "Tool", b: "🔧" }
               ]
             },
             {
@@ -316,31 +342,35 @@ window.OWEN_DATA.english = {
                 { sentence: "___ they run?", img: "🏃", options: ["Do", "Does"], answer: 0 },
                 { sentence: "___ she sing?", img: "🎤", options: ["Do", "Does"], answer: 1 },
                 { sentence: "___ we go?", img: "🚶", options: ["Do", "Does"], answer: 0 },
-                { sentence: "___ it fly?", img: "🐦", options: ["Do", "Does"], answer: 1 }
+                { sentence: "___ it fly?", img: "🐦", options: ["Do", "Does"], answer: 1 },
+                { sentence: "___ you read?", img: "📚", options: ["Do", "Does"], answer: 0 },
+                { sentence: "___ he swim?", img: "🏊", options: ["Do", "Does"], answer: 1 }
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Piensa en el sujeto. ¿Do o Does?",
+              format: "trivia", level: "Medio",
+              instructions: "¿Cuál pregunta está bien escrita?",
               items: [
-                { sentence: "___ I know you?", img: "❓", options: ["Do", "Does"], answer: 0 },
-                { sentence: "___ the dog bark?", img: "🐕", options: ["Do", "Does"], answer: 1 },
-                { sentence: "___ your friends play?", img: "🧒", options: ["Do", "Does"], answer: 0 },
-                { sentence: "___ Owen like books?", img: "📚", options: ["Do", "Does"], answer: 1 },
-                { sentence: "___ cats drink milk?", img: "🐈", options: ["Do", "Does"], answer: 0 },
-                { sentence: "___ the sun shine?", img: "☀️", options: ["Do", "Does"], answer: 1 }
+                { question: "Choose the correct one:", img: "👧", options: ["Do she like it?", "Does she like it?"], answer: 1 },
+                { question: "Choose the correct one:", img: "🧒", options: ["Do you play?", "Does you play?"], answer: 0 },
+                { question: "Choose the correct one:", img: "👦", options: ["Do he run?", "Does he run?"], answer: 1 },
+                { question: "Choose the correct one:", img: "👬", options: ["Do they jump?", "Does they jump?"], answer: 0 },
+                { question: "Choose the correct one:", img: "🐈", options: ["Does it work?", "Do it work?"], answer: 0 },
+                { question: "Choose the correct one:", img: "🧑‍🤝‍🧑", options: ["Does we go?", "Do we go?"], answer: 1 }
               ]
             },
             {
               format: "fill", level: "Difícil",
               instructions: "Frases negativas. Completa con do o does.",
               items: [
-                { sentence: "She ___ not like peas.", img: "🚫", options: ["do", "does"], answer: 1 },
-                { sentence: "They ___ not play.", img: "🚫", options: ["do", "does"], answer: 0 },
-                { sentence: "He ___ not run.", img: "🚫", options: ["do", "does"], answer: 1 },
-                { sentence: "I ___ not know.", img: "🚫", options: ["do", "does"], answer: 0 },
-                { sentence: "It ___ not work.", img: "🚫", options: ["do", "does"], answer: 1 },
-                { sentence: "We ___ not sleep.", img: "🚫", options: ["do", "does"], answer: 0 }
+                { sentence: "She ___ not like peas.", img: "👧", options: ["do", "does"], answer: 1 },
+                { sentence: "They ___ not play.", img: "👬", options: ["do", "does"], answer: 0 },
+                { sentence: "He ___ not run.", img: "👦", options: ["do", "does"], answer: 1 },
+                { sentence: "I ___ not know.", img: "🙋", options: ["do", "does"], answer: 0 },
+                { sentence: "It ___ not work.", img: "🤖", options: ["do", "does"], answer: 1 },
+                { sentence: "We ___ not sleep.", img: "🧑‍🤝‍🧑", options: ["do", "does"], answer: 0 },
+                { sentence: "The dog ___ not bark.", img: "🐕", options: ["do", "does"], answer: 1 },
+                { sentence: "Cats ___ not fly.", img: "🐈", options: ["do", "does"], answer: 0 }
               ]
             }
           ]
@@ -356,19 +386,16 @@ window.OWEN_DATA.english = {
                 { sentence: "I am ___. (eat)", img: "🍽️", options: ["eat", "eating"], answer: 1 },
                 { sentence: "He is ___. (sleep)", img: "😴", options: ["sleep", "sleeping"], answer: 1 },
                 { sentence: "They are ___. (play)", img: "🎮", options: ["play", "playing"], answer: 1 },
-                { sentence: "We are ___. (read)", img: "📖", options: ["read", "reading"], answer: 1 }
+                { sentence: "We are ___. (read)", img: "📖", options: ["read", "reading"], answer: 1 },
+                { sentence: "She is ___. (jump)", img: "🤸", options: ["jump", "jumping"], answer: 1 }
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Elige la forma correcta con -ing.",
-              items: [
-                { sentence: "She is ___. (run)", img: "🏃‍♀️", options: ["run", "running", "runs"], answer: 1 },
-                { sentence: "I am ___. (jump)", img: "🤸", options: ["jumps", "jumping", "jump"], answer: 1 },
-                { sentence: "The dog is ___. (bark)", img: "🐕", options: ["bark", "barking", "barked"], answer: 1 },
-                { sentence: "You are ___. (draw)", img: "✏️", options: ["draw", "drawing", "drew"], answer: 1 },
-                { sentence: "He is ___. (swim)", img: "🏊", options: ["swimming", "swim", "swam"], answer: 0 },
-                { sentence: "We are ___. (sing)", img: "🎤", options: ["sang", "sing", "singing"], answer: 2 }
+              format: "matching", level: "Medio",
+              instructions: "Empareja cada acción con su dibujo.",
+              pairs: [
+                { a: "Run", b: "🏃" }, { a: "Eat", b: "🍽️" }, { a: "Sleep", b: "😴" },
+                { a: "Swim", b: "🏊" }, { a: "Sing", b: "🎤" }, { a: "Read", b: "📖" }
               ]
             },
             {
@@ -380,7 +407,9 @@ window.OWEN_DATA.english = {
                 { question: "She ___ eating.", img: "🍽️", options: ["is", "are", "am"], answer: 0 },
                 { question: "They ___ running.", img: "🏃", options: ["is", "are", "am"], answer: 1 },
                 { question: "___ you reading?", img: "📖", options: ["Are", "Is", "Am"], answer: 0 },
-                { question: "Which word has -ing?", img: "🔤", options: ["playing", "played"], answer: 0 }
+                { question: "Which word has -ing?", img: "🔤", options: ["playing", "played"], answer: 0 },
+                { question: "He ___ swimming.", img: "🏊", options: ["is", "are", "am"], answer: 0 },
+                { question: "We ___ singing.", img: "🎤", options: ["are", "is", "am"], answer: 0 }
               ]
             }
           ]
@@ -393,26 +422,30 @@ window.OWEN_DATA.english = {
               instructions: "Elige el plural (con -s).",
               items: [
                 { question: "One cat, two ___", img: "🐈", options: ["cats", "cat"], answer: 0 },
-                { question: "One dog, two ___", img: "🐕", options: ["dogs", "dog"], answer: 0 },
+                { question: "One dog, two ___", img: "🐕", options: ["dog", "dogs"], answer: 1 },
                 { question: "One car, two ___", img: "🚗", options: ["cars", "car"], answer: 0 },
-                { question: "One book, two ___", img: "📚", options: ["books", "book"], answer: 0 },
-                { question: "One pen, two ___", img: "🖊️", options: ["pens", "pen"], answer: 0 }
+                { question: "One book, two ___", img: "📚", options: ["book", "books"], answer: 1 },
+                { question: "One pen, two ___", img: "🖊️", options: ["pens", "pen"], answer: 0 },
+                { question: "One ball, two ___", img: "⚽", options: ["ball", "balls"], answer: 1 },
+                { question: "One bird, two ___", img: "🐦", options: ["birds", "bird"], answer: 0 },
+                { question: "One hat, two ___", img: "🧢", options: ["hat", "hats"], answer: 1 }
               ]
             },
             {
-              format: "trivia", level: "Medio",
-              instructions: "Estos plurales llevan -es. Elige el correcto.",
+              format: "fill", level: "Medio",
+              instructions: "Estos plurales llevan -es. Completa.",
               items: [
-                { question: "One box, two ___", img: "📦", options: ["boxs", "boxes"], answer: 1 },
-                { question: "One bus, two ___", img: "🚌", options: ["buss", "buses"], answer: 1 },
-                { question: "One fox, two ___", img: "🦊", options: ["foxs", "foxes"], answer: 1 },
-                { question: "One dish, two ___", img: "🍽️", options: ["dishs", "dishes"], answer: 1 },
-                { question: "One brush, two ___", img: "🪥", options: ["brushs", "brushes"], answer: 1 }
+                { sentence: "One box, two ___.", img: "📦", options: ["boxes", "boxs"], answer: 0 },
+                { sentence: "One bus, two ___.", img: "🚌", options: ["buss", "buses"], answer: 1 },
+                { sentence: "One fox, two ___.", img: "🦊", options: ["foxes", "foxs"], answer: 0 },
+                { sentence: "One dish, two ___.", img: "🍽️", options: ["dishs", "dishes"], answer: 1 },
+                { sentence: "One brush, two ___.", img: "🪥", options: ["brushes", "brushs"], answer: 0 },
+                { sentence: "One glass, two ___.", img: "🥛", options: ["glasss", "glasses"], answer: 1 }
               ]
             },
             {
               format: "trivia", level: "Difícil",
-              instructions: "Plurales difíciles (-ies e irregulares). Elige el correcto.",
+              instructions: "Plurales difíciles (-ies e irregulares).",
               items: [
                 { question: "One baby, two ___", img: "👶", options: ["babys", "babies", "baby"], answer: 1 },
                 { question: "One party, two ___", img: "🎉", options: ["partys", "parties", "partyes"], answer: 1 },
@@ -436,31 +469,31 @@ window.OWEN_DATA.english = {
                 { question: "Maria", img: "👧", options: ["Proper", "Common"], answer: 0 },
                 { question: "city", img: "🏙️", options: ["Proper", "Common"], answer: 1 },
                 { question: "book", img: "📚", options: ["Proper", "Common"], answer: 1 },
-                { question: "Bogotá", img: "🌆", options: ["Proper", "Common"], answer: 0 }
+                { question: "Bogotá", img: "🌆", options: ["Proper", "Common"], answer: 0 },
+                { question: "teacher", img: "🍎", options: ["Proper", "Common"], answer: 1 },
+                { question: "Rex (a dog's name)", img: "🐕", options: ["Proper", "Common"], answer: 0 }
               ]
             },
             {
-              format: "trivia", level: "Medio",
-              instructions: "Días, meses y países son nombres propios. Elige.",
-              items: [
-                { question: "Monday", img: "📅", options: ["Proper", "Common"], answer: 0 },
-                { question: "school", img: "🏫", options: ["Proper", "Common"], answer: 1 },
-                { question: "Colombia", img: "🌎", options: ["Proper", "Common"], answer: 0 },
-                { question: "teacher", img: "🍎", options: ["Proper", "Common"], answer: 1 },
-                { question: "December", img: "🗓️", options: ["Proper", "Common"], answer: 0 },
-                { question: "river", img: "🏞️", options: ["Proper", "Common"], answer: 1 }
+              format: "matching", level: "Medio",
+              instructions: "Empareja el nombre propio con su nombre común.",
+              pairs: [
+                { a: "Owen", b: "boy" }, { a: "Colombia", b: "country" }, { a: "Monday", b: "day" },
+                { a: "Bogotá", b: "city" }, { a: "Rex", b: "dog" }, { a: "December", b: "month" }
               ]
             },
             {
               format: "trivia", level: "Difícil",
-              instructions: "Piensa en la mayúscula. Toca la respuesta.",
+              instructions: "Piensa en la mayúscula.",
               items: [
                 { question: "Which needs a capital letter?", img: "🔠", options: ["owen", "dog"], answer: 0 },
                 { question: "Which needs a capital letter?", img: "🔠", options: ["cat", "colombia"], answer: 1 },
                 { question: "Which is a proper noun?", img: "🔤", options: ["monday", "day"], answer: 0 },
                 { question: "Which is a common noun?", img: "🔤", options: ["river", "Amazon"], answer: 0 },
                 { question: "Which needs a capital?", img: "🔠", options: ["city", "bogota"], answer: 1 },
-                { question: "Which is a proper noun?", img: "🔤", options: ["teacher", "Ms. Ana"], answer: 1 }
+                { question: "Which is a proper noun?", img: "🔤", options: ["teacher", "Ms. Ana"], answer: 1 },
+                { question: "Which needs a capital?", img: "🔠", options: ["dog", "rex"], answer: 1 },
+                { question: "Which is a proper noun?", img: "🔤", options: ["Maria", "girl"], answer: 0 }
               ]
             }
           ]
@@ -476,18 +509,20 @@ window.OWEN_DATA.english = {
                 { sentence: "I ___ at home.", img: "🏠", options: ["was", "am"], answer: 0 },
                 { sentence: "The dog ___ happy.", img: "🐕", options: ["was", "is"], answer: 0 },
                 { sentence: "It ___ a phone.", img: "📱", options: ["was", "is"], answer: 0 },
-                { sentence: "She ___ my teacher.", img: "👩‍🏫", options: ["was", "is"], answer: 0 }
+                { sentence: "She ___ my teacher.", img: "👩‍🏫", options: ["was", "is"], answer: 0 },
+                { sentence: "It ___ fun.", img: "🎈", options: ["was", "is"], answer: 0 }
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Pasado (was) o presente (is)? Elige.",
+              format: "trivia", level: "Medio",
+              instructions: "¿Cuál habla del pasado?",
               items: [
-                { sentence: "Now it is sunny. Yesterday it ___ rainy.", img: "🌧️", options: ["was", "is"], answer: 0 },
-                { sentence: "Today I am 6. Last year I ___ 5.", img: "🎂", options: ["was", "am"], answer: 0 },
-                { sentence: "He ___ sick yesterday, but is fine now.", img: "🤒", options: ["was", "is"], answer: 0 },
-                { sentence: "The park ___ full yesterday.", img: "🏞️", options: ["was", "is"], answer: 0 },
-                { sentence: "This ___ my old toy.", img: "🧸", options: ["was", "is"], answer: 0 }
+                { question: "Yesterday…", img: "🌧️", options: ["it was rainy", "it is rainy"], answer: 0 },
+                { question: "Last year…", img: "🎂", options: ["I was 5", "I am 5"], answer: 0 },
+                { question: "A minute ago…", img: "⏱️", options: ["he was here", "he is here"], answer: 0 },
+                { question: "In the past…", img: "⏳", options: ["it was cold", "it is cold"], answer: 0 },
+                { question: "Yesterday…", img: "🤒", options: ["she was sick", "she is sick"], answer: 0 },
+                { question: "Long ago…", img: "🦕", options: ["dinosaurs were big", "dinosaurs are big"], answer: 0 }
               ]
             },
             {
