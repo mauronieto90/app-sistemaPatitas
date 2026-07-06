@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soluciones integrales - Carrusel</title>
+
+    <!-- Fuente -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap">
+
+    <!-- Owl Carousel (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+
+    <style>
+        /* ============================================================
+           BASE / RESET DEL COMPONENTE
+        ============================================================ */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: Montserrat, sans-serif;
+        }
+
+        /* ============================================================
+           OWL CAROUSEL (owl.carousel.min.css)
+        ============================================================ */
+        .owl-carousel,
+        .owl-carousel .owl-item {
+            -webkit-tap-highlight-color: transparent;
+            position: relative
+        }
+
+        .owl-carousel {
+            display: none;
+            width: 100%;
+            z-index: 1
+        }
+
+        .owl-carousel .owl-stage {
+            position: relative;
+            -ms-touch-action: pan-Y;
+            touch-action: manipulation;
+            -moz-backface-visibility: hidden
+        }
+
+        .owl-carousel .owl-stage:after {
+            content: ".";
+            display: block;
+            clear: both;
+            visibility: hidden;
+            line-height: 0;
+            height: 0
+        }
+
+        .owl-carousel .owl-stage-outer {
+            position: relative;
+            overflow: hidden;
+            -webkit-transform: translate3d(0, 0, 0)
+        }
+
+        .owl-carousel .owl-item,
+        .owl-carousel .owl-wrapper {
+            -webkit-backface-visibility: hidden;
+            -moz-backface-visibility: hidden;
+            -ms-backface-visibility: hidden;
+            -webkit-transform: translate3d(0, 0, 0);
+            -moz-transform: translate3d(0, 0, 0);
+            -ms-transform: translate3d(0, 0, 0)
+        }
+
+        .owl-carousel .owl-item {
+            min-height: 1px;
+            float: left;
+            -webkit-backface-visibility: hidden;
+            -webkit-touch-callout: none
+        }
+
+        .owl-carousel .owl-item img {
+            display: block;
+            width: 100%
+        }
+
+        .owl-carousel .owl-dots.disabled,
+        .owl-carousel .owl-nav.disabled {
+            display: none
+        }
+
+        .no-js .owl-carousel,
+        .owl-carousel.owl-loaded {
+            display: block
+        }
+
+        .owl-carousel .owl-dot,
+        .owl-carousel .owl-nav .owl-next,
+        .owl-carousel .owl-nav .owl-prev {
+            cursor: pointer;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none
+        }
+
+        .owl-carousel .owl-nav button.owl-next,
+        .owl-carousel .owl-nav button.owl-prev,
+        .owl-carousel button.owl-dot {
+            background: 0 0;
+            color: inherit;
+            border: none;
+            padding: 0!important;
+            font: inherit
+        }
+
+        .owl-carousel.owl-loading {
+            opacity: 0;
+            display: block
+        }
+
+        .owl-carousel.owl-hidden {
+            opacity: 0
+        }
+
+        .owl-carousel.owl-refresh .owl-item {
+            visibility: hidden
+        }
+
+        .owl-carousel.owl-drag .owl-item {
+            -ms-touch-action: pan-y;
+            touch-action: pan-y;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none
+        }
+
+        .owl-carousel.owl-grab {
+            cursor: move;
+            cursor: grab
+        }
+
+        .owl-carousel.owl-rtl {
+            direction: rtl
+        }
+
+        .owl-carousel.owl-rtl .owl-item {
+            float: right
+        }
+
+        .owl-carousel .animated {
+            animation-duration: 1s;
+            animation-fill-mode: both
+        }
+
+        .owl-carousel .owl-animated-in {
+            z-index: 0
+        }
+
+        .owl-carousel .owl-animated-out {
+            z-index: 1
+        }
+
+        .owl-carousel .fadeOut {
+            animation-name: fadeOut
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1 }
+            100% { opacity: 0 }
+        }
+
+        .owl-height {
+            transition: height .5s ease-in-out
+        }
+
+        /* ============================================================
+           OWL THEME DEFAULT (owl.theme.default.min.css)
+        ============================================================ */
+        .owl-theme .owl-dots,
+        .owl-theme .owl-nav {
+            text-align: center;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        .owl-theme .owl-nav {
+            margin-top: 10px
+        }
+
+        .owl-theme .owl-nav [class*=owl-] {
+            color: #FFF;
+            font-size: 14px;
+            margin: 5px;
+            padding: 4px 7px;
+            background: #D6D6D6;
+            display: inline-block;
+            cursor: pointer;
+            border-radius: 3px
+        }
+
+        .owl-theme .owl-nav [class*=owl-]:hover {
+            background: #869791;
+            color: #FFF;
+            text-decoration: none
+        }
+
+        .owl-theme .owl-nav .disabled {
+            opacity: .5;
+            cursor: default
+        }
+
+        .owl-theme .owl-nav.disabled+.owl-dots {
+            margin-top: 10px
+        }
+
+        .owl-theme .owl-dots .owl-dot {
+            display: inline-block;
+            zoom: 1
+        }
+
+        .owl-theme .owl-dots .owl-dot span {
+            width: 10px;
+            height: 10px;
+            margin: 5px 7px;
+            background: #D6D6D6;
+            display: block;
+            -webkit-backface-visibility: visible;
+            transition: opacity .2s ease;
+            border-radius: 30px
+        }
+
+        .owl-theme .owl-dots .owl-dot.active span,
+        .owl-theme .owl-dots .owl-dot:hover span {
+            background: #869791
+        }
+
+        /* ============================================================
+           TÍTULO DE LA SECCIÓN
+        ============================================================ */
+        .titulo-pagina h2 {
+            font-family: Montserrat, sans-serif;
+            color: rgb(56, 59, 59);
+            font-size: 37px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            line-height: 38px;
+            text-align: left;
+        }
+
+        .titulo-pagina h2 span {
+            font-weight: 500;
+        }
+
+        .titulo-pagina p {
+            font-family: Montserrat, sans-serif;
+            text-align: left;
+            font-size: 16px;
+            line-height: 19px;
+            margin-bottom: 25px;
+        }
+
+        /* ============================================================
+           COMPONENTE SOLUCIONES INTEGRALES
+        ============================================================ */
+        .componente-soluciones-integrales {
+            position: relative;
+            text-align: center;
+            max-width: 1171px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 70px 20px;
+        }
+
+        .componente-soluciones-integrales .owl-stage {
+            display: flex;
+        }
+
+        .componente-soluciones-integrales .item {
+            display: flex !important;
+            flex: 1 0 auto;
+            height: 100%;
+            padding: 7px;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion {
+            background: white;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 20px;
+            border-radius: 20px;
+            box-shadow: 0px 0px 9px 0px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion img {
+            width: 100%;
+            margin: 0 auto;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion .texto-card {
+            margin-bottom: 80px;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion .texto-card h3 {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            font-family: Montserrat, sans-serif;
+            color: rgb(56, 59, 59);
+            font-size: 19px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            line-height: 20px;
+            text-align: left;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion .texto-card p {
+            display: block;
+            font-family: Montserrat, sans-serif;
+            text-align: left;
+            font-size: 14px;
+            line-height: 19px;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion .btns-cards {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion .btns-cards a {
+            background-image: linear-gradient(to bottom, #ffbb8e, #ffbb8e, #ff6600, #ff6600);
+            background-size: 100% 126px;
+            background-position: 0 -48px;
+            color: white;
+            padding: 14px 17px;
+            border-radius: 50px;
+            font-family: "Montserrat", sans-serif;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: max-content;
+            font-size: 16px;
+            line-height: 13px;
+            text-decoration: none;
+            transition: all 0.2s linear;
+        }
+
+        .componente-soluciones-integrales .item .card-solucion .btns-cards a:hover {
+            background-position: 0 -60px;
+            color: white !important;
+        }
+
+        /* ---- Navegación (flechas) ---- */
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            width: 100%;
+            gap: 6px;
+            justify-content: right;
+            padding-top: 20px;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav [class*=owl-] {
+            margin: 0 !important;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-prev {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% !important;
+            background-color: rgb(255 102 0 / 60%) !important;
+            transition: 0.3s;
+            outline: none;
+            min-width: auto;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-prev span {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font: 0/0 a;
+            text-shadow: transparent;
+            color: transparent;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-prev span:before {
+            content: "";
+            background-image: url(/empresas/Biblioteca%20de%20estilos/webpart/home-bienestar/img/flecha-carousel.png);
+            display: block;
+            text-align: center;
+            width: 20px;
+            height: 24px;
+            background-size: 10px;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: rotate(180deg);
+            opacity: 1;
+            filter: brightness(10);
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-prev:hover {
+            background-color: rgb(255 102 0 / 100%) !important;
+            opacity: 1 !important;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-next {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% !important;
+            background-color: rgb(255 102 0 / 60%) !important;
+            transition: 0.3s;
+            outline: none;
+            min-width: auto;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-next span {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font: 0/0 a;
+            text-shadow: transparent;
+            color: transparent;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-next span:before {
+            content: "";
+            background-image: url(/empresas/Biblioteca%20de%20estilos/webpart/home-bienestar/img/flecha-carousel.png);
+            display: block;
+            text-align: center;
+            width: 20px;
+            height: 24px;
+            background-size: 10px;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 1;
+            filter: brightness(10);
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-nav .owl-next:hover {
+            width: 40px;
+            height: 40px;
+            background-color: rgb(255 102 0 / 100%) !important;
+            opacity: 1 !important;
+            box-shadow: none !important;
+        }
+
+        #owl-carousel-soluciones-integrales.owl-carousel .owl-dots {
+            display: none;
+        }
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+        @media only screen and (max-width: 768px) {
+            .titulo-pagina h2 {
+                text-align: center;
+                font-size: 29px;
+            }
+            .titulo-pagina p {
+                text-align: center;
+            }
+        }
+
+        @media only screen and (max-width: 550px) {
+            .componente-soluciones-integrales .item .card-solucion {
+                padding: 20px 20px 30px 20px;
+            }
+            .componente-soluciones-integrales .item .card-solucion img {
+                max-width: 350px;
+            }
+            .componente-soluciones-integrales .item .card-solucion .texto-card h3 {
+                height: auto;
+                text-align: center;
+                justify-content: center;
+            }
+            .componente-soluciones-integrales .item .card-solucion .texto-card {
+                margin-bottom: 25px;
+            }
+            .componente-soluciones-integrales .item .card-solucion .texto-card p {
+                text-align: center;
+            }
+            .componente-soluciones-integrales .item .card-solucion .btns-cards {
+                position: relative;
+                text-align: center;
+                margin: 0 auto;
+                bottom: initial;
+                left: initial;
+            }
+            .componente-soluciones-integrales .item .card-solucion .btns-cards a {
+                margin: 0 auto;
+            }
+            #owl-carousel-soluciones-integrales.owl-carousel .owl-nav {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section title="Soluciones integrales" class="componente-soluciones-integrales">
+        <div class="titulo-pagina">
+            <h2>¡Aquí comienza una forma diferente de acompañar a tu empresa!</h2>
+            <p>Soluciones integrales que conectan bienestar, productividad y desarrollo del talento para impulsar el desempeño de tus equipos y el crecimiento de tu organización. Cada negocio avanza a su ritmo, por eso, nuestros servicios están diseñados para acompañar el momento en el que está tu empresa.</p>
+        </div>
+        <div id="owl-carousel-soluciones-integrales" class="owl-carousel owl-theme">
+            <!--item-1-->
+            <div class="item">
+                <div class="card-solucion">
+                    <img src="/empresas/Biblioteca%20de%20estilos/webpart/home-bienestar/img/img-soluciones-integrales-1.png" alt="">
+                    <div class="texto-card">
+                        <h3>Productividad Empresarial</h3>
+                        <p>Impulsa tu competitividad con servicios sin costo</p>
+                    </div>
+                    <div class="btns-cards">
+                        <a href="/productividad" title="" target="_blank" rel="noopener noreferrer">Más información</a>
+                    </div>
+                </div>
+            </div>
+            <!--item-2-->
+            <div class="item">
+                <div class="card-solucion">
+                    <img src="/empresas/Biblioteca%20de%20estilos/webpart/home-bienestar/img/img-soluciones-integrales-2.webp" alt="">
+                    <div class="texto-card">
+                        <h3>Desarrollo del talento humano</h3>
+                        <p>Programas de aprendizaje para tu equipo</p>
+                    </div>
+                    <div class="btns-cards">
+                        <a href="/empresas/bienestar/educacion" title="" target="_blank" rel="noopener noreferrer">Más información</a>
+                    </div>
+                </div>
+            </div>
+            <!--item-3-->
+            <div class="item">
+                <div class="card-solucion">
+                    <img src="/empresas/Biblioteca%20de%20estilos/webpart/home-bienestar/img/img-soluciones-integrales-3.webp" alt="">
+                    <div class="texto-card">
+                        <h3>Bienestar físico y mental</h3>
+                        <p>Equipos sanos y productivos</p>
+                    </div>
+                    <div class="btns-cards">
+                        <a href="/empresas/bienestar/deportes" title="" target="_blank" rel="noopener noreferrer">Más información</a>
+                    </div>
+                </div>
+            </div>
+            <!--item-4-->
+            <div class="item">
+                <div class="card-solucion">
+                    <img src="/empresas/Biblioteca%20de%20estilos/webpart/home-bienestar/img/img-soluciones-integrales-4.webp" alt="">
+                    <div class="texto-card">
+                        <h3>Eventos con propósito</h3>
+                        <p>Momentos que trascienden</p>
+                    </div>
+                    <div class="btns-cards">
+                        <a href="/eventos/empresas/eventos-empresariales" title="" target="_blank" rel="noopener noreferrer">Más información</a>
+                    </div>
+                </div>
+            </div>
+            <!--item-5-->
+            <div class="item">
+                <div class="card-solucion">
+                    <img src="/empresas/Biblioteca%20de%20estilos/webpart/home-bienestar/img/img-soluciones-integrales-5.webp" alt="">
+                    <div class="texto-card">
+                        <h3>Responsabilidad social empresarial</h3>
+                        <p>Iniciativas que marcan la diferencia</p>
+                    </div>
+                    <div class="btns-cards">
+                        <a href="/proyectos-sociales" title="" target="_blank" rel="noopener noreferrer">Más información</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- jQuery + Owl Carousel (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+
+    <!-- Inicialización del carrusel -->
+    <script>
+        $(document).ready(function () {
+            $('#owl-carousel-soluciones-integrales').owlCarousel({
+                loop: false,
+                margin: 10,
+                navSpeed: 500,
+                nav: true,
+                autoplay: true,
+                rewind: true,
+                autoplayTimeout: 7000,
+                autoplayHoverPause: true,
+                autoHeight: true,
+                responsive: {
+                    0: {
+                        items: 1
+                    },
+                    700: {
+                        items: 2
+                    },
+                    800: {
+                        items: 3
+                    },
+                    1000: {
+                        items: 4
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
