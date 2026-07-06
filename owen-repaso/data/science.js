@@ -2,8 +2,9 @@
    DATOS — SCIENCE (en inglés, como se enseña en el colegio bilingüe)
    -------------------------------------------------------------------------
    Cada TEMA tiene varias ACTIVIDADES (formato + nivel de dificultad).
-   Solo contenido, sin lógica. Para agregar temas nuevos, añade objetos a
-   "topics" (o actividades a "activities"). No hay que tocar el motor.
+   Cada actividad tiene un BANCO grande de preguntas/parejas; el juego
+   muestra un subconjunto AL AZAR cada vez, así no salen siempre las mismas.
+   Solo contenido, sin lógica. No hay que tocar el motor para agregar temas.
 
    activity.format:
      "trivia" / "fill"      -> items: [{ question|sentence, img?, options, answer }]
@@ -27,7 +28,7 @@ window.OWEN_DATA.science = {
           activities: [
             {
               format: "trivia", level: "Fácil",
-              instructions: "¿Está vivo o no está vivo? Toca la respuesta.",
+              instructions: "¿Está vivo o no está vivo?",
               items: [
                 { question: "Dog", img: "🐕", options: ["Alive", "Not alive"], answer: 0 },
                 { question: "Rock", img: "🪨", options: ["Alive", "Not alive"], answer: 1 },
@@ -36,15 +37,20 @@ window.OWEN_DATA.science = {
                 { question: "Bird", img: "🐦", options: ["Alive", "Not alive"], answer: 0 },
                 { question: "Chair", img: "🪑", options: ["Alive", "Not alive"], answer: 1 },
                 { question: "Flower", img: "🌼", options: ["Alive", "Not alive"], answer: 0 },
-                { question: "Ball", img: "⚽", options: ["Alive", "Not alive"], answer: 1 }
+                { question: "Ball", img: "⚽", options: ["Alive", "Not alive"], answer: 1 },
+                { question: "Cat", img: "🐈", options: ["Alive", "Not alive"], answer: 0 },
+                { question: "Spoon", img: "🥄", options: ["Alive", "Not alive"], answer: 1 },
+                { question: "Rabbit", img: "🐇", options: ["Alive", "Not alive"], answer: 0 },
+                { question: "Cup", img: "🥤", options: ["Alive", "Not alive"], answer: 1 }
               ]
             },
             {
-              format: "memory", level: "Medio",
-              instructions: "Encuentra las parejas: la palabra y su dibujo de seres vivos.",
+              format: "matching", level: "Medio",
+              instructions: "Empareja el ser vivo con su dibujo.",
               pairs: [
                 { a: "Dog", b: "🐕" }, { a: "Cat", b: "🐈" }, { a: "Tree", b: "🌳" },
-                { a: "Bird", b: "🐦" }, { a: "Fish", b: "🐟" }, { a: "Butterfly", b: "🦋" }
+                { a: "Bird", b: "🐦" }, { a: "Fish", b: "🐟" }, { a: "Butterfly", b: "🦋" },
+                { a: "Frog", b: "🐸" }, { a: "Flower", b: "🌼" }
               ]
             },
             {
@@ -58,7 +64,11 @@ window.OWEN_DATA.science = {
                 { question: "Mushroom", img: "🍄", options: ["Alive", "Not alive"], answer: 0 },
                 { question: "Phone", img: "📱", options: ["Alive", "Not alive"], answer: 1 },
                 { question: "Grass", img: "🌱", options: ["Alive", "Not alive"], answer: 0 },
-                { question: "Candle", img: "🕯️", options: ["Alive", "Not alive"], answer: 1 }
+                { question: "Candle", img: "🕯️", options: ["Alive", "Not alive"], answer: 1 },
+                { question: "Ant", img: "🐜", options: ["Alive", "Not alive"], answer: 0 },
+                { question: "Robot", img: "🤖", options: ["Alive", "Not alive"], answer: 1 },
+                { question: "Tree leaf", img: "🍃", options: ["Alive", "Not alive"], answer: 0 },
+                { question: "Balloon", img: "🎈", options: ["Alive", "Not alive"], answer: 1 }
               ]
             }
           ]
@@ -71,7 +81,8 @@ window.OWEN_DATA.science = {
               instructions: "Encuentra la parte del cuerpo y su dibujo.",
               pairs: [
                 { a: "Hand", b: "✋" }, { a: "Foot", b: "🦶" }, { a: "Eye", b: "👁️" },
-                { a: "Ear", b: "👂" }, { a: "Nose", b: "👃" }, { a: "Mouth", b: "👄" }
+                { a: "Ear", b: "👂" }, { a: "Nose", b: "👃" }, { a: "Mouth", b: "👄" },
+                { a: "Tooth", b: "🦷" }, { a: "Tongue", b: "👅" }
               ]
             },
             {
@@ -85,14 +96,16 @@ window.OWEN_DATA.science = {
             },
             {
               format: "trivia", level: "Difícil",
-              instructions: "¿Qué parte del cuerpo usamos? Toca la respuesta.",
+              instructions: "¿Qué parte del cuerpo usamos?",
               items: [
                 { question: "You SEE with your…", img: "👁️", options: ["Eyes", "Ears", "Feet"], answer: 0 },
                 { question: "You HEAR with your…", img: "👂", options: ["Hands", "Ears", "Nose"], answer: 1 },
                 { question: "You SMELL with your…", img: "👃", options: ["Nose", "Mouth", "Eyes"], answer: 0 },
                 { question: "You WALK with your…", img: "🦶", options: ["Hands", "Feet", "Ears"], answer: 1 },
                 { question: "You TASTE with your…", img: "👅", options: ["Tongue", "Nose", "Hair"], answer: 0 },
-                { question: "You CLAP with your…", img: "👏", options: ["Feet", "Hands", "Eyes"], answer: 1 }
+                { question: "You CLAP with your…", img: "👏", options: ["Feet", "Hands", "Eyes"], answer: 1 },
+                { question: "You BITE with your…", img: "🦷", options: ["Teeth", "Toes", "Ears"], answer: 0 },
+                { question: "You THINK with your…", img: "🧠", options: ["Brain", "Foot", "Nose"], answer: 0 }
               ]
             }
           ]
@@ -108,13 +121,15 @@ window.OWEN_DATA.science = {
             },
             {
               format: "trivia", level: "Medio",
-              instructions: "Preguntas sobre la digestión. Toca la respuesta.",
+              instructions: "Preguntas sobre la digestión.",
               items: [
                 { question: "We CHEW food with our…", img: "👄", options: ["Teeth", "Stomach", "Nose"], answer: 0 },
-                { question: "Food goes down a tube called the…", img: "svg:esophagus", options: ["Esophagus", "Nose", "Ear"], answer: 0 },
+                { question: "Food goes down the…", img: "svg:esophagus", options: ["Esophagus", "Nose", "Ear"], answer: 0 },
                 { question: "Food is crushed in the…", img: "svg:stomach", options: ["Stomach", "Mouth", "Eye"], answer: 0 },
                 { question: "We TASTE food with our…", img: "👅", options: ["Tongue", "Foot", "Eye"], answer: 0 },
-                { question: "Food goes into the long…", img: "svg:intestineSmall", options: ["Intestine", "Hand", "Hair"], answer: 0 }
+                { question: "Food goes into the long…", img: "svg:intestineSmall", options: ["Intestine", "Hand", "Hair"], answer: 0 },
+                { question: "Which comes FIRST?", img: "🍎", options: ["Mouth", "Stomach", "Intestine"], answer: 0 },
+                { question: "The LAST part is the…", img: "svg:intestineLarge", options: ["Large intestine", "Mouth", "Nose"], answer: 0 }
               ]
             },
             {
@@ -138,14 +153,16 @@ window.OWEN_DATA.science = {
             },
             {
               format: "trivia", level: "Medio",
-              instructions: "¿Qué sentido usamos? Toca la respuesta.",
+              instructions: "¿Qué sentido usamos?",
               items: [
                 { question: "A rainbow", img: "🌈", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 0 },
                 { question: "Music", img: "🎵", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 1 },
                 { question: "A flower's scent", img: "🌸", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 2 },
                 { question: "Ice cream", img: "🍦", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 3 },
                 { question: "A soft cat", img: "🐈", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 4 },
-                { question: "A loud drum", img: "🥁", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 1 }
+                { question: "A loud drum", img: "🥁", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 1 },
+                { question: "Bright stars", img: "⭐", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 0 },
+                { question: "A warm hug", img: "🤗", options: ["Sight", "Hearing", "Smell", "Taste", "Touch"], answer: 4 }
               ]
             },
             {
@@ -163,14 +180,16 @@ window.OWEN_DATA.science = {
           activities: [
             {
               format: "trivia", level: "Fácil",
-              instructions: "¿Sweet (dulce) o salty (salado)? Toca la respuesta.",
+              instructions: "¿Sweet (dulce) o salty (salado)?",
               items: [
                 { question: "Candy", img: "🍬", options: ["Sweet", "Salty"], answer: 0 },
                 { question: "Fries", img: "🍟", options: ["Sweet", "Salty"], answer: 1 },
                 { question: "Cake", img: "🍰", options: ["Sweet", "Salty"], answer: 0 },
                 { question: "Popcorn", img: "🍿", options: ["Sweet", "Salty"], answer: 1 },
                 { question: "Honey", img: "🍯", options: ["Sweet", "Salty"], answer: 0 },
-                { question: "Pretzel", img: "🥨", options: ["Sweet", "Salty"], answer: 1 }
+                { question: "Pretzel", img: "🥨", options: ["Sweet", "Salty"], answer: 1 },
+                { question: "Cookie", img: "🍪", options: ["Sweet", "Salty"], answer: 0 },
+                { question: "Nuts", img: "🥜", options: ["Sweet", "Salty"], answer: 1 }
               ]
             },
             {
@@ -178,7 +197,8 @@ window.OWEN_DATA.science = {
               instructions: "Empareja cada comida con su dibujo.",
               pairs: [
                 { a: "Lemon", b: "🍋" }, { a: "Candy", b: "🍬" }, { a: "Honey", b: "🍯" },
-                { a: "Fries", b: "🍟" }, { a: "Coffee", b: "☕" }, { a: "Cake", b: "🍰" }
+                { a: "Fries", b: "🍟" }, { a: "Coffee", b: "☕" }, { a: "Cake", b: "🍰" },
+                { a: "Orange", b: "🍊" }, { a: "Cookie", b: "🍪" }
               ]
             },
             {
@@ -224,13 +244,14 @@ window.OWEN_DATA.science = {
             },
             {
               format: "trivia", level: "Difícil",
-              instructions: "¿Qué parte de la planta es? Toca la respuesta.",
+              instructions: "¿Qué parte de la planta es?",
               items: [
                 { question: "Holds the plant in the soil", img: "svg:root", options: ["Root", "Stem", "Leaf", "Flower", "Fruit"], answer: 0 },
                 { question: "Green and flat, makes food", img: "🍃", options: ["Root", "Stem", "Leaf", "Flower", "Fruit"], answer: 2 },
                 { question: "Colorful, turns into a fruit", img: "🌸", options: ["Root", "Stem", "Leaf", "Flower", "Fruit"], answer: 3 },
                 { question: "Carries water up the plant", img: "svg:stem", options: ["Root", "Stem", "Leaf", "Flower", "Fruit"], answer: 1 },
-                { question: "Has seeds inside", img: "🍎", options: ["Root", "Stem", "Leaf", "Flower", "Fruit"], answer: 4 }
+                { question: "Has seeds inside", img: "🍎", options: ["Root", "Stem", "Leaf", "Flower", "Fruit"], answer: 4 },
+                { question: "Grows into a new plant", img: "🌰", options: ["Seed", "Stem", "Leaf", "Flower", "Fruit"], answer: 0 }
               ]
             }
           ]
@@ -246,13 +267,14 @@ window.OWEN_DATA.science = {
             },
             {
               format: "trivia", level: "Medio",
-              instructions: "¿Qué necesita una planta? Toca la respuesta.",
+              instructions: "¿Qué necesita una planta para crecer?",
               items: [
                 { question: "A seed grows into a…", img: "🌱", options: ["Sprout", "Rock", "Fish"], answer: 0 },
                 { question: "Plants need light from the…", img: "☀️", options: ["Sun", "Moon", "TV"], answer: 0 },
                 { question: "Plants drink…", img: "💧", options: ["Water", "Milk", "Soda"], answer: 0 },
                 { question: "Plants grow in the…", img: "🟫", options: ["Soil", "Sky", "Car"], answer: 0 },
-                { question: "After the flower comes the…", img: "🍎", options: ["Fruit", "Seed", "Leaf"], answer: 0 }
+                { question: "After the flower comes the…", img: "🍎", options: ["Fruit", "Seed", "Leaf"], answer: 0 },
+                { question: "Plants also need fresh…", img: "🌬️", options: ["Air", "Candy", "Toys"], answer: 0 }
               ]
             },
             {
@@ -270,12 +292,13 @@ window.OWEN_DATA.science = {
               format: "matching", level: "Fácil",
               instructions: "Empareja el lugar con agua y un animal que vive ahí.",
               pairs: [
-                { a: "Ocean", b: "🐋" }, { a: "River", b: "🐟" }, { a: "Lake", b: "🦆" }, { a: "Pond", b: "🐸" }
+                { a: "Ocean", b: "🐋" }, { a: "River", b: "🐟" }, { a: "Lake", b: "🦆" },
+                { a: "Pond", b: "🐸" }, { a: "Sea", b: "🐠" }
               ]
             },
             {
-              format: "matching", level: "Medio",
-              instructions: "Empareja cada lugar con agua con su animal.",
+              format: "memory", level: "Medio",
+              instructions: "Encuentra el lugar con agua y su animal.",
               pairs: [
                 { a: "Ocean", b: "🐋" }, { a: "Sea", b: "🐠" }, { a: "River", b: "🐟" },
                 { a: "Lake", b: "🦆" }, { a: "Pond", b: "🐸" }, { a: "Swamp", b: "🐊" }
@@ -283,13 +306,14 @@ window.OWEN_DATA.science = {
             },
             {
               format: "trivia", level: "Difícil",
-              instructions: "¿Dónde vive cada animal? Toca la respuesta.",
+              instructions: "¿Dónde vive cada animal?",
               items: [
                 { question: "A whale lives in the…", img: "🐋", options: ["Ocean", "River", "Lake", "Pond", "Swamp"], answer: 0 },
                 { question: "A frog lives in a…", img: "🐸", options: ["Ocean", "River", "Lake", "Pond", "Swamp"], answer: 3 },
                 { question: "A duck swims in a…", img: "🦆", options: ["Ocean", "River", "Lake", "Pond", "Swamp"], answer: 2 },
                 { question: "A crocodile lives in a…", img: "🐊", options: ["Ocean", "River", "Lake", "Pond", "Swamp"], answer: 4 },
-                { question: "A shark lives in the…", img: "🦈", options: ["Ocean", "River", "Lake", "Pond", "Swamp"], answer: 0 }
+                { question: "A shark lives in the…", img: "🦈", options: ["Ocean", "River", "Lake", "Pond", "Swamp"], answer: 0 },
+                { question: "A river fish lives in a…", img: "🐟", options: ["Ocean", "River", "Lake", "Pond", "Swamp"], answer: 1 }
               ]
             }
           ]
@@ -299,14 +323,16 @@ window.OWEN_DATA.science = {
           activities: [
             {
               format: "trivia", level: "Fácil",
-              instructions: "¿Pasa de día o de noche? Toca la respuesta.",
+              instructions: "¿Pasa de día o de noche?",
               items: [
                 { question: "The sun is up", img: "☀️", options: ["Day", "Night"], answer: 0 },
                 { question: "We see stars", img: "⭐", options: ["Day", "Night"], answer: 1 },
                 { question: "The moon shines", img: "🌙", options: ["Day", "Night"], answer: 1 },
                 { question: "We go to sleep", img: "😴", options: ["Day", "Night"], answer: 1 },
                 { question: "We go to school", img: "🎒", options: ["Day", "Night"], answer: 0 },
-                { question: "We eat breakfast", img: "🥞", options: ["Day", "Night"], answer: 0 }
+                { question: "We eat breakfast", img: "🥞", options: ["Day", "Night"], answer: 0 },
+                { question: "The sun comes up", img: "🌅", options: ["Day", "Night"], answer: 0 },
+                { question: "We say goodnight", img: "🌙", options: ["Day", "Night"], answer: 1 }
               ]
             },
             {
@@ -328,7 +354,7 @@ window.OWEN_DATA.science = {
                 { question: "Kids play at the park", img: "🛝", options: ["Day", "Night"], answer: 0 },
                 { question: "Bats fly out", img: "🦇", options: ["Day", "Night"], answer: 1 },
                 { question: "We eat lunch", img: "🍱", options: ["Day", "Night"], answer: 0 },
-                { question: "We say goodnight", img: "🌙", options: ["Day", "Night"], answer: 1 }
+                { question: "The city lights turn on", img: "🌃", options: ["Day", "Night"], answer: 1 }
               ]
             }
           ]
@@ -345,14 +371,16 @@ window.OWEN_DATA.science = {
             },
             {
               format: "trivia", level: "Medio",
-              instructions: "¿De qué estación hablamos? Toca la respuesta.",
+              instructions: "¿De qué estación hablamos?",
               items: [
                 { question: "It snows", img: "❄️", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 3 },
                 { question: "Flowers bloom", img: "🌷", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 0 },
                 { question: "Very hot, we go to the beach", img: "🏖️", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 1 },
                 { question: "Leaves fall from trees", img: "🍂", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 2 },
                 { question: "We wear a warm coat", img: "🧥", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 3 },
-                { question: "We wear shorts", img: "🩳", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 1 }
+                { question: "We wear shorts", img: "🩳", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 1 },
+                { question: "Baby animals are born", img: "🐣", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 0 },
+                { question: "We pick pumpkins", img: "🎃", options: ["Spring", "Summer", "Autumn", "Winter"], answer: 2 }
               ]
             },
             {
@@ -370,14 +398,16 @@ window.OWEN_DATA.science = {
           activities: [
             {
               format: "trivia", level: "Fácil",
-              instructions: "¿Es push (empujar) o pull (halar)? Toca la respuesta.",
+              instructions: "¿Es push (empujar) o pull (halar)?",
               items: [
                 { question: "Kicking a ball", img: "⚽", options: ["Push", "Pull"], answer: 0 },
                 { question: "Opening a drawer", img: "🗄️", options: ["Push", "Pull"], answer: 1 },
                 { question: "Pushing a swing", img: "🛝", options: ["Push", "Pull"], answer: 0 },
                 { question: "Pulling a rope", img: "🪢", options: ["Push", "Pull"], answer: 1 },
                 { question: "Pushing a cart", img: "🛒", options: ["Push", "Pull"], answer: 0 },
-                { question: "A dog pulling the leash", img: "🐕", options: ["Push", "Pull"], answer: 1 }
+                { question: "A dog pulling the leash", img: "🐕", options: ["Push", "Pull"], answer: 1 },
+                { question: "Throwing a ball", img: "🏀", options: ["Push", "Pull"], answer: 0 },
+                { question: "Reeling a fishing line", img: "🎣", options: ["Push", "Pull"], answer: 1 }
               ]
             },
             {
