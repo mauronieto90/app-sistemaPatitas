@@ -1,58 +1,38 @@
 /* =========================================================================
    DATOS — ENGLISH
    -------------------------------------------------------------------------
-   Mismo formato que science.js. Cada tema tiene varias actividades
-   (formato + nivel). Cada actividad tiene un banco grande y el juego
-   muestra un subconjunto al azar (variación en cada partida).
+   Mismo formato que science.js: "activities" (trivia/fill/order) + un banco
+   "pairs" compartido que genera Emparejar y Memoria en cada nivel.
+   Las parejas pueden ser palabra↔dibujo o palabra↔palabra (ej. sujeto↔auxiliar).
    ========================================================================= */
 window.OWEN_DATA = window.OWEN_DATA || {};
 window.OWEN_DATA.english = {
-  id: "english",
-  title: "English",
-  emoji: "🔤",
-  color: "blue",
+  id: "english", title: "English", emoji: "🔤", color: "blue",
   terms: [
     {
-      id: "t1",
-      title: "Term 1",
+      id: "t1", title: "Term 1",
       topics: [
         {
           id: "vocabulary", title: "Vocabulary", emoji: "🖼️", cycle: "Cycle 1",
-          activities: [
-            {
-              format: "matching", level: "Fácil",
-              instructions: "Empareja cada palabra con su dibujo.",
-              pairs: [
-                { a: "Red", b: "🔴" }, { a: "Blue", b: "🔵" }, { a: "Cow", b: "🐄" },
-                { a: "Lion", b: "🦁" }, { a: "Apple", b: "🍎" }, { a: "Fish", b: "🐟" }
-              ]
-            },
-            {
-              format: "memory", level: "Medio",
-              instructions: "Encuentra la palabra y su dibujo.",
-              pairs: [
-                { a: "Green", b: "🟢" }, { a: "Yellow", b: "🟡" }, { a: "Dog", b: "🐕" },
-                { a: "Duck", b: "🦆" }, { a: "Banana", b: "🍌" }, { a: "Cat", b: "🐈" },
-                { a: "Bear", b: "🐻" }, { a: "Frog", b: "🐸" }
-              ]
-            },
-            {
-              format: "matching", level: "Difícil",
-              instructions: "Más palabras. Empareja cada una con su dibujo.",
-              pairs: [
-                { a: "Elephant", b: "🐘" }, { a: "Monkey", b: "🐒" }, { a: "Tiger", b: "🐅" },
-                { a: "Orange", b: "🍊" }, { a: "Grapes", b: "🍇" }, { a: "Star", b: "⭐" },
-                { a: "Heart", b: "❤️" }, { a: "Sun", b: "☀️" }
-              ]
-            }
-          ]
+          pairsInstr: "Empareja cada palabra con su dibujo.",
+          pairs: [
+            { a: "Red", b: "🔴" }, { a: "Blue", b: "🔵" }, { a: "Green", b: "🟢" }, { a: "Yellow", b: "🟡" },
+            { a: "Cow", b: "🐄" }, { a: "Lion", b: "🦁" }, { a: "Dog", b: "🐕" }, { a: "Duck", b: "🦆" },
+            { a: "Apple", b: "🍎" }, { a: "Banana", b: "🍌" }, { a: "Fish", b: "🐟" }, { a: "Cat", b: "🐈" },
+            { a: "Elephant", b: "🐘" }, { a: "Monkey", b: "🐒" }
+          ],
+          activities: []
         },
         {
           id: "counting", title: "Numbers 1–50", emoji: "🔢", cycle: "Cycle 1",
+          pairsInstr: "Empareja el número con su palabra.",
+          pairs: [
+            { a: "One", b: "1" }, { a: "Two", b: "2" }, { a: "Three", b: "3" }, { a: "Four", b: "4" },
+            { a: "Five", b: "5" }, { a: "Ten", b: "10" }, { a: "Twenty", b: "20" }
+          ],
           activities: [
             {
-              format: "fill", level: "Fácil",
-              instructions: "¿Qué número falta?",
+              format: "fill", level: "Fácil", instructions: "¿Qué número falta?",
               items: [
                 { sentence: "1, 2, 3, ___, 5", img: "🔢", options: ["4", "6", "8"], answer: 0 },
                 { sentence: "2, 3, ___, 5", img: "🔢", options: ["4", "1", "7"], answer: 0 },
@@ -65,8 +45,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "trivia", level: "Medio",
-              instructions: "¿Qué número sigue?",
+              format: "trivia", level: "Medio", instructions: "¿Qué número sigue?",
               items: [
                 { question: "After 10 comes…", img: "🔟", options: ["11", "20", "9"], answer: 0 },
                 { question: "After 19 comes…", img: "🔢", options: ["20", "21", "18"], answer: 0 },
@@ -79,19 +58,21 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "order", level: "Difícil",
-              instructions: "Ordena los números de menor a mayor. ¡Toca en orden!",
-              prompt: "Cuenta de 10 en 10 🔢",
-              steps: ["10", "20", "30", "40", "50"]
+              format: "order", level: "Difícil", instructions: "Ordena los números de menor a mayor. ¡Toca en orden!",
+              prompt: "Cuenta de 10 en 10 🔢", steps: ["10", "20", "30", "40", "50"]
             }
           ]
         },
         {
           id: "pronouns-be", title: "Pronouns + To Be", emoji: "🙋", cycle: "Cycle 2–4",
+          pairsInstr: "Empareja el pronombre con am, is o are.",
+          pairs: [
+            { a: "I", b: "am" }, { a: "You", b: "are" }, { a: "He", b: "is" }, { a: "She", b: "is" },
+            { a: "It", b: "is" }, { a: "We", b: "are" }, { a: "They", b: "are" }
+          ],
           activities: [
             {
-              format: "fill", level: "Fácil",
-              instructions: "Completa con am, is o are.",
+              format: "fill", level: "Fácil", instructions: "Completa con am, is o are.",
               items: [
                 { sentence: "I ___ a boy.", img: "👦", options: ["am", "is", "are"], answer: 0 },
                 { sentence: "You ___ happy.", img: "🙂", options: ["am", "is", "are"], answer: 2 },
@@ -104,8 +85,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "trivia", level: "Medio",
-              instructions: "¿Cuál está bien escrita?",
+              format: "trivia", level: "Medio", instructions: "¿Cuál está bien escrita?",
               items: [
                 { question: "Choose the correct one:", img: "👦", options: ["He are happy", "He is happy"], answer: 1 },
                 { question: "Choose the correct one:", img: "👬", options: ["They are friends", "They is friends"], answer: 0 },
@@ -116,8 +96,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "fill", level: "Difícil",
-              instructions: "Preguntas y frases negativas. Elige la palabra correcta.",
+              format: "fill", level: "Difícil", instructions: "Preguntas y frases negativas. Elige la palabra correcta.",
               items: [
                 { sentence: "___ she your sister?", img: "❓", options: ["Is", "Are", "Am"], answer: 0 },
                 { sentence: "___ they friends?", img: "👨‍👩‍👧‍👦", options: ["Is", "Are", "Am"], answer: 1 },
@@ -133,10 +112,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "can-cant", title: "Can / Can't", emoji: "💪", cycle: "Cycle 5",
+          pairsInstr: "Empareja el animal con su dibujo.",
+          pairs: [
+            { a: "Bird", b: "🐦" }, { a: "Fish", b: "🐟" }, { a: "Dog", b: "🐕" }, { a: "Cat", b: "🐈" },
+            { a: "Frog", b: "🐸" }, { a: "Snake", b: "🐍" }, { a: "Kangaroo", b: "🦘" }, { a: "Cheetah", b: "🐆" }
+          ],
           activities: [
             {
-              format: "trivia", level: "Fácil",
-              instructions: "¿Puede pasar? Responde Yes o No.",
+              format: "trivia", level: "Fácil", instructions: "¿Puede pasar? Responde Yes o No.",
               items: [
                 { question: "Can a bird fly?", img: "🐦", options: ["Yes", "No"], answer: 0 },
                 { question: "Can a fish walk?", img: "🐟", options: ["Yes", "No"], answer: 1 },
@@ -149,8 +132,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Completa con can o can't.",
+              format: "fill", level: "Medio", instructions: "Completa con can o can't.",
               items: [
                 { sentence: "A bird ___ fly.", img: "🐦", options: ["can", "can't"], answer: 0 },
                 { sentence: "A fish ___ walk.", img: "🐟", options: ["can", "can't"], answer: 1 },
@@ -163,8 +145,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "trivia", level: "Difícil",
-              instructions: "¿Qué SÍ puede hacer?",
+              format: "trivia", level: "Difícil", instructions: "¿Qué SÍ puede hacer?",
               items: [
                 { question: "A fish can…", img: "🐟", options: ["swim", "fly", "walk"], answer: 0 },
                 { question: "A bird can…", img: "🐦", options: ["swim", "fly", "drive"], answer: 1 },
@@ -180,27 +161,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "feelings", title: "Feelings", emoji: "😀", cycle: "Cycle 6",
+          pairsInstr: "Empareja la emoción con su cara.",
+          pairs: [
+            { a: "Happy", b: "😄" }, { a: "Sad", b: "😢" }, { a: "Angry", b: "😠" }, { a: "Scared", b: "😱" },
+            { a: "Sleepy", b: "😴" }, { a: "Surprised", b: "😮" }, { a: "Excited", b: "🤩" }, { a: "Sick", b: "🤒" }
+          ],
           activities: [
             {
-              format: "matching", level: "Fácil",
-              instructions: "Empareja cada emoción con su cara.",
-              pairs: [
-                { a: "Happy", b: "😄" }, { a: "Sad", b: "😢" }, { a: "Angry", b: "😠" },
-                { a: "Scared", b: "😱" }, { a: "Sleepy", b: "😴" }, { a: "Surprised", b: "😮" }
-              ]
-            },
-            {
-              format: "memory", level: "Medio",
-              instructions: "Encuentra la emoción y su cara.",
-              pairs: [
-                { a: "Happy", b: "😄" }, { a: "Sad", b: "😢" }, { a: "Angry", b: "😠" },
-                { a: "Scared", b: "😱" }, { a: "Sleepy", b: "😴" }, { a: "Surprised", b: "😮" },
-                { a: "Excited", b: "🤩" }, { a: "Sick", b: "🤒" }
-              ]
-            },
-            {
-              format: "trivia", level: "Difícil",
-              instructions: "¿Cómo se siente?",
+              format: "trivia", level: "Difícil", instructions: "¿Cómo se siente?",
               items: [
                 { question: "Owen got a gift. He is…", img: "🎁", options: ["happy", "sad", "angry"], answer: 0 },
                 { question: "Her ice cream fell. She is…", img: "🍦", options: ["happy", "sad", "sleepy"], answer: 1 },
@@ -216,10 +184,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "possessive", title: "Possessive Adjectives", emoji: "🎒", cycle: "Cycle 7",
+          pairsInstr: "Empareja el pronombre con su posesivo.",
+          pairs: [
+            { a: "I", b: "my" }, { a: "You", b: "your" }, { a: "He", b: "his" }, { a: "She", b: "her" },
+            { a: "It", b: "its" }, { a: "We", b: "our" }, { a: "They", b: "their" }
+          ],
           activities: [
             {
-              format: "fill", level: "Fácil",
-              instructions: "¿De quién es? Completa con my o your.",
+              format: "fill", level: "Fácil", instructions: "¿De quién es? Completa con my o your.",
               items: [
                 { sentence: "(I) This is ___ ball.", img: "⚽", options: ["my", "your"], answer: 0 },
                 { sentence: "(you) That is ___ dog.", img: "🐕", options: ["my", "your"], answer: 1 },
@@ -230,8 +202,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Completa con my, your, his o her.",
+              format: "fill", level: "Medio", instructions: "Completa con my, your, his o her.",
               items: [
                 { sentence: "(he) He loves ___ mom.", img: "👦", options: ["my", "your", "his", "her"], answer: 2 },
                 { sentence: "(she) She has ___ book.", img: "👧", options: ["my", "your", "his", "her"], answer: 3 },
@@ -244,8 +215,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "trivia", level: "Difícil",
-              instructions: "¿Cuál está bien escrita?",
+              format: "trivia", level: "Difícil", instructions: "¿Cuál está bien escrita?",
               items: [
                 { question: "Choose the correct one:", img: "👧", options: ["She brushes his hair", "She brushes her hair"], answer: 1 },
                 { question: "Choose the correct one:", img: "👦", options: ["He kicks his ball", "He kicks her ball"], answer: 0 },
@@ -259,27 +229,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "phonics", title: "Phonics Sounds", emoji: "🔡", cycle: "Cycle 2–8",
+          pairsInstr: "Empareja la letra con un dibujo que empieza con ese sonido.",
+          pairs: [
+            { a: "Aa", b: "🍎" }, { a: "Bb", b: "⚽" }, { a: "Cc", b: "🐈" }, { a: "Dd", b: "🐕" },
+            { a: "Ss", b: "☀️" }, { a: "Ff", b: "🐟" }, { a: "Mm", b: "🌙" }, { a: "Tt", b: "🌳" }
+          ],
           activities: [
             {
-              format: "memory", level: "Fácil",
-              instructions: "Encuentra la letra y el dibujo con ese sonido.",
-              pairs: [
-                { a: "Aa", b: "🍎" }, { a: "Bb", b: "⚽" }, { a: "Cc", b: "🐈" },
-                { a: "Dd", b: "🐕" }, { a: "Ss", b: "☀️" }, { a: "Ff", b: "🐟" }
-              ]
-            },
-            {
-              format: "matching", level: "Medio",
-              instructions: "Empareja cada letra con un dibujo con ese sonido.",
-              pairs: [
-                { a: "Aa", b: "🍎" }, { a: "Bb", b: "⚽" }, { a: "Cc", b: "🐈" },
-                { a: "Dd", b: "🐕" }, { a: "Ss", b: "☀️" }, { a: "Ff", b: "🐟" },
-                { a: "Mm", b: "🌙" }, { a: "Tt", b: "🌳" }
-              ]
-            },
-            {
-              format: "trivia", level: "Difícil",
-              instructions: "¿Qué palabra empieza con ese sonido?",
+              format: "trivia", level: "Difícil", instructions: "¿Qué palabra empieza con ese sonido?",
               items: [
                 { question: "Which starts with B?", img: "🔤", options: ["Ball", "Apple", "Sun"], answer: 0 },
                 { question: "Which starts with S?", img: "🔤", options: ["Fish", "Sun", "Cat"], answer: 1 },
@@ -295,47 +252,29 @@ window.OWEN_DATA.english = {
         },
         {
           id: "layla-bots", title: "Layla & the Bots", emoji: "🤖", cycle: "Cycle 4–9",
-          activities: [
-            {
-              format: "matching", level: "Fácil",
-              instructions: "Palabras de la historia. Empareja con su dibujo.",
-              pairs: [
-                { a: "Robot", b: "🤖" }, { a: "Fix", b: "🛠️" }, { a: "Battery", b: "🔋" },
-                { a: "Light", b: "💡" }, { a: "Gear", b: "⚙️" }, { a: "Rocket", b: "🚀" }
-              ]
-            },
-            {
-              format: "memory", level: "Medio",
-              instructions: "Encuentra la palabra de la historia y su dibujo.",
-              pairs: [
-                { a: "Robot", b: "🤖" }, { a: "Fix", b: "🛠️" }, { a: "Battery", b: "🔋" },
-                { a: "Light", b: "💡" }, { a: "Gear", b: "⚙️" }, { a: "Rocket", b: "🚀" },
-                { a: "Magnet", b: "🧲" }, { a: "Tool", b: "🔧" }
-              ]
-            },
-            {
-              format: "matching", level: "Difícil",
-              instructions: "Más palabras de robots. Empareja con su dibujo.",
-              pairs: [
-                { a: "Robot", b: "🤖" }, { a: "Gear", b: "⚙️" }, { a: "Battery", b: "🔋" },
-                { a: "Magnet", b: "🧲" }, { a: "Screen", b: "📺" }, { a: "Rocket", b: "🚀" },
-                { a: "Tool", b: "🔧" }, { a: "Bulb", b: "💡" }
-              ]
-            }
-          ]
+          pairsInstr: "Empareja la palabra de la historia con su dibujo.",
+          pairs: [
+            { a: "Robot", b: "🤖" }, { a: "Fix", b: "🛠️" }, { a: "Battery", b: "🔋" }, { a: "Light", b: "💡" },
+            { a: "Gear", b: "⚙️" }, { a: "Rocket", b: "🚀" }, { a: "Magnet", b: "🧲" }, { a: "Tool", b: "🔧" },
+            { a: "Screen", b: "📺" }, { a: "Bulb", b: "💡" }
+          ],
+          activities: []
         }
       ]
     },
     {
-      id: "t2",
-      title: "Term 2",
+      id: "t2", title: "Term 2",
       topics: [
         {
           id: "do-does", title: "Present Simple (Do/Does)", emoji: "❓", cycle: "Cycle 1–2",
+          pairsInstr: "Empareja el sujeto con Do o Does.",
+          pairs: [
+            { a: "I", b: "Do" }, { a: "You", b: "Do" }, { a: "We", b: "Do" }, { a: "They", b: "Do" },
+            { a: "He", b: "Does" }, { a: "She", b: "Does" }, { a: "It", b: "Does" }
+          ],
           activities: [
             {
-              format: "fill", level: "Fácil",
-              instructions: "Completa la pregunta con Do o Does.",
+              format: "fill", level: "Fácil", instructions: "Completa la pregunta con Do o Does.",
               items: [
                 { sentence: "___ you like pizza?", img: "🍕", options: ["Do", "Does"], answer: 0 },
                 { sentence: "___ he play soccer?", img: "⚽", options: ["Do", "Does"], answer: 1 },
@@ -348,8 +287,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "trivia", level: "Medio",
-              instructions: "¿Cuál pregunta está bien escrita?",
+              format: "trivia", level: "Medio", instructions: "¿Cuál pregunta está bien escrita?",
               items: [
                 { question: "Choose the correct one:", img: "👧", options: ["Do she like it?", "Does she like it?"], answer: 1 },
                 { question: "Choose the correct one:", img: "🧒", options: ["Do you play?", "Does you play?"], answer: 0 },
@@ -360,8 +298,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "fill", level: "Difícil",
-              instructions: "Frases negativas. Completa con do o does.",
+              format: "fill", level: "Difícil", instructions: "Frases negativas. Completa con do o does.",
               items: [
                 { sentence: "She ___ not like peas.", img: "👧", options: ["do", "does"], answer: 1 },
                 { sentence: "They ___ not play.", img: "👬", options: ["do", "does"], answer: 0 },
@@ -377,10 +314,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "present-continuous", title: "Present Continuous (-ing)", emoji: "🏃", cycle: "Cycle 4",
+          pairsInstr: "Empareja la acción con su dibujo.",
+          pairs: [
+            { a: "Run", b: "🏃" }, { a: "Eat", b: "🍽️" }, { a: "Sleep", b: "😴" }, { a: "Swim", b: "🏊" },
+            { a: "Sing", b: "🎤" }, { a: "Read", b: "📖" }, { a: "Jump", b: "🤸" }, { a: "Draw", b: "✏️" }
+          ],
           activities: [
             {
-              format: "fill", level: "Fácil",
-              instructions: "¿Qué pasa ahora? Elige la forma con -ing.",
+              format: "fill", level: "Fácil", instructions: "¿Qué pasa ahora? Elige la forma con -ing.",
               items: [
                 { sentence: "She is ___. (run)", img: "🏃‍♀️", options: ["run", "running"], answer: 1 },
                 { sentence: "I am ___. (eat)", img: "🍽️", options: ["eat", "eating"], answer: 1 },
@@ -391,16 +332,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "matching", level: "Medio",
-              instructions: "Empareja cada acción con su dibujo.",
-              pairs: [
-                { a: "Run", b: "🏃" }, { a: "Eat", b: "🍽️" }, { a: "Sleep", b: "😴" },
-                { a: "Swim", b: "🏊" }, { a: "Sing", b: "🎤" }, { a: "Read", b: "📖" }
-              ]
-            },
-            {
-              format: "trivia", level: "Difícil",
-              instructions: "Piensa bien. Toca la respuesta correcta.",
+              format: "trivia", level: "Difícil", instructions: "Piensa bien. Toca la respuesta correcta.",
               items: [
                 { question: "Which is happening NOW?", img: "⏰", options: ["She is dancing", "She dances"], answer: 0 },
                 { question: "Which question is correct?", img: "❓", options: ["Are you eating?", "You are eating?"], answer: 0 },
@@ -416,10 +348,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "singular-plural", title: "Singular & Plural", emoji: "➕", cycle: "Cycle 5",
+          pairsInstr: "Empareja el singular con su plural.",
+          pairs: [
+            { a: "cat", b: "cats" }, { a: "box", b: "boxes" }, { a: "baby", b: "babies" },
+            { a: "man", b: "men" }, { a: "foot", b: "feet" }, { a: "mouse", b: "mice" }
+          ],
           activities: [
             {
-              format: "trivia", level: "Fácil",
-              instructions: "Elige el plural (con -s).",
+              format: "trivia", level: "Fácil", instructions: "Elige el plural (con -s).",
               items: [
                 { question: "One cat, two ___", img: "🐈", options: ["cats", "cat"], answer: 0 },
                 { question: "One dog, two ___", img: "🐕", options: ["dog", "dogs"], answer: 1 },
@@ -432,8 +368,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "fill", level: "Medio",
-              instructions: "Estos plurales llevan -es. Completa.",
+              format: "fill", level: "Medio", instructions: "Estos plurales llevan -es. Completa.",
               items: [
                 { sentence: "One box, two ___.", img: "📦", options: ["boxes", "boxs"], answer: 0 },
                 { sentence: "One bus, two ___.", img: "🚌", options: ["buss", "buses"], answer: 1 },
@@ -444,8 +379,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "trivia", level: "Difícil",
-              instructions: "Plurales difíciles (-ies e irregulares).",
+              format: "trivia", level: "Difícil", instructions: "Plurales difíciles (-ies e irregulares).",
               items: [
                 { question: "One baby, two ___", img: "👶", options: ["babys", "babies", "baby"], answer: 1 },
                 { question: "One party, two ___", img: "🎉", options: ["partys", "parties", "partyes"], answer: 1 },
@@ -459,10 +393,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "proper-common", title: "Proper & Common Nouns", emoji: "🔤", cycle: "Cycle 6",
+          pairsInstr: "Empareja el nombre propio con su nombre común.",
+          pairs: [
+            { a: "Owen", b: "boy" }, { a: "Colombia", b: "country" }, { a: "Monday", b: "day" },
+            { a: "Bogotá", b: "city" }, { a: "Rex", b: "dog" }, { a: "December", b: "month" }
+          ],
           activities: [
             {
-              format: "trivia", level: "Fácil",
-              instructions: "¿Nombre propio (proper) o común (common)?",
+              format: "trivia", level: "Fácil", instructions: "¿Nombre propio (proper) o común (common)?",
               items: [
                 { question: "Owen", img: "🧒", options: ["Proper", "Common"], answer: 0 },
                 { question: "dog", img: "🐕", options: ["Proper", "Common"], answer: 1 },
@@ -475,16 +413,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "matching", level: "Medio",
-              instructions: "Empareja el nombre propio con su nombre común.",
-              pairs: [
-                { a: "Owen", b: "boy" }, { a: "Colombia", b: "country" }, { a: "Monday", b: "day" },
-                { a: "Bogotá", b: "city" }, { a: "Rex", b: "dog" }, { a: "December", b: "month" }
-              ]
-            },
-            {
-              format: "trivia", level: "Difícil",
-              instructions: "Piensa en la mayúscula.",
+              format: "trivia", level: "Difícil", instructions: "Piensa en la mayúscula.",
               items: [
                 { question: "Which needs a capital letter?", img: "🔠", options: ["owen", "dog"], answer: 0 },
                 { question: "Which needs a capital letter?", img: "🔠", options: ["cat", "colombia"], answer: 1 },
@@ -500,10 +429,14 @@ window.OWEN_DATA.english = {
         },
         {
           id: "simple-past-was", title: "Simple Past: Was", emoji: "⏳", cycle: "Cycle 7",
+          pairsInstr: "Empareja el sujeto con was o were.",
+          pairs: [
+            { a: "I", b: "was" }, { a: "He", b: "was" }, { a: "She", b: "was" }, { a: "It", b: "was" },
+            { a: "We", b: "were" }, { a: "You", b: "were" }, { a: "They", b: "were" }
+          ],
           activities: [
             {
-              format: "fill", level: "Fácil",
-              instructions: "Habla del pasado. Completa con was.",
+              format: "fill", level: "Fácil", instructions: "Habla del pasado. Completa con was.",
               items: [
                 { sentence: "Yesterday it ___ sunny.", img: "☀️", options: ["was", "is"], answer: 0 },
                 { sentence: "I ___ at home.", img: "🏠", options: ["was", "am"], answer: 0 },
@@ -514,8 +447,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "trivia", level: "Medio",
-              instructions: "¿Cuál habla del pasado?",
+              format: "trivia", level: "Medio", instructions: "¿Cuál habla del pasado?",
               items: [
                 { question: "Yesterday…", img: "🌧️", options: ["it was rainy", "it is rainy"], answer: 0 },
                 { question: "Last year…", img: "🎂", options: ["I was 5", "I am 5"], answer: 0 },
@@ -526,8 +458,7 @@ window.OWEN_DATA.english = {
               ]
             },
             {
-              format: "fill", level: "Difícil",
-              instructions: "Completa con was o wasn't (was not).",
+              format: "fill", level: "Difícil", instructions: "Completa con was o wasn't (was not).",
               items: [
                 { sentence: "It was cold. It ___ hot.", img: "🥶", options: ["was", "wasn't"], answer: 1 },
                 { sentence: "I ___ happy; I was sad.", img: "😢", options: ["was", "wasn't"], answer: 1 },

@@ -41,6 +41,21 @@ window.OWEN_ICONS = {
     '<path d="M14 12c8 0 8 8 0 8s-8 8 0 8 8 8 0 8 8 8 0 8M30 12c8 0 8 8 0 8s-8 8 0 8 8 8 0 8 8 8 0 8M46 12c8 0 8 8 0 8s-8 8 0 8 8 8 0 8 8 8 0 8" ' +
     'fill="none" stroke="#F0B27A" stroke-width="5" stroke-linecap="round"/>' +
     '</svg>',
+  // ---- Logo PROVISIONAL del colegio (árbol de arrayán) ----
+  //  Reemplazar por el logo oficial cuando esté disponible.
+  school:
+    '<svg viewBox="0 0 64 64" role="img" aria-label="Gimnasio Los Arrayanes">' +
+    '<circle cx="32" cy="32" r="31" fill="#0B7A3B"/>' +
+    '<circle cx="32" cy="32" r="31" fill="none" stroke="#FFD34E" stroke-width="2.5"/>' +
+    '<rect x="29.5" y="34" width="5" height="18" rx="2" fill="#7A4A1E"/>' +
+    '<circle cx="32" cy="24" r="12" fill="#8BD450"/>' +
+    '<circle cx="21" cy="30" r="8.5" fill="#6FC03A"/>' +
+    '<circle cx="43" cy="30" r="8.5" fill="#6FC03A"/>' +
+    '<circle cx="32" cy="20" r="8" fill="#A6E06A"/>' +
+    '<circle cx="27" cy="22" r="1.7" fill="#fff"/>' +
+    '<circle cx="37" cy="21" r="1.7" fill="#fff"/>' +
+    '<circle cx="32" cy="27" r="1.7" fill="#fff"/>' +
+    '</svg>',
   intestineLarge:
     '<svg viewBox="0 0 64 64" role="img" aria-label="large intestine">' +
     '<path d="M14 54V20a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v34" fill="none" stroke="#E8A0A0" stroke-width="9" stroke-linecap="round"/>' +

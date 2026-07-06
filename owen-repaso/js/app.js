@@ -143,13 +143,45 @@
     "Medio": { cls: "lvl-mid", icon: "🟡" },
     "Difícil": { cls: "lvl-hard", icon: "🔴" }
   };
+  var LEVELS = ["Fácil", "Medio", "Difícil"];
+  var FORMAT_ORDER = { fill: 1, trivia: 2, order: 3, matching: 4, memory: 5 };
+
+  // Cuántas parejas mostrar en Emparejar/Memoria según el nivel (dificultad
+  // por tamaño). Se limita al tamaño del banco.
+  function pickPairs(level, n) {
+    var base = level === "Fácil" ? 4 : level === "Medio" ? 6 : 8;
+    return Math.min(base, n);
+  }
+
+  // Construye la lista de juegos disponibles para un tema en un nivel:
+  // los quizzes/orden escritos en los datos + Emparejar y Memoria
+  // generados a partir del banco compartido topic.pairs.
+  function activitiesForLevel(topic, level) {
+    var acts = (topic.activities || []).filter(function (a) { return a.level === level; }).slice();
+    if (topic.pairs && topic.pairs.length >= 3) {
+      var pk = pickPairs(level, topic.pairs.length);
+      acts.push({ format: "matching", level: level, pick: pk, pairs: topic.pairs,
+        instructions: topic.pairsInstr || "Empareja cada carta con su pareja." });
+      acts.push({ format: "memory", level: level, pick: pk, pairs: topic.pairs,
+        instructions: (topic.pairsInstr || "Encuentra las parejas.") + " ¡Encuentra las parejas!" });
+    }
+    acts.sort(function (a, b) { return (FORMAT_ORDER[a.format] || 9) - (FORMAT_ORDER[b.format] || 9); });
+    return acts;
+  }
+
+  function countTopicGames(topic) {
+    var n = 0;
+    LEVELS.forEach(function (lv) { n += activitiesForLevel(topic, lv).length; });
+    return n;
+  }
 
   // ============================ pantalla: HOME ============================
   function renderHome() {
     app.appendChild(el(
       '<div class="hero">' +
-        '<div class="mascot">🐾</div>' +
-        '<h1>Modo de Repaso</h1>' +
+        '<div class="mascot">' + pic("svg:school") + '</div>' +
+        '<h1>Grado Primero</h1>' +
+        '<p class="school">Gimnasio Los Arrayanes Bilingüe</p>' +
         '<p>¡Hola Owen! Elige una materia para jugar 🎮</p>' +
       '</div>'
     ));
@@ -159,7 +191,7 @@
       var s = DATA[sid];
       if (!s) return;
       var nTopics = 0, nGames = 0;
-      s.terms.forEach(function (t) { t.topics.forEach(function (tp) { nTopics++; nGames += (tp.activities || []).length; }); });
+      s.terms.forEach(function (t) { t.topics.forEach(function (tp) { nTopics++; nGames += countTopicGames(tp); }); });
       var card = el(
         '<button class="subject-card ' + s.color + '">' +
           '<div class="strip"></div>' +
@@ -184,14 +216,13 @@
       block.appendChild(el('<div class="term-title">' + esc(term.title) + '</div>'));
       var grid = el('<div class="topics"></div>');
       term.topics.forEach(function (topic) {
-        var acts = topic.activities || [];
         var card = el(
           '<button class="topic-card">' +
             '<div class="t-emoji">' + pic(topic.emoji) + '</div>' +
             '<div class="t-name">' + esc(topic.title) + '</div>' +
             '<div class="t-meta">' +
               '<span class="chip">' + esc(topic.cycle) + '</span>' +
-              '<span class="chip game">' + acts.length + ' juegos</span>' +
+              '<span class="chip game">' + countTopicGames(topic) + ' juegos</span>' +
             '</div>' +
           '</button>'
         );
@@ -204,29 +235,38 @@
   }
 
   // ============================ pantalla: ACTIVIDADES ============================
+  // Agrupada por nivel: cada nivel muestra VARIOS formatos para escoger.
   function renderActivities() {
     var topic = state.topic;
-    app.appendChild(topbar(esc(topic.title), "Elige un juego y nivel", function () { go("topics", { subjectId: state.subjectId }); }));
+    app.appendChild(topbar(esc(topic.title), "Elige un nivel y un juego", function () { go("topics", { subjectId: state.subjectId }); }));
     app.appendChild(el('<div class="topic-hero">' + pic(topic.emoji) + '</div>'));
 
-    var list = el('<div class="activities"></div>');
-    (topic.activities || []).forEach(function (act) {
-      var gm = GAME_META[act.format] || { label: act.format, icon: "🎮" };
-      var lm = LEVEL_META[act.level] || { cls: "lvl-mid", icon: "⚪" };
-      var card = el(
-        '<button class="activity-card ' + lm.cls + '">' +
-          '<span class="a-icon">' + gm.icon + '</span>' +
-          '<span class="a-body">' +
-            '<span class="a-title">' + esc(gm.label) + '</span>' +
-            '<span class="a-count">' + countItems(act) + ' preguntas</span>' +
-          '</span>' +
-          '<span class="a-level">' + lm.icon + ' ' + esc(act.level) + '</span>' +
-        '</button>'
-      );
-      card.addEventListener("click", function () { go("game", { activity: act }); });
-      list.appendChild(card);
+    LEVELS.forEach(function (level) {
+      var acts = activitiesForLevel(topic, level);
+      if (!acts.length) return;
+      var lm = LEVEL_META[level] || { cls: "lvl-mid", icon: "⚪" };
+      var group = el('<div class="level-group"></div>');
+      group.appendChild(el('<div class="level-head ' + lm.cls + '">' + lm.icon + ' ' + esc(level) + '</div>'));
+      var list = el('<div class="activities"></div>');
+      acts.forEach(function (act) {
+        var gm = GAME_META[act.format] || { label: act.format, icon: "🎮" };
+        var count = act.pairs ? (act.pick || act.pairs.length) : countItems(act);
+        var unit = act.pairs ? "parejas" : "preguntas";
+        var card = el(
+          '<button class="activity-card ' + lm.cls + '">' +
+            '<span class="a-icon">' + gm.icon + '</span>' +
+            '<span class="a-body">' +
+              '<span class="a-title">' + esc(gm.label) + '</span>' +
+              '<span class="a-count">' + count + ' ' + unit + '</span>' +
+            '</span>' +
+          '</button>'
+        );
+        card.addEventListener("click", function () { go("game", { activity: act }); });
+        list.appendChild(card);
+      });
+      group.appendChild(list);
+      app.appendChild(group);
     });
-    app.appendChild(list);
   }
 
   // ============================ pantalla: JUEGO ============================
