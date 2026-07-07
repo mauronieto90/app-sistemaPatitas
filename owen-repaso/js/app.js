@@ -153,12 +153,25 @@
     return Math.min(base, n);
   }
 
+  // Un banco de parejas SOLO sirve para Emparejar/Memoria si es 1-a-1:
+  // ninguna palabra ni dibujo puede repetirse (si no, hay varias cartas
+  // iguales y el niño no sabe cuál va con cuál).
+  function pairsAreOneToOne(pairs) {
+    var seenA = {}, seenB = {};
+    for (var i = 0; i < pairs.length; i++) {
+      var a = pairs[i].a, b = pairs[i].b;
+      if (seenA[a] || seenB[b]) return false;
+      seenA[a] = 1; seenB[b] = 1;
+    }
+    return true;
+  }
+
   // Construye la lista de juegos disponibles para un tema en un nivel:
   // los quizzes/orden escritos en los datos + Emparejar y Memoria
-  // generados a partir del banco compartido topic.pairs.
+  // generados a partir del banco compartido topic.pairs (si es 1-a-1).
   function activitiesForLevel(topic, level) {
     var acts = (topic.activities || []).filter(function (a) { return a.level === level; }).slice();
-    if (topic.pairs && topic.pairs.length >= 3) {
+    if (topic.pairs && topic.pairs.length >= 3 && pairsAreOneToOne(topic.pairs)) {
       var pk = pickPairs(level, topic.pairs.length);
       acts.push({ format: "matching", level: level, pick: pk, pairs: topic.pairs,
         instructions: topic.pairsInstr || "Empareja cada carta con su pareja." });
@@ -179,7 +192,7 @@
   function renderHome() {
     app.appendChild(el(
       '<div class="hero">' +
-        '<div class="mascot">' + pic("svg:school") + '</div>' +
+        '<div class="mascot"><img class="hero-logo" src="assets/logo-arrayanes.png" alt="Gimnasio Los Arrayanes Bilingüe"></div>' +
         '<h1>Grado Primero</h1>' +
         '<p class="school">Gimnasio Los Arrayanes Bilingüe</p>' +
         '<p>¡Hola Owen! Elige una materia para jugar 🎮</p>' +

@@ -65,10 +65,10 @@ window.OWEN_DATA.english = {
         },
         {
           id: "pronouns-be", title: "Pronouns + To Be", emoji: "🙋", cycle: "Cycle 2–4",
-          pairsInstr: "Empareja el pronombre con am, is o are.",
+          pairsInstr: "Empareja el pronombre con su dibujo.",
           pairs: [
-            { a: "I", b: "am" }, { a: "You", b: "are" }, { a: "He", b: "is" }, { a: "She", b: "is" },
-            { a: "It", b: "is" }, { a: "We", b: "are" }, { a: "They", b: "are" }
+            { a: "I", b: "🙋" }, { a: "You", b: "👉" }, { a: "He", b: "👦" }, { a: "She", b: "👧" },
+            { a: "It", b: "🐱" }, { a: "We", b: "🧑‍🤝‍🧑" }, { a: "They", b: "👨‍👩‍👧‍👦" }
           ],
           activities: [
             {
@@ -256,7 +256,7 @@ window.OWEN_DATA.english = {
           pairs: [
             { a: "Robot", b: "🤖" }, { a: "Fix", b: "🛠️" }, { a: "Battery", b: "🔋" }, { a: "Light", b: "💡" },
             { a: "Gear", b: "⚙️" }, { a: "Rocket", b: "🚀" }, { a: "Magnet", b: "🧲" }, { a: "Tool", b: "🔧" },
-            { a: "Screen", b: "📺" }, { a: "Bulb", b: "💡" }
+            { a: "Screen", b: "📺" }, { a: "Button", b: "🔘" }
           ],
           activities: []
         }
@@ -267,10 +267,10 @@ window.OWEN_DATA.english = {
       topics: [
         {
           id: "do-does", title: "Present Simple (Do/Does)", emoji: "❓", cycle: "Cycle 1–2",
-          pairsInstr: "Empareja el sujeto con Do o Does.",
+          pairsInstr: "Empareja el pronombre con su dibujo.",
           pairs: [
-            { a: "I", b: "Do" }, { a: "You", b: "Do" }, { a: "We", b: "Do" }, { a: "They", b: "Do" },
-            { a: "He", b: "Does" }, { a: "She", b: "Does" }, { a: "It", b: "Does" }
+            { a: "I", b: "🙋" }, { a: "You", b: "👉" }, { a: "He", b: "👦" }, { a: "She", b: "👧" },
+            { a: "It", b: "🐱" }, { a: "We", b: "🧑‍🤝‍🧑" }, { a: "They", b: "👨‍👩‍👧‍👦" }
           ],
           activities: [
             {
@@ -429,10 +429,10 @@ window.OWEN_DATA.english = {
         },
         {
           id: "simple-past-was", title: "Simple Past: Was", emoji: "⏳", cycle: "Cycle 7",
-          pairsInstr: "Empareja el sujeto con was o were.",
+          pairsInstr: "Empareja el pronombre con su dibujo.",
           pairs: [
-            { a: "I", b: "was" }, { a: "He", b: "was" }, { a: "She", b: "was" }, { a: "It", b: "was" },
-            { a: "We", b: "were" }, { a: "You", b: "were" }, { a: "They", b: "were" }
+            { a: "I", b: "🙋" }, { a: "You", b: "👉" }, { a: "He", b: "👦" }, { a: "She", b: "👧" },
+            { a: "It", b: "🐱" }, { a: "We", b: "🧑‍🤝‍🧑" }, { a: "They", b: "👨‍👩‍👧‍👦" }
           ],
           activities: [
             {

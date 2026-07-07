@@ -69,6 +69,7 @@ body {
 .hero { text-align: center; padding: 10px 0 6px; }
 .hero .mascot { font-size: 84px; line-height: 1; filter: drop-shadow(0 6px 8px rgba(0,0,0,.12)); }
 .hero .mascot .pic-svg svg { width: 92px; height: 92px; }
+.hero-logo { width: 128px; height: 128px; border-radius: 26px; display: block; margin: 0 auto; object-fit: cover; }
 .hero h1 { font-size: 30px; font-weight: 800; margin-top: 8px; }
 .hero .school { color: var(--teal-dark, #0B7A3B); font-weight: 800; font-size: 16px; margin-top: 2px; }
 .hero p { color: var(--ink2); font-weight: 600; margin-top: 4px; }
