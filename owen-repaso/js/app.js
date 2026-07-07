@@ -179,7 +179,7 @@
   function renderHome() {
     app.appendChild(el(
       '<div class="hero">' +
-        '<div class="mascot">' + pic("svg:school") + '</div>' +
+        '<div class="mascot"><img class="hero-logo" src="assets/logo-arrayanes.png" alt="Gimnasio Los Arrayanes Bilingüe"></div>' +
         '<h1>Grado Primero</h1>' +
         '<p class="school">Gimnasio Los Arrayanes Bilingüe</p>' +
         '<p>¡Hola Owen! Elige una materia para jugar 🎮</p>' +
