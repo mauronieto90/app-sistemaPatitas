@@ -1,5 +1,5 @@
 /* =========================================================================
-   Owen — Modo de Repaso  ·  Motor de la app (sin contenido hardcodeado)
+   Modo de Repaso — Grado Primero  ·  Motor de la app (sin contenido hardcodeado)
    -------------------------------------------------------------------------
    El contenido vive en /data/science.js y /data/english.js.
    Cada TEMA tiene varias ACTIVIDADES (formato + nivel de dificultad).
@@ -46,13 +46,20 @@
   // Cuántas preguntas/parejas mostrar por partida (si el banco es más grande).
   var PICK = { trivia: 6, fill: 6, matching: 6, memory: 6 };
 
-  // Convierte un valor de imagen (emoji o "svg:nombre") en HTML para mostrar.
+  var EMOJI = window.OWEN_EMOJI || {};
+  // Convierte un valor de imagen en HTML:
+  //  - "svg:nombre"  -> ilustración SVG propia (js/icons.js)
+  //  - un emoji que esté en el mapa -> imagen ilustrada de OpenMoji (assets/emoji/)
+  //  - cualquier otra cosa -> se muestra tal cual (texto/emoji del sistema)
   function pic(val) {
     if (val == null) return "";
     val = String(val);
     if (val.indexOf("svg:") === 0) {
       var name = val.slice(4);
       return '<span class="pic-svg">' + (ICONS[name] || "❓") + "</span>";
+    }
+    if (EMOJI[val]) {
+      return '<img class="pic-img" src="assets/emoji/' + EMOJI[val] + '.svg" alt="' + esc(val) + '" loading="lazy">';
     }
     return '<span class="pic-emoji">' + esc(val) + "</span>";
   }
@@ -195,7 +202,7 @@
         '<div class="mascot"><img class="hero-logo" src="assets/logo-arrayanes.png" alt="Gimnasio Los Arrayanes Bilingüe"></div>' +
         '<h1>Grado Primero</h1>' +
         '<p class="school">Gimnasio Los Arrayanes Bilingüe</p>' +
-        '<p>¡Hola Owen! Elige una materia para jugar 🎮</p>' +
+        '<p>¡Hola! Elige una materia para jugar 🎮</p>' +
       '</div>'
     ));
     app.appendChild(el('<div class="section-label">Materias</div>'));
@@ -302,7 +309,7 @@
     var pct = total > 0 ? score / total : 0;
     var stars = pct >= 0.85 ? 3 : pct >= 0.55 ? 2 : 1;
     var faces = ["😺", "😻", "🤩"];
-    var titles = ["¡Buen intento!", "¡Muy bien!", "¡Increíble, Owen!"];
+    var titles = ["¡Buen intento!", "¡Muy bien!", "¡Increíble!"];
     var msgs = [
       "Sigue practicando, ¡lo vas a lograr! 💪",
       "¡Vas súper bien! Cada día aprendes más 🌟",
