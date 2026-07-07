@@ -170,7 +170,7 @@ window.OWEN_DATA.english = {
             {
               format: "trivia", level: "Difícil", instructions: "¿Cómo se siente?",
               items: [
-                { question: "Owen got a gift. He is…", img: "🎁", options: ["happy", "sad", "angry"], answer: 0 },
+                { question: "The boy got a gift. He is…", img: "🎁", options: ["happy", "sad", "angry"], answer: 0 },
                 { question: "Her ice cream fell. She is…", img: "🍦", options: ["happy", "sad", "sleepy"], answer: 1 },
                 { question: "It is very late. He is…", img: "🌙", options: ["sleepy", "angry", "scared"], answer: 0 },
                 { question: "A big spider! She is…", img: "🕷️", options: ["scared", "happy", "hungry"], answer: 0 },
@@ -395,14 +395,14 @@ window.OWEN_DATA.english = {
           id: "proper-common", title: "Proper & Common Nouns", emoji: "🔤", cycle: "Cycle 6",
           pairsInstr: "Empareja el nombre propio con su nombre común.",
           pairs: [
-            { a: "Owen", b: "boy" }, { a: "Colombia", b: "country" }, { a: "Monday", b: "day" },
+            { a: "Ana", b: "girl" }, { a: "Colombia", b: "country" }, { a: "Monday", b: "day" },
             { a: "Bogotá", b: "city" }, { a: "Rex", b: "dog" }, { a: "December", b: "month" }
           ],
           activities: [
             {
               format: "trivia", level: "Fácil", instructions: "¿Nombre propio (proper) o común (common)?",
               items: [
-                { question: "Owen", img: "🧒", options: ["Proper", "Common"], answer: 0 },
+                { question: "Ana", img: "🧒", options: ["Proper", "Common"], answer: 0 },
                 { question: "dog", img: "🐕", options: ["Proper", "Common"], answer: 1 },
                 { question: "Maria", img: "👧", options: ["Proper", "Common"], answer: 0 },
                 { question: "city", img: "🏙️", options: ["Proper", "Common"], answer: 1 },
@@ -415,7 +415,7 @@ window.OWEN_DATA.english = {
             {
               format: "trivia", level: "Difícil", instructions: "Piensa en la mayúscula.",
               items: [
-                { question: "Which needs a capital letter?", img: "🔠", options: ["owen", "dog"], answer: 0 },
+                { question: "Which needs a capital letter?", img: "🔠", options: ["ana", "dog"], answer: 0 },
                 { question: "Which needs a capital letter?", img: "🔠", options: ["cat", "colombia"], answer: 1 },
                 { question: "Which is a proper noun?", img: "🔤", options: ["monday", "day"], answer: 0 },
                 { question: "Which is a common noun?", img: "🔤", options: ["river", "Amazon"], answer: 0 },
