@@ -26,9 +26,13 @@ Cubre las materias de **Science** e **English**. Sin login, sin cuentas: es solo
 Cada juego da **feedback inmediato** (correcto/incorrecto, colores y sonido suave) y un
 **puntaje con estrellas** al final, con mensajes motivadores para un niño de 6–7 años.
 
-**Cada tema tiene varios juegos y niveles.** Al entrar a un tema (ej. *Vocabulary*)
-aparece una lista de actividades: distintos formatos + niveles de dificultad
-🟢 **Fácil** / 🟡 **Medio** / 🔴 **Difícil**, cada uno con más palabras y ejemplos.
+**Modo Duolingo 🦉.** Cada materia es un **camino de nodos** (uno por tema, agrupados
+por Term) que se desbloquean en orden. Cada tema acumula **coronas 👑 (0→3)**:
+la 1ª lección se juega en Fácil, la 2ª en Medio y la 3ª en Difícil. Cada **lección
+mezcla ejercicios** (completar, trivia, elegir imagen, escuchar 🔊 con voz en inglés,
+emparejar y ordenar); los errores restan un **corazón ❤️** (5 por lección) y el
+ejercicio se repite al final. El progreso — **XP ⚡, racha diaria 🔥 y coronas** —
+se guarda en el dispositivo (localStorage), sin cuentas.
 
 ### 🖼️ Dibujos
 La mayoría de dibujos son **emoji grandes** en tarjetas tipo flashcard. Para conceptos
