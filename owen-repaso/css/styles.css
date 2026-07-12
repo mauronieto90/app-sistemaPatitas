@@ -97,7 +97,7 @@ body {
   transition: transform .1s;
 }
 .avatar-opt:active { transform: scale(.95); }
-.avatar-opt .pic-img { width: 64px; height: 64px; }
+.avatar-opt .pic-img, .avatar-opt .av-img { width: 68px; height: 68px; }
 .avatar-opt .avatar-name { font-size: 12px; font-weight: 800; color: var(--ink2); }
 .avatar-opt.selected { border-color: var(--purple); background: #F1EAFF; box-shadow: 0 0 0 3px rgba(138,99,255,.18); }
 .avatar-opt.selected .avatar-name { color: var(--purple); }
@@ -112,10 +112,44 @@ body {
   box-shadow: var(--shadow-sm); margin-top: 12px; transition: transform .1s;
 }
 .player-chip:active { transform: scale(.98); }
-.player-avatar .pic-img { width: 44px; height: 44px; }
+.player-avatar .pic-img, .player-avatar .av-img { width: 46px; height: 46px; display: block; }
 .player-txt { flex: 1; font-size: 17px; font-weight: 700; color: var(--ink2); }
 .player-txt b { color: var(--ink); }
 .player-edit { font-size: 16px; opacity: .7; }
+
+/* ---------- Caja del adulto (correo + autorización) ---------- */
+.form-block { margin-bottom: 4px; }
+.profile-label.sm { font-size: 15px; margin: 6px 2px; }
+.adult-box {
+  margin-top: 18px; background: #F4F1FB; border: 2px solid #E7DFF6;
+  border-radius: var(--radius-sm); padding: 14px 14px 16px;
+}
+.adult-title { font-size: 14px; font-weight: 800; color: var(--purple); margin-bottom: 8px; }
+.email-input { font-size: 17px; text-align: left; text-transform: none; }
+.auth-check {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 12px;
+  font-size: 13.5px; font-weight: 600; color: var(--ink2); line-height: 1.35; cursor: pointer;
+}
+.auth-check input { width: 24px; height: 24px; margin-top: 1px; flex-shrink: 0; accent-color: var(--purple); }
+.auth-check b { color: var(--ink); }
+
+/* ---------- Botón compartir ---------- */
+.btn-share {
+  display: block; width: 100%; margin-top: 16px; border: none; cursor: pointer;
+  font-family: var(--font); background: var(--surface); color: var(--purple);
+  font-size: 16px; font-weight: 800; padding: 14px; border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm); transition: transform .1s;
+}
+.btn-share:active { transform: translateY(2px); }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: #fff; font-weight: 700; font-size: 14px;
+  padding: 12px 20px; border-radius: 999px; box-shadow: var(--shadow); z-index: 100;
+  opacity: 0; transition: all .3s; max-width: 90vw; text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ---------- Big choice cards (subject) ---------- */
 .subjects { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }

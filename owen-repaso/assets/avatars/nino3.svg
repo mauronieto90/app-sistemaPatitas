@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF7A59"/><stop offset="1" stop-color="#E8452C"/>
+    </linearGradient>
+    <clipPath id="c"><circle cx="60" cy="60" r="56"/></clipPath>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#bg)"/>
+  <g clip-path="url(#c)">
+    <path d="M16 122 C20 96 34 86 60 86 C86 86 100 96 104 122 Z" fill="#B71C1C"/>
+    <path d="M24 122 C24 98 40 88 60 88 C80 88 96 98 96 122 Z" fill="#2F6FD8"/>
+    <path d="M52 96 l8 6 8 -6 -8 14 Z" fill="#FFC531"/>
+    <path d="M52 84 h16 v8 a8 8 0 0 1 -16 0 Z" fill="#E8B08C"/>
+    <circle cx="60" cy="54" r="25" fill="#E8B08C"/>
+    <path d="M35 51 C35 33 45 26 60 26 C75 26 85 33 85 51 C85 41 76 35 60 35 C44 35 35 41 35 51 Z" fill="#1E1B2E"/>
+    <path fill-rule="evenodd" d="M38 46 C44 42 52 41 60 41 C68 41 76 42 82 46 C84 52 82 58 78 60 C72 62 64 62 60 62 C56 62 48 62 42 60 C38 58 36 52 38 46 Z M51 50 a5.5 4.6 0 1 0 0.01 0 Z M69 50 a5.5 4.6 0 1 0 0.01 0 Z" fill="#C62828"/>
+    <circle cx="51" cy="54.6" r="2.7" fill="#2B2140"/>
+    <circle cx="69" cy="54.6" r="2.7" fill="#2B2140"/>
+    <path d="M52 68 Q60 74 68 68" stroke="#2B2140" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+  </g>
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#FFFFFF" stroke-width="5"/>
+</svg>
