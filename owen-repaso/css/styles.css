@@ -76,6 +76,47 @@ body {
 
 .section-label { font-size: 15px; font-weight: 800; color: var(--ink2); margin: 20px 4px 10px; }
 
+/* ---------- Registro (nombre + avatar) ---------- */
+.profile-card {
+  background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 22px 18px; margin-top: 14px;
+}
+.profile-label { display: block; font-size: 18px; font-weight: 800; margin: 14px 2px 8px; }
+.name-input {
+  width: 100%; border: 3px solid var(--line); border-radius: var(--radius-sm);
+  padding: 14px 16px; font-family: var(--font); font-size: 22px; font-weight: 800;
+  color: var(--ink); background: #FFFDF8; outline: none; text-align: center;
+}
+.name-input:focus { border-color: var(--purple); }
+.avatar-group-label { font-size: 13px; font-weight: 800; color: var(--ink2); margin: 10px 2px 6px; text-transform: uppercase; letter-spacing: .05em; }
+.avatar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.avatar-opt {
+  border: 3px solid transparent; cursor: pointer; font-family: var(--font);
+  background: #FBF7FF; border-radius: var(--radius-sm); padding: 12px 6px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: transform .1s;
+}
+.avatar-opt:active { transform: scale(.95); }
+.avatar-opt .pic-img { width: 64px; height: 64px; }
+.avatar-opt .avatar-name { font-size: 12px; font-weight: 800; color: var(--ink2); }
+.avatar-opt.selected { border-color: var(--purple); background: #F1EAFF; box-shadow: 0 0 0 3px rgba(138,99,255,.18); }
+.avatar-opt.selected .avatar-name { color: var(--purple); }
+.btn-start { width: 100%; margin-top: 18px; font-size: 20px; padding: 16px; border-radius: var(--radius-sm); }
+.btn-start:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; }
+
+/* ---------- Chip del jugador en Home ---------- */
+.player-chip {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  border: none; cursor: pointer; font-family: var(--font); text-align: left;
+  background: var(--surface); border-radius: 999px; padding: 10px 16px;
+  box-shadow: var(--shadow-sm); margin-top: 12px; transition: transform .1s;
+}
+.player-chip:active { transform: scale(.98); }
+.player-avatar .pic-img { width: 44px; height: 44px; }
+.player-txt { flex: 1; font-size: 17px; font-weight: 700; color: var(--ink2); }
+.player-txt b { color: var(--ink); }
+.player-edit { font-size: 16px; opacity: .7; }
+
 /* ---------- Big choice cards (subject) ---------- */
 .subjects { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
 .subject-card {
