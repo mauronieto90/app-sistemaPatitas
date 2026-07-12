@@ -1,62 +1,27 @@
 /* =========================================================================
-   Modo de Repaso — Grado Primero · Gimnasio Los Arrayanes Bilingüe
-   Motor estilo Duolingo (sin contenido hardcodeado)
+   Modo de Repaso — Grado Primero  ·  Motor de la app (sin contenido hardcodeado)
    -------------------------------------------------------------------------
-   El contenido vive en /data/science.js y /data/english.js (no se toca).
+   El contenido vive en /data/science.js y /data/english.js.
+   Cada TEMA tiene varias ACTIVIDADES (formato + nivel de dificultad).
 
-   Cómo funciona el "modo Duolingo":
-   - CAMINO (path): cada materia es un camino de nodos (uno por tema),
-     agrupados por Term. Un nodo se desbloquea cuando el anterior tiene
-     al menos 1 corona. Cada tema acumula CORONAS 👑 (0→3):
-       0 coronas -> la lección se juega en Fácil
-       1 corona  -> Medio
-       2 coronas -> Difícil
-       3 coronas -> práctica (Difícil, sin corona nueva)
-   - LECCIÓN: mezcla ejercicios generados desde los bancos del tema:
-     completar/trivia (items), elegir imagen y escuchar 🔊 (pairs),
-     emparejar (pairs) y ordenar (steps). Los errores restan un corazón
-     y el ejercicio SE REPITE al final, como en Duolingo.
-   - PROGRESO: XP ⚡, racha diaria 🔥 y coronas se guardan en el
-     dispositivo (localStorage). Sin cuentas ni internet.
+   Estructura de datos:
+     materia -> terms[] -> topics[] -> activities[]
+     activity = { format, level, instructions, ...contenido }
+       format "trivia"/"fill"  -> items:[{ question|sentence, img?, options, answer }]
+       format "matching"/"memory" -> pairs:[{ a:"palabra", b:"🍎" o "svg:root" }]
+       format "order"          -> prompt, steps:[ "Paso 🌰", ... ]  (en orden)
+
+   Las imágenes (img / b / steps) pueden ser un EMOJI o "svg:nombre"
+   (ver js/icons.js). Así los dibujos quedan acordes al tema.
    ========================================================================= */
 (function () {
   "use strict";
 
   var DATA = window.OWEN_DATA || {};
   var ICONS = window.OWEN_ICONS || {};
-  var EMOJI = window.OWEN_EMOJI || {};
   var app = document.getElementById("app");
 
-  var LEVELS = ["Fácil", "Medio", "Difícil"];
-  var HEARTS_MAX = 5;
-
-  var state = { screen: "home", subjectId: null, topic: null };
-
-  // ============================ progreso guardado ============================
-  var STORE_KEY = "arrayanes-repaso-v1";
-  var S = (function () {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
-    catch (e) { return {}; }
-  })();
-  S.xp = S.xp || 0;
-  S.crowns = S.crowns || {};            // topicId -> 0..3
-  S.streak = S.streak || { count: 0, last: null };
-  function save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* sin storage */ }
-  }
-  function todayStr() {
-    var d = new Date();
-    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
-  }
-  function touchStreak() {
-    var t = todayStr();
-    if (S.streak.last === t) return;
-    var y = new Date(); y.setDate(y.getDate() - 1);
-    var yest = y.getFullYear() + "-" + (y.getMonth() + 1) + "-" + y.getDate();
-    S.streak.count = (S.streak.last === yest) ? S.streak.count + 1 : 1;
-    S.streak.last = t;
-  }
-  function crownsOf(topicId) { return S.crowns[topicId] || 0; }
+  var state = { screen: "home", subjectId: null, topic: null, activity: null };
 
   // ============================ utilidades ============================
   function el(html) {
@@ -72,12 +37,20 @@
     }
     return a;
   }
-  function sample(arr, n) { var s = shuffle(arr); return (n && n < s.length) ? s.slice(0, n) : s; }
   function esc(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  // Toma n elementos al azar (para que cada partida sea distinta).
+  function sample(arr, n) { var s = shuffle(arr); return (n && n < s.length) ? s.slice(0, n) : s; }
+  // Cuántas preguntas/parejas mostrar por partida (si el banco es más grande).
+  var PICK = { trivia: 6, fill: 6, matching: 6, memory: 6 };
 
+  var EMOJI = window.OWEN_EMOJI || {};
+  // Convierte un valor de imagen en HTML:
+  //  - "svg:nombre"  -> ilustración SVG propia (js/icons.js)
+  //  - un emoji que esté en el mapa -> imagen ilustrada de OpenMoji (assets/emoji/)
+  //  - cualquier otra cosa -> se muestra tal cual (texto/emoji del sistema)
   function pic(val) {
     if (val == null) return "";
     val = String(val);
@@ -90,28 +63,25 @@
     }
     return '<span class="pic-emoji">' + esc(val) + "</span>";
   }
+  // Separa "Mouth 👄" o "Seed svg:seed" en {text, img} para chips ordenar.
   function splitStep(step) {
-    if (typeof step === "object") return step;
+    if (typeof step === "object") return step; // { text, img }
     var m = String(step).match(/^(.*?)\s+(svg:\S+|[^\s\w].*)$/u);
     if (m) return { text: m[1], img: m[2] };
     return { text: String(step), img: null };
   }
-  function pairsAreOneToOne(pairs) {
-    var seenA = {}, seenB = {};
-    for (var i = 0; i < pairs.length; i++) {
-      if (seenA[pairs[i].a] || seenB[pairs[i].b]) return false;
-      seenA[pairs[i].a] = 1; seenB[pairs[i].b] = 1;
-    }
-    return true;
-  }
-  function usablePairs(topic) {
-    return (topic.pairs && topic.pairs.length >= 4 && pairsAreOneToOne(topic.pairs)) ? topic.pairs : null;
+
+  function countItems(a) {
+    if (a.items) return a.items.length;
+    if (a.pairs) return a.pairs.length;
+    if (a.steps) return a.steps.length;
+    return 0;
   }
 
-  // ---------- voz (escuchar 🔊) ----------
+  // ---------- apoyo de lectura (voz del navegador, en inglés) ----------
   var hasTTS = (typeof window.speechSynthesis !== "undefined") && (typeof window.SpeechSynthesisUtterance !== "undefined");
   function say(text) {
-    if (!hasTTS) return;
+    if (!hasTTS || !text) return;
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
@@ -119,8 +89,22 @@
       window.speechSynthesis.speak(u);
     } catch (e) { /* sin voz */ }
   }
+  // Botón 🔊 para leer una frase/palabra en voz alta (devuelve "" si no hay voz).
+  function speakBtn(text) {
+    if (!hasTTS) return "";
+    return '<button class="read-btn" data-say="' + esc(text) + '" aria-label="Escuchar">🔊</button>';
+  }
+  // Activa todos los botones 🔊 dentro de un contenedor.
+  function wireSpeak(root) {
+    if (!hasTTS) return;
+    root.querySelectorAll(".read-btn").forEach(function (b) {
+      b.addEventListener("click", function (e) { e.stopPropagation(); say(b.getAttribute("data-say")); });
+    });
+  }
+  // Texto legible de una oración con "___" (lee el hueco como una pausa).
+  function readableSentence(s) { return String(s).replace(/_+/g, " … "); }
 
-  // ---------- sonidos ----------
+  // ---------- sonidos suaves (WebAudio, sin archivos) ----------
   var actx = null;
   function beep(kind) {
     try {
@@ -135,7 +119,7 @@
       g.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, now + (kind === "win" ? 0.35 : 0.18));
       o.start(now); o.stop(now + (kind === "win" ? 0.35 : 0.18));
-    } catch (e) { /* silencio */ }
+    } catch (e) { /* silencio si no hay audio */ }
   }
   function confetti() {
     var emojis = ["🎉", "⭐", "🌟", "🎊", "✨", "🏆", "💜"];
@@ -152,17 +136,11 @@
       })(i);
     }
   }
-  function toast(msg) {
-    var t = el('<div class="toast">' + msg + '</div>');
-    document.body.appendChild(t);
-    setTimeout(function () { t.classList.add("show"); }, 20);
-    setTimeout(function () { t.classList.remove("show"); setTimeout(function () { t.remove(); }, 300); }, 1400);
-  }
 
   // ============================ navegación ============================
   function go(screen, opts) {
     opts = opts || {};
-    ["subjectId", "topic"].forEach(function (k) { if (k in opts) state[k] = opts[k]; });
+    ["subjectId", "topic", "activity"].forEach(function (k) { if (k in opts) state[k] = opts[k]; });
     state.screen = screen;
     render();
     window.scrollTo(0, 0);
@@ -170,458 +148,448 @@
   function render() {
     app.innerHTML = "";
     if (state.screen === "home") return renderHome();
-    if (state.screen === "path") return renderPath();
-    if (state.screen === "lesson") return renderLesson();
+    if (state.screen === "topics") return renderTopics();
+    if (state.screen === "activities") return renderActivities();
+    if (state.screen === "game") return renderGame();
   }
 
-  function statsBar() {
-    var totalCrowns = 0;
-    Object.keys(S.crowns).forEach(function (k) { totalCrowns += S.crowns[k]; });
-    return el(
-      '<div class="stats-bar">' +
-        '<span class="stat">🔥 ' + S.streak.count + '</span>' +
-        '<span class="stat">⚡ ' + S.xp + '</span>' +
-        '<span class="stat">👑 ' + totalCrowns + '</span>' +
+  function topbar(title, sub, onBack) {
+    var bar = el(
+      '<div class="topbar">' +
+        '<button class="btn-back" aria-label="Volver">←</button>' +
+        '<div class="title-wrap"><h1>' + title + '</h1><div class="sub">' + sub + '</div></div>' +
       '</div>'
     );
+    bar.querySelector(".btn-back").addEventListener("click", onBack);
+    return bar;
+  }
+
+  var GAME_META = {
+    trivia: { label: "Trivia", icon: "🧠" },
+    fill: { label: "Completar", icon: "✏️" },
+    matching: { label: "Emparejar", icon: "🔗" },
+    memory: { label: "Memoria", icon: "🃏" },
+    order: { label: "Ordenar", icon: "🔢" }
+  };
+  var LEVEL_META = {
+    "Fácil": { cls: "lvl-easy", icon: "🟢" },
+    "Medio": { cls: "lvl-mid", icon: "🟡" },
+    "Difícil": { cls: "lvl-hard", icon: "🔴" }
+  };
+  var LEVELS = ["Fácil", "Medio", "Difícil"];
+  var FORMAT_ORDER = { fill: 1, trivia: 2, order: 3, matching: 4, memory: 5 };
+
+  // Cuántas parejas mostrar en Emparejar/Memoria según el nivel (dificultad
+  // por tamaño). Se limita al tamaño del banco.
+  function pickPairs(level, n) {
+    var base = level === "Fácil" ? 4 : level === "Medio" ? 6 : 8;
+    return Math.min(base, n);
+  }
+
+  // Un banco de parejas SOLO sirve para Emparejar/Memoria si es 1-a-1:
+  // ninguna palabra ni dibujo puede repetirse (si no, hay varias cartas
+  // iguales y el niño no sabe cuál va con cuál).
+  function pairsAreOneToOne(pairs) {
+    var seenA = {}, seenB = {};
+    for (var i = 0; i < pairs.length; i++) {
+      var a = pairs[i].a, b = pairs[i].b;
+      if (seenA[a] || seenB[b]) return false;
+      seenA[a] = 1; seenB[b] = 1;
+    }
+    return true;
+  }
+
+  // Construye la lista de juegos disponibles para un tema en un nivel:
+  // los quizzes/orden escritos en los datos + Emparejar y Memoria
+  // generados a partir del banco compartido topic.pairs (si es 1-a-1).
+  function activitiesForLevel(topic, level) {
+    var acts = (topic.activities || []).filter(function (a) { return a.level === level; }).slice();
+    if (topic.pairs && topic.pairs.length >= 3 && pairsAreOneToOne(topic.pairs)) {
+      var pk = pickPairs(level, topic.pairs.length);
+      acts.push({ format: "matching", level: level, pick: pk, pairs: topic.pairs,
+        instructions: topic.pairsInstr || "Empareja cada carta con su pareja." });
+      acts.push({ format: "memory", level: level, pick: pk, pairs: topic.pairs,
+        instructions: (topic.pairsInstr || "Encuentra las parejas.") + " ¡Encuentra las parejas!" });
+    }
+    acts.sort(function (a, b) { return (FORMAT_ORDER[a.format] || 9) - (FORMAT_ORDER[b.format] || 9); });
+    return acts;
+  }
+
+  function countTopicGames(topic) {
+    var n = 0;
+    LEVELS.forEach(function (lv) { n += activitiesForLevel(topic, lv).length; });
+    return n;
   }
 
   // ============================ pantalla: HOME ============================
   function renderHome() {
-    app.appendChild(statsBar());
     app.appendChild(el(
       '<div class="hero">' +
         '<div class="mascot"><img class="hero-logo" src="assets/logo-arrayanes.png" alt="Gimnasio Los Arrayanes Bilingüe"></div>' +
         '<h1>Grado Primero</h1>' +
         '<p class="school">Gimnasio Los Arrayanes Bilingüe</p>' +
-        '<p>¡Hola! Elige tu curso y sigue el camino 🗺️</p>' +
+        '<p>¡Hola! Elige una materia para jugar 🎮</p>' +
       '</div>'
     ));
-    app.appendChild(el('<div class="section-label">Cursos</div>'));
+    app.appendChild(el('<div class="section-label">Materias</div>'));
     var grid = el('<div class="subjects"></div>');
     ["science", "english"].forEach(function (sid) {
       var s = DATA[sid];
       if (!s) return;
-      var topics = allTopics(s);
-      var earned = 0;
-      topics.forEach(function (tp) { earned += crownsOf(tp.id); });
+      var nTopics = 0, nGames = 0;
+      s.terms.forEach(function (t) { t.topics.forEach(function (tp) { nTopics++; nGames += countTopicGames(tp); }); });
       var card = el(
         '<button class="subject-card ' + s.color + '">' +
           '<div class="strip"></div>' +
           '<div class="emoji">' + s.emoji + '</div>' +
           '<div class="name">' + esc(s.title) + '</div>' +
-          '<div class="desc">👑 ' + earned + ' / ' + (topics.length * 3) + '</div>' +
+          '<div class="desc">' + nTopics + ' temas · ' + nGames + ' juegos</div>' +
         '</button>'
       );
-      card.addEventListener("click", function () { go("path", { subjectId: sid }); });
+      card.addEventListener("click", function () { go("topics", { subjectId: sid }); });
       grid.appendChild(card);
     });
     app.appendChild(grid);
     app.appendChild(el('<div class="footer-note">Gimnasio Los Arrayanes Bilingüe · Primero de primaria</div>'));
   }
 
-  function allTopics(subject) {
-    var out = [];
-    subject.terms.forEach(function (t) { t.topics.forEach(function (tp) { out.push(tp); }); });
-    return out;
-  }
-
-  // ============================ pantalla: CAMINO ============================
-  function renderPath() {
+  // ============================ pantalla: TEMAS ============================
+  function renderTopics() {
     var s = DATA[state.subjectId];
-    var bar = el(
-      '<div class="topbar">' +
-        '<button class="btn-back" aria-label="Volver">←</button>' +
-        '<div class="title-wrap"><h1>' + esc(s.title) + '</h1><div class="sub">' + s.emoji + ' Sigue el camino</div></div>' +
-      '</div>'
-    );
-    bar.querySelector(".btn-back").addEventListener("click", function () { go("home"); });
-    app.appendChild(bar);
-    app.appendChild(statsBar());
-
-    var idx = 0;          // índice global del nodo dentro de la materia
-    var prevTopic = null; // para la regla de desbloqueo
-    var OFFSETS = [0, -70, -100, -70, 0, 70, 100, 70];
-
+    app.appendChild(topbar(esc(s.title), s.emoji + " Elige un tema", function () { go("home"); }));
     s.terms.forEach(function (term) {
-      app.appendChild(el('<div class="unit-banner ' + s.color + '">' + esc(term.title) + ' · ' + esc(s.title) + '</div>'));
-      var path = el('<div class="path"></div>');
+      var block = el('<div class="term-block"></div>');
+      block.appendChild(el('<div class="term-title">' + esc(term.title) + '</div>'));
+      var grid = el('<div class="topics"></div>');
       term.topics.forEach(function (topic) {
-        var crowns = crownsOf(topic.id);
-        var unlocked = (prevTopic === null) || crownsOf(prevTopic.id) >= 1;
-        var isCurrent = unlocked && crowns < 3;
-        var cls = !unlocked ? "locked" : (crowns >= 3 ? "done" : "current");
-
-        var wrap = el('<div class="node-wrap" style="transform:translateX(' + OFFSETS[idx % OFFSETS.length] + 'px)"></div>');
-        if (isCurrent && (prevTopic === null || crownsOf(prevTopic.id) >= 1) && crowns === 0 && firstPending(s) === topic.id) {
-          wrap.appendChild(el('<div class="start-bubble">¡EMPIEZA!</div>'));
-        }
-        var node = el(
-          '<button class="node ' + cls + " " + s.color + '" ' + (unlocked ? "" : "disabled") + ">" +
-            '<span class="node-emoji">' + (unlocked ? pic(topic.emoji) : "🔒") + '</span>' +
-            (crowns > 0 ? '<span class="crowns">👑' + crowns + '</span>' : "") +
+        var card = el(
+          '<button class="topic-card">' +
+            '<div class="t-emoji">' + pic(topic.emoji) + '</div>' +
+            '<div class="t-name">' + esc(topic.title) + '</div>' +
+            '<div class="t-meta">' +
+              '<span class="chip">' + esc(topic.cycle) + '</span>' +
+              '<span class="chip game">' + countTopicGames(topic) + ' juegos</span>' +
+            '</div>' +
           '</button>'
         );
-        node.dataset.topic = topic.id;
-        (function (topic, unlocked) {
-          node.addEventListener("click", function () {
-            if (!unlocked) { node.classList.add("shake"); setTimeout(function () { node.classList.remove("shake"); }, 450); toast("Completa el nodo anterior 🔒"); return; }
-            go("lesson", { topic: topic });
-          });
-        })(topic, unlocked);
-        wrap.appendChild(node);
-        wrap.appendChild(el('<div class="node-label">' + esc(topic.title) + '</div>'));
-        path.appendChild(wrap);
-        prevTopic = topic;
-        idx++;
+        card.addEventListener("click", function () { go("activities", { topic: topic }); });
+        grid.appendChild(card);
       });
-      app.appendChild(path);
+      block.appendChild(grid);
+      app.appendChild(block);
     });
-    app.appendChild(el('<div class="footer-note">👑 Gana 3 coronas en cada tema: Fácil → Medio → Difícil</div>'));
   }
 
-  function firstPending(subject) {
-    var topics = allTopics(subject);
-    for (var i = 0; i < topics.length; i++) {
-      var unlocked = i === 0 || crownsOf(topics[i - 1].id) >= 1;
-      if (unlocked && crownsOf(topics[i].id) < 3) return topics[i].id;
-    }
-    return null;
-  }
-
-  // ============================ generador de LECCIÓN ============================
-  // Mezcla ejercicios desde los bancos del tema, según el nivel actual.
-  function optCount(level) { return level === "Fácil" ? 3 : 4; }
-  function matchCount(level, n) {
-    var base = level === "Fácil" ? 4 : level === "Medio" ? 5 : 6;
-    return Math.min(base, n);
-  }
-
-  function buildLesson(topic, level) {
-    var ex = [];
-    var pairs = usablePairs(topic);
-
-    // 1) preguntas escritas (trivia / completar) de este nivel
-    var qitems = [];
-    (topic.activities || []).forEach(function (a) {
-      if ((a.format === "trivia" || a.format === "fill") && a.level === level) {
-        a.items.forEach(function (it) { qitems.push({ fill: a.format === "fill", item: it, instructions: a.instructions }); });
-      }
-    });
-    sample(qitems, 4).forEach(function (q) { ex.push({ kind: "quiz", fill: q.fill, item: q.item, instructions: q.instructions }); });
-
-    // 2) sintetizados desde el banco de parejas
-    if (pairs) {
-      var nSel = qitems.length ? 2 : 4;
-      for (var i = 0; i < nSel; i++) ex.push(makeSelect(pairs, level, i % 2 === 1));
-      ex.push({ kind: "match", pairs: sample(pairs, matchCount(level, pairs.length)), instructions: topic.pairsInstr || "Empareja las cartas." });
-      if (hasTTS) ex.push(makeListen(pairs, level));
-      if (!qitems.length && hasTTS) ex.push(makeListen(pairs, level));
-    }
-
-    // 3) ordenar (si el tema lo tiene en este nivel)
-    var orders = (topic.activities || []).filter(function (a) { return a.format === "order" && a.level === level; });
-    if (orders.length) ex.push({ kind: "order", act: orders[0] });
-
-    // Mínimo 6 ejercicios: rellenar con más "elige la imagen"
-    while (ex.length < 6 && pairs) ex.push(makeSelect(pairs, level, ex.length % 2 === 0));
-
-    return shuffle(ex);
-  }
-
-  function makeSelect(pairs, level, reverse) {
-    var chosen = sample(pairs, optCount(level));
-    var target = chosen[0];
-    return { kind: "select", reverse: !!reverse, target: target, options: shuffle(chosen) };
-  }
-  function makeListen(pairs, level) {
-    var chosen = sample(pairs, optCount(level));
-    return { kind: "listen", target: chosen[0], options: shuffle(chosen) };
-  }
-
-  // ============================ pantalla: LECCIÓN ============================
-  function renderLesson() {
+  // ============================ pantalla: ACTIVIDADES ============================
+  // Agrupada por nivel: cada nivel muestra VARIOS formatos para escoger.
+  function renderActivities() {
     var topic = state.topic;
-    var crowns = crownsOf(topic.id);
-    var level = LEVELS[Math.min(crowns, 2)];
-    var practice = crowns >= 3;
+    app.appendChild(topbar(esc(topic.title), "Elige un nivel y un juego", function () { go("topics", { subjectId: state.subjectId }); }));
+    app.appendChild(el('<div class="topic-hero">' + pic(topic.emoji) + '</div>'));
 
-    var queue = buildLesson(topic, level);
-    var idx = 0, hearts = HEARTS_MAX, combo = 0, best = 0, mistakes = 0;
+    LEVELS.forEach(function (level) {
+      var acts = activitiesForLevel(topic, level);
+      if (!acts.length) return;
+      var lm = LEVEL_META[level] || { cls: "lvl-mid", icon: "⚪" };
+      var group = el('<div class="level-group"></div>');
+      group.appendChild(el('<div class="level-head ' + lm.cls + '">' + lm.icon + ' ' + esc(level) + '</div>'));
+      var list = el('<div class="activities"></div>');
+      acts.forEach(function (act) {
+        var gm = GAME_META[act.format] || { label: act.format, icon: "🎮" };
+        var count = act.pairs ? (act.pick || act.pairs.length) : countItems(act);
+        var unit = act.pairs ? "parejas" : "preguntas";
+        var card = el(
+          '<button class="activity-card ' + lm.cls + '">' +
+            '<span class="a-icon">' + gm.icon + '</span>' +
+            '<span class="a-body">' +
+              '<span class="a-title">' + esc(gm.label) + '</span>' +
+              '<span class="a-count">' + count + ' ' + unit + '</span>' +
+            '</span>' +
+          '</button>'
+        );
+        card.addEventListener("click", function () { go("game", { activity: act }); });
+        list.appendChild(card);
+      });
+      group.appendChild(list);
+      app.appendChild(group);
+    });
+  }
 
-    // --- barra superior estilo Duolingo: salir, progreso, corazones ---
-    var top = el(
-      '<div class="lesson-top">' +
-        '<button class="btn-quit" aria-label="Salir">✕</button>' +
-        '<div class="progress-track"><div class="progress-fill"></div></div>' +
-        '<div class="hearts">❤️ <b>' + hearts + '</b></div>' +
+  // ============================ pantalla: JUEGO ============================
+  function renderGame() {
+    var topic = state.topic, act = state.activity;
+    var gm = GAME_META[act.format] || { label: act.format, icon: "🎮" };
+    app.appendChild(topbar(esc(topic.title), gm.icon + " " + gm.label + " · " + esc(act.level),
+      function () { go("activities", { topic: topic }); }));
+    app.appendChild(el('<div class="instructions">' + esc(act.instructions || "") + '</div>'));
+    var wrap = el('<div class="game-wrap"></div>');
+    app.appendChild(wrap);
+
+    var starter = { trivia: playQuiz, fill: playQuiz, matching: playMatching, memory: playMemory, order: playOrder }[act.format];
+    if (starter) starter(act, wrap);
+    else wrap.appendChild(el('<div class="instructions">Tipo de juego no reconocido 🤔</div>'));
+  }
+
+  // ---------- resultado (común) ----------
+  function showResult(wrap, score, total) {
+    var pct = total > 0 ? score / total : 0;
+    var stars = pct >= 0.85 ? 3 : pct >= 0.55 ? 2 : 1;
+    var faces = ["😺", "😻", "🤩"];
+    var titles = ["¡Buen intento!", "¡Muy bien!", "¡Increíble!"];
+    var msgs = [
+      "Sigue practicando, ¡lo vas a lograr! 💪",
+      "¡Vas súper bien! Cada día aprendes más 🌟",
+      "¡Eres una estrella! Lo hiciste genial 🏆"
+    ];
+    beep("win");
+    if (stars >= 2) confetti();
+    wrap.innerHTML = "";
+    var starStr = "";
+    for (var i = 0; i < 3; i++) starStr += i < stars ? "⭐" : "☆";
+    var box = el(
+      '<div class="result">' +
+        '<div class="big-emoji">' + faces[stars - 1] + '</div>' +
+        '<h2>' + titles[stars - 1] + '</h2>' +
+        '<div class="stars">' + starStr + '</div>' +
+        '<div class="score">' + score + ' de ' + total + ' 🎯</div>' +
+        '<div class="msg">' + msgs[stars - 1] + '</div>' +
+        '<div class="result-actions">' +
+          '<button class="btn-primary">🔁 Jugar otra vez</button>' +
+          '<button class="btn-secondary">🎮 Otro juego de este tema</button>' +
+        '</div>' +
       '</div>'
     );
-    top.querySelector(".btn-quit").addEventListener("click", function () { go("path", { subjectId: state.subjectId }); });
-    app.appendChild(top);
-    app.appendChild(el('<div class="lesson-meta">' + pic(topic.emoji) + ' <b>' + esc(topic.title) + '</b> · ' + esc(level) + (practice ? " · Práctica" : "") + '</div>'));
+    box.querySelector(".btn-primary").addEventListener("click", function () { go("game", { activity: state.activity }); });
+    box.querySelector(".btn-secondary").addEventListener("click", function () { go("activities", { topic: state.topic }); });
+    wrap.appendChild(box);
+  }
 
-    var stage = el('<div class="game-wrap"></div>');
-    app.appendChild(stage);
+  // ============================ JUEGO: Trivia / Completar ============================
+  function playQuiz(act, wrap) {
+    var items = sample(act.items, act.pick || PICK[act.format]);
+    var idx = 0, score = 0;
+    var isFill = act.format === "fill";
 
-    function updateTop() {
-      top.querySelector(".progress-fill").style.width = Math.round(idx / queue.length * 100) + "%";
-      top.querySelector(".hearts b").textContent = hearts;
-    }
+    var progress = el('<div class="progress-row"><div class="progress-track"><div class="progress-fill"></div></div><div class="progress-txt"></div></div>');
+    var stage = el('<div></div>');
+    wrap.appendChild(progress); wrap.appendChild(stage);
 
-    function next() {
-      idx++;
-      if (idx >= queue.length) return finish();
-      updateTop();
-      show(queue[idx]);
-    }
+    function draw() {
+      var item = items[idx];
+      progress.querySelector(".progress-fill").style.width = (idx / items.length * 100) + "%";
+      progress.querySelector(".progress-txt").textContent = (idx + 1) + " / " + items.length;
 
-    // answered: true = bien, false = mal (resta corazón y re-encola), null = sin corazones (match/order)
-    function answered(ok) {
-      if (ok === true) {
-        combo++; if (combo > best) best = combo;
-        if (combo === 3 || combo === 5 || combo === 8) toast("¡Racha de " + combo + "! 🔥");
-      } else if (ok === false) {
-        combo = 0; mistakes++; hearts--;
-        updateTop();
-        // el ejercicio se repite al final, como en Duolingo
-        var clone = {}; for (var k in queue[idx]) clone[k] = queue[idx][k];
-        clone.requeued = true;
-        queue.push(clone);
-        if (hearts <= 0) return fail();
-      }
-      next();
-    }
-
-    function finish() {
-      touchStreak();
-      var gained = practice ? 5 : 10;
-      if (mistakes === 0) gained += 5;
-      S.xp += gained;
-      if (!practice) S.crowns[topic.id] = Math.min(3, crowns + 1);
-      save();
-      beep("win"); confetti();
-
-      stage.innerHTML = "";
-      top.querySelector(".progress-fill").style.width = "100%";
-      var newCrowns = crownsOf(topic.id);
-      var owl = EMOJI["🦉"] ? '<img class="owl" src="assets/emoji/' + EMOJI["🦉"] + '.svg" alt="">' : '<div class="big-emoji">🤩</div>';
-      var box = el(
-        '<div class="result">' + owl +
-          '<h2>' + (mistakes === 0 ? "¡Lección perfecta!" : "¡Lección completada!") + '</h2>' +
-          (!practice ? '<div class="stars">👑 ' + newCrowns + ' / 3</div>' : '<div class="stars">💪 Práctica</div>') +
-          '<div class="xp-pill">⚡ +' + gained + ' XP</div>' +
-          '<div class="msg">Racha 🔥 ' + S.streak.count + ' · Mejor combo: ' + best + '</div>' +
-          '<div class="result-actions">' +
-            '<button class="btn-primary">Continuar →</button>' +
-          '</div>' +
-        '</div>'
-      );
-      box.querySelector(".btn-primary").addEventListener("click", function () { go("path", { subjectId: state.subjectId }); });
-      stage.appendChild(box);
-    }
-
-    function fail() {
-      beep("bad");
-      stage.innerHTML = "";
-      var box = el(
-        '<div class="result">' +
-          '<div class="big-emoji">💔</div>' +
-          '<h2>¡Se acabaron los corazones!</h2>' +
-          '<div class="msg">No pasa nada. ¡Inténtalo otra vez, tú puedes! 💪</div>' +
-          '<div class="result-actions">' +
-            '<button class="btn-primary">🔁 Intentar de nuevo</button>' +
-            '<button class="btn-secondary">🗺️ Volver al camino</button>' +
-          '</div>' +
-        '</div>'
-      );
-      box.querySelector(".btn-primary").addEventListener("click", function () { go("lesson", { topic: topic }); });
-      box.querySelector(".btn-secondary").addEventListener("click", function () { go("path", { subjectId: state.subjectId }); });
-      stage.appendChild(box);
-    }
-
-    // ---------- render de cada tipo de ejercicio ----------
-    function show(ex) {
-      stage.innerHTML = "";
-      if (ex.kind === "quiz") return showQuiz(ex);
-      if (ex.kind === "select") return showSelect(ex);
-      if (ex.kind === "listen") return showListen(ex);
-      if (ex.kind === "match") return showMatch(ex);
-      if (ex.kind === "order") return showOrder(ex);
-      next();
-    }
-
-    function feedbackAndNext(ok, correctLabel) {
-      var fb = stage.querySelector(".feedback");
-      if (ok) { fb.className = "feedback ok"; fb.textContent = pick(["¡Correcto! 🎉", "¡Muy bien! ✅", "¡Genial! 🌟"]); beep("ok"); }
-      else { fb.className = "feedback bad"; fb.textContent = "La respuesta era: " + correctLabel + " 👀"; beep("bad"); }
-      var btn = el('<button class="btn-next">Continuar →</button>');
-      btn.addEventListener("click", function () { answered(ok); });
-      stage.appendChild(btn);
-    }
-
-    function showQuiz(ex) {
-      var item = ex.item;
-      stage.appendChild(el('<div class="instructions">' + esc(ex.instructions || (ex.fill ? "Completa la oración." : "Elige la respuesta.")) + '</div>'));
-      var qHtml;
-      if (ex.fill) {
-        qHtml = '<div class="q-emoji">' + pic(item.img || "✏️") + '</div><div class="q-text q-blank">' + esc(item.sentence).replace("___", "<b>?</b>") + '</div>';
+      var qHtml, readText;
+      if (isFill) {
+        var sentence = esc(item.sentence).replace("___", '<b>?</b>');
+        readText = readableSentence(item.sentence);
+        qHtml = '<div class="q-emoji">' + pic(item.img || "✏️") + '</div><div class="q-text q-blank">' + sentence + '</div>';
       } else {
+        readText = item.question;
         qHtml = '<div class="q-emoji">' + pic(item.img || "❓") + '</div><div class="q-text">' + esc(item.question) + '</div>';
       }
-      stage.appendChild(el('<div class="question-card">' + qHtml + '</div>'));
+      var nOpt = item.options.length;
+      var optClass = nOpt === 2 ? "options two" : "options multi";
+
+      // Mezclamos el orden de las opciones para que la respuesta correcta
+      // no quede siempre en el mismo lugar (y para variar entre partidas).
       var shown = shuffle(item.options.map(function (o, i) { return { text: o, ok: i === item.answer }; }));
-      var opts = el('<div class="options ' + (shown.length === 2 ? "two" : "multi") + '"></div>');
-      shown.forEach(function (o) {
-        var b = el('<button class="opt"' + (o.ok ? ' data-ok="1"' : "") + '>' + esc(o.text) + '</button>');
-        b.addEventListener("click", function () { lockOpts(opts, o, b); feedbackAndNext(o.ok, correctText(shown)); });
+
+      stage.innerHTML = "";
+      var card = el('<div class="question-card">' + qHtml + speakBtn(readText) + '</div>');
+      wireSpeak(card);
+      stage.appendChild(card);
+      say(readText); // apoyo de lectura: lee la frase al aparecer
+      var opts = el('<div class="' + optClass + '"></div>');
+      shown.forEach(function (o, i) {
+        var b = el('<button class="opt">' + esc(o.text) + '</button>');
+        b.addEventListener("click", function () { choose(i, opts, shown); });
         opts.appendChild(b);
       });
       stage.appendChild(opts);
       stage.appendChild(el('<div class="feedback"></div>'));
+      var next = el('<button class="btn-next hidden">Siguiente →</button>');
+      next.addEventListener("click", function () {
+        idx++;
+        if (idx >= items.length) showResult(wrap, score, items.length);
+        else draw();
+      });
+      stage.appendChild(next);
     }
 
-    function correctText(shown) {
-      for (var i = 0; i < shown.length; i++) if (shown[i].ok) return shown[i].text || shown[i].label || "";
-      return "";
-    }
-    function lockOpts(opts, chosen, btn) {
-      opts.querySelectorAll(".opt").forEach(function (b) {
+    function choose(i, opts, shown) {
+      var buttons = opts.querySelectorAll(".opt");
+      if (buttons[0].disabled) return;
+      var correct = shown[i].ok;
+      buttons.forEach(function (b, bi) {
         b.disabled = true;
-        if (b.dataset.ok === "1") b.classList.add("correct");
-        else if (b === btn) b.classList.add("wrong");
+        if (shown[bi].ok) b.classList.add("correct");
+        else if (bi === i) b.classList.add("wrong");
         else b.classList.add("dim");
       });
+      var fb = stage.querySelector(".feedback");
+      if (correct) { score++; fb.className = "feedback ok"; fb.textContent = pick(["¡Correcto! 🎉", "¡Muy bien! ✅", "¡Genial! 🌟"]); beep("ok"); }
+      else { fb.className = "feedback bad"; fb.textContent = "¡Casi! Mira la respuesta 👀"; beep("bad"); }
+      var next = stage.querySelector(".btn-next");
+      next.classList.remove("hidden");
+      next.textContent = idx + 1 >= items.length ? "Ver resultado 🏁" : "Siguiente →";
     }
+    draw();
+  }
 
-    function showSelect(ex) {
-      // reverse=false: palabra -> elige imagen | reverse=true: imagen -> elige palabra
-      var t = ex.target;
-      if (!ex.reverse) {
-        stage.appendChild(el('<div class="instructions">Elige el dibujo correcto.</div>'));
-        stage.appendChild(el('<div class="question-card"><div class="q-text big-word">' + esc(t.a) + '</div></div>'));
-        var opts = el('<div class="options multi select-grid"></div>');
-        ex.options.forEach(function (p) {
-          var ok = p === t;
-          var b = el('<button class="opt img-opt"' + (ok ? ' data-ok="1"' : "") + '>' + pic(p.b) + '</button>');
-          b.addEventListener("click", function () { lockOpts(opts, null, b); feedbackAndNext(ok, t.a); });
-          opts.appendChild(b);
-        });
-        stage.appendChild(opts);
+  // ============================ JUEGO: Emparejar ============================
+  function playMatching(act, wrap) {
+    var pairs = sample(act.pairs, act.pick || PICK.matching);
+    var left = shuffle(pairs.map(function (p, i) { return { id: i, txt: p.a }; }));
+    var right = shuffle(pairs.map(function (p, i) { return { id: i, img: p.b }; }));
+    var matched = 0, mistakes = 0, selectedLeft = null, selectedRight = null, locked = false;
+
+    var progress = el('<div class="progress-row"><div class="progress-track"><div class="progress-fill"></div></div><div class="progress-txt"></div></div>');
+    wrap.appendChild(progress);
+    var grid = el('<div class="match-grid"><div class="match-col" data-side="l"></div><div class="match-col" data-side="r"></div></div>');
+    wrap.appendChild(grid);
+    var lcol = grid.querySelector('[data-side="l"]'), rcol = grid.querySelector('[data-side="r"]');
+
+    function updateProgress() {
+      progress.querySelector(".progress-fill").style.width = (matched / pairs.length * 100) + "%";
+      progress.querySelector(".progress-txt").textContent = matched + " / " + pairs.length;
+    }
+    left.forEach(function (d) {
+      var b = el('<button class="match-item word">' + esc(d.txt) + '</button>');
+      b.dataset.id = d.id;
+      b.addEventListener("click", function () { onPick(b, "l", d); });
+      lcol.appendChild(b);
+    });
+    right.forEach(function (d) {
+      var b = el('<button class="match-item emoji">' + pic(d.img) + '</button>');
+      b.dataset.id = d.id;
+      b.addEventListener("click", function () { onPick(b, "r", d); });
+      rcol.appendChild(b);
+    });
+    updateProgress();
+
+    function onPick(btn, side, data) {
+      if (locked || btn.classList.contains("done")) return;
+      if (side === "l") { say(data.txt); if (selectedLeft) selectedLeft.btn.classList.remove("selected"); selectedLeft = { btn: btn, data: data }; }
+      else { if (selectedRight) selectedRight.btn.classList.remove("selected"); selectedRight = { btn: btn, data: data }; }
+      btn.classList.add("selected");
+      if (selectedLeft && selectedRight) evaluate();
+    }
+    function evaluate() {
+      locked = true;
+      var l = selectedLeft, r = selectedRight;
+      if (l.data.id === r.data.id) {
+        beep("ok");
+        l.btn.classList.remove("selected"); r.btn.classList.remove("selected");
+        l.btn.classList.add("done"); r.btn.classList.add("done");
+        matched++; updateProgress();
+        selectedLeft = selectedRight = null; locked = false;
+        if (matched === pairs.length) setTimeout(function () { showResult(wrap, Math.max(1, pairs.length - Math.floor(mistakes / 2)), pairs.length); }, 350);
       } else {
-        stage.appendChild(el('<div class="instructions">Elige la palabra correcta.</div>'));
-        stage.appendChild(el('<div class="question-card"><div class="q-emoji">' + pic(t.b) + '</div></div>'));
-        var opts2 = el('<div class="options multi"></div>');
-        ex.options.forEach(function (p) {
-          var ok = p === t;
-          var b = el('<button class="opt"' + (ok ? ' data-ok="1"' : "") + '>' + esc(p.a) + '</button>');
-          b.addEventListener("click", function () { lockOpts(opts2, null, b); feedbackAndNext(ok, t.a); });
-          opts2.appendChild(b);
-        });
-        stage.appendChild(opts2);
-      }
-      stage.appendChild(el('<div class="feedback"></div>'));
-    }
-
-    function showListen(ex) {
-      var t = ex.target;
-      stage.appendChild(el('<div class="instructions">Escucha y elige el dibujo. 🔊</div>'));
-      var spk = el('<div class="question-card"><button class="speaker-btn" aria-label="Escuchar">🔊</button></div>');
-      spk.querySelector(".speaker-btn").addEventListener("click", function () { say(t.a); });
-      stage.appendChild(spk);
-      setTimeout(function () { say(t.a); }, 350);
-      var opts = el('<div class="options multi select-grid"></div>');
-      ex.options.forEach(function (p) {
-        var ok = p === t;
-        var b = el('<button class="opt img-opt"' + (ok ? ' data-ok="1"' : "") + '>' + pic(p.b) + '</button>');
-        b.addEventListener("click", function () { lockOpts(opts, null, b); feedbackAndNext(ok, t.a); });
-        opts.appendChild(b);
-      });
-      stage.appendChild(opts);
-      stage.appendChild(el('<div class="feedback"></div>'));
-    }
-
-    function showMatch(ex) {
-      stage.appendChild(el('<div class="instructions">' + esc(ex.instructions) + '</div>'));
-      var pairs = ex.pairs;
-      var left = shuffle(pairs.map(function (p, i) { return { id: i, txt: p.a }; }));
-      var right = shuffle(pairs.map(function (p, i) { return { id: i, img: p.b }; }));
-      var matched = 0, selL = null, selR = null, locked = false;
-      var grid = el('<div class="match-grid"><div class="match-col" data-side="l"></div><div class="match-col" data-side="r"></div></div>');
-      stage.appendChild(grid);
-      var lcol = grid.querySelector('[data-side="l"]'), rcol = grid.querySelector('[data-side="r"]');
-      left.forEach(function (d) {
-        var b = el('<button class="match-item word">' + esc(d.txt) + '</button>');
-        b.dataset.id = d.id;
-        b.addEventListener("click", function () { tap(b, "l", d); });
-        lcol.appendChild(b);
-      });
-      right.forEach(function (d) {
-        var b = el('<button class="match-item emoji">' + pic(d.img) + '</button>');
-        b.dataset.id = d.id;
-        b.addEventListener("click", function () { tap(b, "r", d); });
-        rcol.appendChild(b);
-      });
-      function tap(btn, side, data) {
-        if (locked || btn.classList.contains("done")) return;
-        if (side === "l") { if (selL) selL.btn.classList.remove("selected"); selL = { btn: btn, data: data }; }
-        else { if (selR) selR.btn.classList.remove("selected"); selR = { btn: btn, data: data }; }
-        btn.classList.add("selected");
-        if (selL && selR) evaluate();
-      }
-      function evaluate() {
-        locked = true;
-        if (selL.data.id === selR.data.id) {
-          beep("ok");
-          selL.btn.classList.remove("selected"); selR.btn.classList.remove("selected");
-          selL.btn.classList.add("done"); selR.btn.classList.add("done");
-          matched++; selL = selR = null; locked = false;
-          if (matched === pairs.length) setTimeout(function () { answered(true); }, 380);
-        } else {
-          beep("bad");
-          var a = selL.btn, b = selR.btn;
-          a.classList.add("shake"); b.classList.add("shake");
-          setTimeout(function () {
-            a.classList.remove("shake", "selected"); b.classList.remove("shake", "selected");
-            selL = selR = null; locked = false;
-          }, 500);
-        }
+        beep("bad"); mistakes++;
+        l.btn.classList.add("shake"); r.btn.classList.add("shake");
+        setTimeout(function () {
+          l.btn.classList.remove("shake", "selected"); r.btn.classList.remove("shake", "selected");
+          selectedLeft = selectedRight = null; locked = false;
+        }, 500);
       }
     }
+  }
 
-    function showOrder(ex) {
-      var act = ex.act;
-      var steps = act.steps.map(splitStep);
-      var expected = 0;
-      stage.appendChild(el('<div class="instructions">' + esc(act.instructions || "Ordena los pasos.") + '</div>'));
-      stage.appendChild(el('<div class="order-prompt">' + esc(act.prompt || "") + '</div>'));
-      var tray = el('<div class="order-tray"></div>');
-      stage.appendChild(tray);
-      var pool = el('<div class="order-pool"></div>');
-      stage.appendChild(pool);
-      shuffle(steps.map(function (s, i) { return { step: s, pos: i }; })).forEach(function (d) {
-        var chip = el('<button class="order-chip">' + (d.step.img ? pic(d.step.img) + " " : "") + esc(d.step.text) + '</button>');
-        chip.dataset.pos = d.pos;
-        chip.addEventListener("click", function () {
-          if (chip.classList.contains("used")) return;
-          if (d.pos === expected) {
-            beep("ok");
-            chip.classList.add("used");
-            tray.appendChild(el('<div class="tray-chip"><span class="num">' + (expected + 1) + '</span>' + (d.step.img ? pic(d.step.img) + " " : "") + esc(d.step.text) + '</div>'));
-            expected++;
-            if (expected === steps.length) setTimeout(function () { answered(true); }, 380);
-          } else {
-            beep("bad");
-            chip.classList.add("shake");
-            setTimeout(function () { chip.classList.remove("shake"); }, 500);
-          }
-        });
-        pool.appendChild(chip);
-      });
+  // ============================ JUEGO: Memoria ============================
+  function playMemory(act, wrap) {
+    var basePairs = sample(act.pairs, act.pick || PICK.memory);
+    var cards = shuffle(basePairs.reduce(function (acc, p, i) {
+      acc.push({ id: i, face: p.a }); acc.push({ id: i, face: p.b }); return acc;
+    }, []));
+    var totalPairs = basePairs.length, matched = 0, moves = 0, first = null, locked = false;
+
+    var progress = el('<div class="progress-row"><div class="progress-track"><div class="progress-fill"></div></div><div class="progress-txt"></div></div>');
+    wrap.appendChild(progress);
+    var grid = el('<div class="memory-grid"></div>');
+    if (totalPairs * 2 > 12) grid.classList.add("dense");
+    wrap.appendChild(grid);
+
+    function updateProgress() {
+      progress.querySelector(".progress-fill").style.width = (matched / totalPairs * 100) + "%";
+      progress.querySelector(".progress-txt").textContent = matched + " / " + totalPairs;
     }
+    cards.forEach(function (c) {
+      var card = el(
+        '<div class="mem-card"><div class="mem-inner">' +
+          '<div class="mem-face mem-back">?</div>' +
+          '<div class="mem-face mem-front">' + pic(c.face) + '</div>' +
+        '</div></div>'
+      );
+      card.dataset.pid = c.id;
+      card.addEventListener("click", function () { flip(card, c); });
+      grid.appendChild(card);
+    });
+    updateProgress();
 
-    updateTop();
-    show(queue[0]);
+    function flip(card, c) {
+      if (locked || card.classList.contains("flipped") || card.classList.contains("matched")) return;
+      card.classList.add("flipped");
+      if (!first) { first = { card: card, c: c }; return; }
+      moves++;
+      if (first.c.id === c.id && first.card !== card) {
+        beep("ok");
+        first.card.classList.add("matched"); card.classList.add("matched");
+        first = null; matched++; updateProgress();
+        if (matched === totalPairs) setTimeout(function () {
+          var extra = moves - totalPairs;
+          showResult(wrap, Math.min(totalPairs, Math.max(1, totalPairs - Math.floor(extra / 2))), totalPairs);
+        }, 400);
+      } else {
+        beep("bad"); locked = true;
+        var a = first.card, b = card;
+        setTimeout(function () { a.classList.remove("flipped"); b.classList.remove("flipped"); first = null; locked = false; }, 750);
+      }
+    }
+  }
+
+  // ============================ JUEGO: Ordenar ============================
+  function playOrder(act, wrap) {
+    var steps = act.steps.map(splitStep);
+    var total = steps.length, expected = 0, mistakes = 0;
+
+    wrap.appendChild(el('<div class="order-prompt">' + esc(act.prompt || "Ordena los pasos") + '</div>'));
+    var progress = el('<div class="progress-row"><div class="progress-track"><div class="progress-fill"></div></div><div class="progress-txt"></div></div>');
+    wrap.appendChild(progress);
+    var tray = el('<div class="order-tray"></div>');
+    wrap.appendChild(tray);
+    var pool = el('<div class="order-pool"></div>');
+    wrap.appendChild(pool);
+
+    function updateProgress() {
+      progress.querySelector(".progress-fill").style.width = (expected / total * 100) + "%";
+      progress.querySelector(".progress-txt").textContent = expected + " / " + total;
+    }
+    shuffle(steps.map(function (s, i) { return { step: s, pos: i }; })).forEach(function (d) {
+      var chip = el('<button class="order-chip">' + (d.step.img ? pic(d.step.img) + " " : "") + esc(d.step.text) + '</button>');
+      chip.dataset.pos = d.pos;
+      chip.addEventListener("click", function () { tap(chip, d); });
+      pool.appendChild(chip);
+    });
+    updateProgress();
+
+    function tap(chip, d) {
+      if (chip.classList.contains("used")) return;
+      if (d.pos === expected) {
+        beep("ok");
+        chip.classList.add("used");
+        tray.appendChild(el('<div class="tray-chip"><span class="num">' + (expected + 1) + '</span>' +
+          (d.step.img ? pic(d.step.img) + " " : "") + esc(d.step.text) + '</div>'));
+        expected++; updateProgress();
+        if (expected === total) setTimeout(function () {
+          showResult(wrap, Math.min(total, Math.max(1, total - Math.floor(mistakes / 2))), total);
+        }, 350);
+      } else {
+        beep("bad"); mistakes++;
+        chip.classList.add("shake");
+        setTimeout(function () { chip.classList.remove("shake"); }, 500);
+      }
+    }
   }
 
   // ============================ arranque ============================
