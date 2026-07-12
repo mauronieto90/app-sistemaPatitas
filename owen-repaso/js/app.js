@@ -23,6 +23,29 @@
 
   var state = { screen: "home", subjectId: null, topic: null, activity: null };
 
+  // ============================ perfil (nombre + avatar) ============================
+  // Perfil local del niño/niña, guardado en el dispositivo (sin cuentas ni internet).
+  var PROFILE_KEY = "arrayanes-perfil-v1";
+  var AVATARS = [
+    { id: "nino1", emoji: "👦", label: "Niño", group: "niño" },
+    { id: "nino2", emoji: "🤴", label: "Príncipe", group: "niño" },
+    { id: "nino3", emoji: "🦸‍♂️", label: "Superhéroe", group: "niño" },
+    { id: "nina1", emoji: "👧", label: "Niña", group: "niña" },
+    { id: "nina2", emoji: "👸", label: "Princesa", group: "niña" },
+    { id: "nina3", emoji: "🦸‍♀️", label: "Superheroína", group: "niña" }
+  ];
+  function loadProfile() {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch (e) { return null; }
+  }
+  function saveProfile(p) {
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (e) { /* sin storage */ }
+  }
+  var profile = loadProfile();
+  function avatarOf(p) {
+    for (var i = 0; i < AVATARS.length; i++) if (AVATARS[i].id === (p && p.avatar)) return AVATARS[i];
+    return null;
+  }
+
   // ============================ utilidades ============================
   function el(html) {
     var t = document.createElement("template");
@@ -147,10 +170,73 @@
   }
   function render() {
     app.innerHTML = "";
+    // Sin perfil todavía -> primero la ventana de registro
+    if (!profile && state.screen !== "profile") { state.screen = "profile"; }
+    if (state.screen === "profile") return renderProfile();
     if (state.screen === "home") return renderHome();
     if (state.screen === "topics") return renderTopics();
     if (state.screen === "activities") return renderActivities();
     if (state.screen === "game") return renderGame();
+  }
+
+  // ============================ pantalla: REGISTRO ============================
+  function renderProfile() {
+    var editing = !!profile;
+    var chosen = editing ? profile.avatar : null;
+
+    app.appendChild(el(
+      '<div class="hero">' +
+        '<div class="mascot"><img class="hero-logo" src="assets/logo-arrayanes.png" alt="Gimnasio Los Arrayanes Bilingüe"></div>' +
+        '<h1>' + (editing ? "Tu perfil" : "¡Bienvenido!") + '</h1>' +
+        '<p class="school">Gimnasio Los Arrayanes Bilingüe · Grado Primero</p>' +
+      '</div>'
+    ));
+
+    var card = el(
+      '<div class="profile-card">' +
+        '<label class="profile-label" for="p-name">¿Cómo te llamas?</label>' +
+        '<input id="p-name" class="name-input" type="text" maxlength="14" autocomplete="off" placeholder="Escribe tu nombre" value="' + (editing ? esc(profile.name) : "") + '">' +
+        '<div class="profile-label">Elige tu avatar</div>' +
+        '<div class="avatar-group-label">Niños</div>' +
+        '<div class="avatar-grid" data-group="niño"></div>' +
+        '<div class="avatar-group-label">Niñas</div>' +
+        '<div class="avatar-grid" data-group="niña"></div>' +
+        '<button class="btn-primary btn-start" disabled>¡Empezar a jugar! 🎮</button>' +
+      '</div>'
+    );
+
+    AVATARS.forEach(function (av) {
+      var b = el(
+        '<button class="avatar-opt' + (chosen === av.id ? " selected" : "") + '" data-avatar="' + av.id + '">' +
+          pic(av.emoji) +
+          '<span class="avatar-name">' + esc(av.label) + '</span>' +
+        '</button>'
+      );
+      b.addEventListener("click", function () {
+        chosen = av.id;
+        card.querySelectorAll(".avatar-opt").forEach(function (x) { x.classList.remove("selected"); });
+        b.classList.add("selected");
+        check();
+      });
+      card.querySelector('.avatar-grid[data-group="' + av.group + '"]').appendChild(b);
+    });
+
+    var input = card.querySelector("#p-name");
+    var startBtn = card.querySelector(".btn-start");
+    function check() {
+      startBtn.disabled = !(input.value.trim().length >= 2 && chosen);
+    }
+    input.addEventListener("input", check);
+    startBtn.addEventListener("click", function () {
+      profile = { name: input.value.trim(), avatar: chosen };
+      saveProfile(profile);
+      beep("win"); confetti();
+      go("home");
+    });
+    check();
+
+    app.appendChild(card);
+    app.appendChild(el('<div class="footer-note">Tu nombre y avatar se guardan solo en este dispositivo 📱</div>'));
   }
 
   function topbar(title, sub, onBack) {
@@ -223,14 +309,23 @@
 
   // ============================ pantalla: HOME ============================
   function renderHome() {
+    var av = avatarOf(profile);
     app.appendChild(el(
       '<div class="hero">' +
         '<div class="mascot"><img class="hero-logo" src="assets/logo-arrayanes.png" alt="Gimnasio Los Arrayanes Bilingüe"></div>' +
         '<h1>Grado Primero</h1>' +
         '<p class="school">Gimnasio Los Arrayanes Bilingüe</p>' +
-        '<p>¡Hola! Elige una materia para jugar 🎮</p>' +
       '</div>'
     ));
+    var greet = el(
+      '<button class="player-chip" title="Cambiar perfil">' +
+        (av ? '<span class="player-avatar">' + pic(av.emoji) + '</span>' : "") +
+        '<span class="player-txt">¡Hola, <b>' + esc(profile.name) + '</b>! Elige una materia 🎮</span>' +
+        '<span class="player-edit">✏️</span>' +
+      '</button>'
+    );
+    greet.addEventListener("click", function () { go("profile"); });
+    app.appendChild(greet);
     app.appendChild(el('<div class="section-label">Materias</div>'));
     var grid = el('<div class="subjects"></div>');
     ["science", "english"].forEach(function (sid) {
@@ -335,7 +430,8 @@
     var pct = total > 0 ? score / total : 0;
     var stars = pct >= 0.85 ? 3 : pct >= 0.55 ? 2 : 1;
     var faces = ["😺", "😻", "🤩"];
-    var titles = ["¡Buen intento!", "¡Muy bien!", "¡Increíble!"];
+    var who = profile && profile.name ? ", " + profile.name : "";
+    var titles = ["¡Buen intento" + who + "!", "¡Muy bien" + who + "!", "¡Increíble" + who + "!"];
     var msgs = [
       "Sigue practicando, ¡lo vas a lograr! 💪",
       "¡Vas súper bien! Cada día aprendes más 🌟",
