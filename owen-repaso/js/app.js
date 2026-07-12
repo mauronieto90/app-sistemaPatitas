@@ -26,14 +26,19 @@
   // ============================ perfil (nombre + avatar) ============================
   // Perfil local del niño/niña, guardado en el dispositivo (sin cuentas ni internet).
   var PROFILE_KEY = "arrayanes-perfil-v1";
+  // Avatares ilustrados propios (assets/avatars/<id>.svg)
   var AVATARS = [
-    { id: "nino1", emoji: "👦", label: "Niño", group: "niño" },
-    { id: "nino2", emoji: "🤴", label: "Príncipe", group: "niño" },
-    { id: "nino3", emoji: "🦸‍♂️", label: "Superhéroe", group: "niño" },
-    { id: "nina1", emoji: "👧", label: "Niña", group: "niña" },
-    { id: "nina2", emoji: "👸", label: "Princesa", group: "niña" },
-    { id: "nina3", emoji: "🦸‍♀️", label: "Superheroína", group: "niña" }
+    { id: "nino1", label: "Niño", group: "niño" },
+    { id: "nino2", label: "Astronauta", group: "niño" },
+    { id: "nino3", label: "Superhéroe", group: "niño" },
+    { id: "nina1", label: "Niña", group: "niña" },
+    { id: "nina2", label: "Princesa", group: "niña" },
+    { id: "nina3", label: "Superheroína", group: "niña" }
   ];
+  function avatarImg(av, cls) {
+    if (!av) return "";
+    return '<img class="av-img ' + (cls || "") + '" src="assets/avatars/' + av.id + '.svg" alt="' + esc(av.label) + '">';
+  }
   function loadProfile() {
     try { return JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch (e) { return null; }
   }
@@ -45,6 +50,7 @@
     for (var i = 0; i < AVATARS.length; i++) if (AVATARS[i].id === (p && p.avatar)) return AVATARS[i];
     return null;
   }
+  function validEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || "").trim()); }
 
   // ============================ utilidades ============================
   function el(html) {
@@ -194,21 +200,34 @@
 
     var card = el(
       '<div class="profile-card">' +
-        '<label class="profile-label" for="p-name">¿Cómo te llamas?</label>' +
-        '<input id="p-name" class="name-input" type="text" maxlength="14" autocomplete="off" placeholder="Escribe tu nombre" value="' + (editing ? esc(profile.name) : "") + '">' +
+        '<div class="form-block">' +
+          '<label class="profile-label" for="p-name">¿Cómo te llamas?</label>' +
+          '<input id="p-name" class="name-input" type="text" maxlength="14" autocomplete="off" placeholder="Escribe tu nombre" value="' + (editing ? esc(profile.name) : "") + '">' +
+        '</div>' +
         '<div class="profile-label">Elige tu avatar</div>' +
         '<div class="avatar-group-label">Niños</div>' +
         '<div class="avatar-grid" data-group="niño"></div>' +
         '<div class="avatar-group-label">Niñas</div>' +
         '<div class="avatar-grid" data-group="niña"></div>' +
-        '<button class="btn-primary btn-start" disabled>¡Empezar a jugar! 🎮</button>' +
+
+        '<div class="adult-box">' +
+          '<div class="adult-title">👨‍👩‍👧 Para el papá, mamá o acudiente</div>' +
+          '<label class="profile-label sm" for="p-email">Correo de un adulto</label>' +
+          '<input id="p-email" class="name-input email-input" type="email" autocomplete="email" inputmode="email" placeholder="correo@ejemplo.com" value="' + (editing && profile.email ? esc(profile.email) : "") + '">' +
+          '<label class="auth-check">' +
+            '<input id="p-auth" type="checkbox"' + (editing && profile.authorized ? " checked" : "") + '>' +
+            '<span>Autorizo, como adulto responsable, que este niño/a use la app de repaso y que se pueda <b>compartir con otros padres del Gimnasio Los Arrayanes</b>.</span>' +
+          '</label>' +
+        '</div>' +
+
+        '<button class="btn-primary btn-start" disabled>' + (editing ? "Guardar 💾" : "¡Crear cuenta y jugar! 🎮") + '</button>' +
       '</div>'
     );
 
     AVATARS.forEach(function (av) {
       var b = el(
         '<button class="avatar-opt' + (chosen === av.id ? " selected" : "") + '" data-avatar="' + av.id + '">' +
-          pic(av.emoji) +
+          avatarImg(av) +
           '<span class="avatar-name">' + esc(av.label) + '</span>' +
         '</button>'
       );
@@ -222,13 +241,24 @@
     });
 
     var input = card.querySelector("#p-name");
+    var email = card.querySelector("#p-email");
+    var auth = card.querySelector("#p-auth");
     var startBtn = card.querySelector(".btn-start");
     function check() {
-      startBtn.disabled = !(input.value.trim().length >= 2 && chosen);
+      startBtn.disabled = !(input.value.trim().length >= 2 && chosen && validEmail(email.value) && auth.checked);
     }
     input.addEventListener("input", check);
+    email.addEventListener("input", check);
+    auth.addEventListener("change", check);
     startBtn.addEventListener("click", function () {
-      profile = { name: input.value.trim(), avatar: chosen };
+      profile = {
+        name: input.value.trim(),
+        avatar: chosen,
+        email: email.value.trim(),
+        authorized: true,
+        authorizedAt: (profile && profile.authorizedAt) || new Date().toISOString(),
+        createdAt: (profile && profile.createdAt) || new Date().toISOString()
+      };
       saveProfile(profile);
       beep("win"); confetti();
       go("home");
@@ -236,7 +266,7 @@
     check();
 
     app.appendChild(card);
-    app.appendChild(el('<div class="footer-note">Tu nombre y avatar se guardan solo en este dispositivo 📱</div>'));
+    app.appendChild(el('<div class="footer-note">La cuenta se guarda en este dispositivo (sin enviar datos a internet). 📱</div>'));
   }
 
   function topbar(title, sub, onBack) {
@@ -319,7 +349,7 @@
     ));
     var greet = el(
       '<button class="player-chip" title="Cambiar perfil">' +
-        (av ? '<span class="player-avatar">' + pic(av.emoji) + '</span>' : "") +
+        (av ? '<span class="player-avatar">' + avatarImg(av) + '</span>' : "") +
         '<span class="player-txt">¡Hola, <b>' + esc(profile.name) + '</b>! Elige una materia 🎮</span>' +
         '<span class="player-edit">✏️</span>' +
       '</button>'
@@ -345,7 +375,36 @@
       grid.appendChild(card);
     });
     app.appendChild(grid);
+
+    var share = el('<button class="btn-share">📤 Compartir con otros padres</button>');
+    share.addEventListener("click", function () { shareApp(); });
+    app.appendChild(share);
+
     app.appendChild(el('<div class="footer-note">Gimnasio Los Arrayanes Bilingüe · Primero de primaria</div>'));
+  }
+
+  function shareApp() {
+    var url = location.href.split("#")[0];
+    var data = {
+      title: "Repaso · Grado Primero · Los Arrayanes",
+      text: "App de repaso de Science e Inglés para Grado Primero del Gimnasio Los Arrayanes Bilingüe 🎮",
+      url: url
+    };
+    if (navigator.share) {
+      navigator.share(data).catch(function () {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { toast("¡Enlace copiado! 📋 Pégalo a otros padres."); }, function () { toast(url); });
+    } else {
+      toast(url);
+    }
+  }
+
+  // toast breve (para avisos)
+  function toast(msg) {
+    var t = el('<div class="toast">' + esc(msg) + '</div>');
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add("show"); }, 20);
+    setTimeout(function () { t.classList.remove("show"); setTimeout(function () { t.remove(); }, 300); }, 2200);
   }
 
   // ============================ pantalla: TEMAS ============================
