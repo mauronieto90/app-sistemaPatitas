@@ -278,12 +278,9 @@ select:focus,input:focus{outline:none;border-color:var(--green)}
 .granel-note.show{display:block}
 </style>
 <script>
-// LOGIN — carga antes que Firebase y Chart.js
-var USERS = {
-  'admin':    { pass: 'PatPel@2026!', nombre: 'Administrador', rol: 'admin' },
-  'vendedor': { pass: 'Vend@2026!',   nombre: 'Vendedor',      rol: 'vendedor' }
-};
-var currentUser = null;
+// LOGIN — la contraseña la valida Firebase Authentication (módulo Firebase más abajo).
+// Aquí solo vive la interfaz: nunca guardar usuarios ni contraseñas en este archivo.
+var currentUser = null;   // { uid, email, nombre, rol } — lo asigna aplicarSesion()
 
 function showLogin(){
   var a=document.getElementById('app-shell'), l=document.getElementById('login-screen');
@@ -306,50 +303,57 @@ function showApp(){
     if(el) el.value = iso;
   });
 }
+function setLoginError(msg){
+  var e=document.getElementById('li-error');
+  if(e) e.textContent=msg||'';
+}
+function loginErrorMsg(err){
+  var c=(err&&err.code)||'';
+  if(c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/user-not-found'||c==='auth/invalid-email')
+    return 'Correo o contraseña incorrectos';
+  if(c==='auth/too-many-requests') return 'Demasiados intentos. Espera unos minutos e intenta de nuevo';
+  if(c==='auth/user-disabled') return 'Este usuario está deshabilitado';
+  if(c==='auth/network-request-failed') return 'Sin conexión a internet';
+  return 'No se pudo iniciar sesión';
+}
 function doLogin(){
   var u=document.getElementById('li-user');
   var p=document.getElementById('li-pass');
-  var e=document.getElementById('li-error');
+  var b=document.getElementById('li-btn');
   if(!u||!p) return;
-  var user=u.value.trim().toLowerCase();
+  var email=u.value.trim().toLowerCase();
   var pass=p.value;
-  if(USERS[user] && USERS[user].pass===pass){
-    currentUser=user;
-    try{sessionStorage.setItem('pp_user',user);}catch(x){}
-    var sn=document.getElementById('sidebar-user-name');
-    var sr=document.getElementById('sidebar-user-rol');
-    if(sn) sn.textContent=USERS[user].nombre;
-    if(sr) sr.textContent=USERS[user].rol==='admin'?'Administrador':'Vendedor';
-    if(e) e.textContent='';
-    showApp();
-  } else {
-    if(e) e.textContent='Usuario o contraseña incorrectos';
+  if(!email||!pass){ setLoginError('Ingresa tu correo y contraseña'); return; }
+  if(typeof window.fbLogin!=='function'){ setLoginError('Conectando… intenta de nuevo en unos segundos'); return; }
+  if(b) b.disabled=true;
+  setLoginError('Verificando…');
+  window.fbLogin(email,pass).then(function(){
+    p.value='';
+  }).catch(function(err){
+    setLoginError(loginErrorMsg(err));
     p.value=''; p.focus();
-  }
+  }).then(function(){ if(b) b.disabled=false; });
 }
 function doLogout(){
-  try{sessionStorage.removeItem('pp_user');}catch(x){}
-  currentUser=null;
-  var u=document.getElementById('li-user'), p=document.getElementById('li-pass');
-  if(u) u.value=''; if(p) p.value='';
-  showLogin();
+  if(typeof window.fbLogout==='function') window.fbLogout();
+  else showLogin();
+}
+// Muestra el usuario en el menú y oculta lo que es solo de administración.
+// Es solo interfaz: los permisos reales los imponen las reglas de Firestore.
+function aplicarSesion(perfil){
+  currentUser=perfil;
+  var esAdmin=!!(perfil&&perfil.rol==='admin');
+  var sn=document.getElementById('sidebar-user-name');
+  var sr=document.getElementById('sidebar-user-rol');
+  if(sn) sn.textContent=perfil?perfil.nombre:'';
+  if(sr) sr.textContent=perfil?(esAdmin?'Administrador':'Vendedor'):'';
+  document.querySelectorAll('[data-solo-admin]').forEach(function(el){
+    el.style.display=esAdmin?'':'none';
+  });
 }
 document.addEventListener('keydown',function(e){
   var ls=document.getElementById('login-screen');
   if(e.key==='Enter' && ls && ls.style.display!=='none') doLogin();
-});
-document.addEventListener('DOMContentLoaded',function(){
-  try{
-    var s=sessionStorage.getItem('pp_user');
-    if(s && USERS[s]){
-      currentUser=s;
-      var sn=document.getElementById('sidebar-user-name');
-      var sr=document.getElementById('sidebar-user-rol');
-      if(sn) sn.textContent=USERS[s].nombre;
-      if(sr) sr.textContent=USERS[s].rol==='admin'?'Administrador':'Vendedor';
-      showApp();
-    }
-  }catch(x){}
 });
 </script>
 <script>
@@ -496,14 +500,14 @@ let cmpHistRows = [];
     <div class="login-title">Patitas Peludas</div>
     <div class="login-sub">Sistema de gestión · Inicia sesión</div>
     <div class="login-field">
-      <label>Usuario</label>
-      <input type="text" id="li-user" placeholder="Ej: admin" autocomplete="username">
+      <label for="li-user">Correo</label>
+      <input type="email" id="li-user" placeholder="correo@ejemplo.com" autocomplete="username" inputmode="email">
     </div>
     <div class="login-field">
-      <label>Contraseña</label>
+      <label for="li-pass">Contraseña</label>
       <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
     </div>
-    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <button class="login-btn" id="li-btn" onclick="doLogin()">Entrar</button>
     <div class="login-error" id="li-error"></div>
     <div class="login-footer">🐾 Tienda para mascotas</div>
   </div>
@@ -525,7 +529,7 @@ let cmpHistRows = [];
   <div style="padding:8px 10px">
     <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:6px 8px 3px">General</div>
     <button class="nav-item" onclick="mobileGoTo('resumen',this)"><span class="nav-icon">📊</span> Resumen</button>
-    <button class="nav-item" onclick="mobileGoTo('finanzas',this)"><span class="nav-icon">💰</span> Finanzas</button>
+    <button class="nav-item" data-solo-admin onclick="mobileGoTo('finanzas',this)"><span class="nav-icon">💰</span> Finanzas</button>
     <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:8px 8px 3px">Ventas</div>
     <button class="nav-item" onclick="mobileGoTo('nueva-venta',this)"><span class="nav-icon">➕</span> Nueva venta</button>
     <button class="nav-item" onclick="mobileGoTo('ventas-dia',this)"><span class="nav-icon">💵</span> Ventas del día</button>
@@ -533,13 +537,14 @@ let cmpHistRows = [];
     <button class="nav-item" onclick="mobileGoTo('productos-top',this)"><span class="nav-icon">⭐</span> Top productos</button>
     <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:8px 8px 3px">Inventario</div>
     <button class="nav-item" onclick="mobileGoTo('inventario',this)"><span class="nav-icon">📦</span> Stock estimado</button>
-    <button class="nav-item" onclick="mobileGoTo('nueva-compra',this)"><span class="nav-icon">🧾</span> Nueva compra</button>
-    <button class="nav-item" onclick="mobileGoTo('nuevo-gasto',this)"><span class="nav-icon">💸</span> Nuevo gasto</button>
-    <button class="nav-item" onclick="mobileGoTo('historial-compras',this)"><span class="nav-icon">📜</span> Historial compras</button>
+    <button class="nav-item" data-solo-admin onclick="mobileGoTo('nueva-compra',this)"><span class="nav-icon">🧾</span> Nueva compra</button>
+    <button class="nav-item" data-solo-admin onclick="mobileGoTo('nuevo-gasto',this)"><span class="nav-icon">💸</span> Nuevo gasto</button>
+    <button class="nav-item" data-solo-admin onclick="mobileGoTo('historial-compras',this)"><span class="nav-icon">📜</span> Historial compras</button>
     <button class="nav-item" onclick="mobileGoTo('catalogo',this)"><span class="nav-icon">📑</span> Catálogo</button>
-    <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:8px 8px 3px">Contabilidad</div>
-    <button class="nav-item" onclick="mobileGoTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
-    <button class="nav-item" onclick="mobileGoTo('exportar',this)"><span class="nav-icon">⬇️</span> Exportar datos</button>
+    <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.09em;text-transform:uppercase;padding:8px 8px 3px" data-solo-admin>Contabilidad</div>
+    <button class="nav-item" data-solo-admin onclick="mobileGoTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
+    <button class="nav-item" data-solo-admin onclick="mobileGoTo('exportar',this)"><span class="nav-icon">⬇️</span> Exportar datos</button>
+    <button class="nav-item" onclick="doLogout()"><span class="nav-icon">🚪</span> Cerrar sesión</button>
   </div>
 </div>
 
@@ -556,7 +561,7 @@ let cmpHistRows = [];
   <div class="nav-section">
     <div class="nav-label">General</div>
     <button class="nav-item active" onclick="goTo('resumen',this)"><span class="nav-icon">📊</span> Resumen</button>
-    <button class="nav-item" onclick="goTo('finanzas',this)"><span class="nav-icon">💰</span> Finanzas</button>
+    <button class="nav-item" data-solo-admin onclick="goTo('finanzas',this)"><span class="nav-icon">💰</span> Finanzas</button>
   </div>
   <div class="nav-section">
     <div class="nav-label">Ventas</div>
@@ -568,15 +573,23 @@ let cmpHistRows = [];
   <div class="nav-section">
     <div class="nav-label">Inventario</div>
     <button class="nav-item" onclick="goTo('inventario',this)"><span class="nav-icon">📦</span> Stock estimado</button>
-    <button class="nav-item" onclick="goTo('nueva-compra',this)"><span class="nav-icon">🧾</span> Nueva compra</button>
-    <button class="nav-item" onclick="goTo('nuevo-gasto',this)"><span class="nav-icon">💸</span> Nuevo gasto</button>
-    <button class="nav-item" onclick="goTo('historial-compras',this)"><span class="nav-icon">📜</span> Historial compras</button>
+    <button class="nav-item" data-solo-admin onclick="goTo('nueva-compra',this)"><span class="nav-icon">🧾</span> Nueva compra</button>
+    <button class="nav-item" data-solo-admin onclick="goTo('nuevo-gasto',this)"><span class="nav-icon">💸</span> Nuevo gasto</button>
+    <button class="nav-item" data-solo-admin onclick="goTo('historial-compras',this)"><span class="nav-icon">📜</span> Historial compras</button>
     <button class="nav-item" onclick="goTo('catalogo',this)"><span class="nav-icon">📑</span> Catálogo</button>
   </div>
   <div class="nav-section">
-    <div class="nav-label">Contabilidad</div>
-    <button class="nav-item" onclick="goTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
-    <button class="nav-item" onclick="goTo('exportar',this)"><span class="nav-icon">⬇️</span> Exportar datos</button>
+    <div class="nav-label" data-solo-admin>Contabilidad</div>
+    <button class="nav-item" data-solo-admin onclick="goTo('contabilidad',this)"><span class="nav-icon">📈</span> Utilidades</button>
+    <button class="nav-item" data-solo-admin onclick="goTo('exportar',this)"><span class="nav-icon">⬇️</span> Exportar datos</button>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar">👤</div>
+    <div class="user-info">
+      <div class="user-name" id="sidebar-user-name"></div>
+      <div class="user-rol" id="sidebar-user-rol"></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Salir</button>
   </div>
   <div class="sidebar-footer">
     <strong>Patitas Peludas</strong> v14 — 
@@ -1431,9 +1444,12 @@ let cmpHistRows = [];
 
 <script type="module">
 import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc,
+import { getFirestore, collection, addDoc, getDocs, getDoc, doc,
          updateDoc, deleteDoc, onSnapshot, setDoc, query, orderBy }
          from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, setPersistence, browserSessionPersistence,
+         signInWithEmailAndPassword, signOut, onAuthStateChanged }
+         from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ── CONFIG ──────────────────────────────────────────────
 // Firebase API Key: en apps web es público por diseño.
@@ -1452,6 +1468,7 @@ const COL_VENTAS   = 'ventas';
 const COL_COMPRAS  = 'compras';
 const COL_GASTOS   = 'gastos';
 const COL_CATALOGO = 'catalogo';
+const COL_USUARIOS = 'usuarios';
 
 // ── HELPERS DE FECHA ────────────────────────────────────
 function getHoyISO() {
@@ -1501,8 +1518,18 @@ function hideLoading() {
 }
 
 // ── INIT ─────────────────────────────────────────────────
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+// Rol del usuario con sesión ('admin' | 'vendedor'); lo fija onAuthStateChanged.
+let sesionRol = null;
+const esAdmin = () => sesionRol === 'admin';
+
+function errMsg(e) {
+  if (e && e.code === 'permission-denied') return 'No tienes permiso para esta acción';
+  return 'Error: ' + ((e && e.message) || e);
+}
 
 // ── CATÁLOGO ─────────────────────────────────────────────
 async function initCatalogo() {
@@ -1546,6 +1573,10 @@ async function initCatalogo() {
 async function saveCatalogoItem(item) {
   if (!item || !item.id) return;
   try {
+    if (!esAdmin()) {
+      await updateDoc(doc(db, COL_CATALOGO, item.id), { sold: item.sold || 0 });
+      return;
+    }
     await setDoc(doc(db, COL_CATALOGO, item.id), {
       id: item.id, cat: item.cat, sub: item.sub || '', p: item.p,
       bought: item.bought || 0, sold: item.sold || 0,
@@ -1570,8 +1601,10 @@ async function actualizarVenta(fbId, data) {
 }
 
 // Listener en tiempo real — sin orderBy para no necesitar índice compuesto
+let unsubVentasHoy = null;
 function escucharVentasHoy() {
-  onSnapshot(
+  if (unsubVentasHoy) unsubVentasHoy();
+  unsubVentasHoy = onSnapshot(
     collection(db, COL_VENTAS),
     snap => {
       const hoy = getHoyISO();
@@ -1596,15 +1629,15 @@ function escucharVentasHoy() {
       if (tbody) {
         tbody.innerHTML = hoyRows.length
           ? hoyRows.map(v => `
-              <tr data-fbid="${v.fbId}">
-                <td style="font-size:11px;color:var(--teal);font-weight:600">${v.hora||'—'}</td>
+              <tr data-fbid="${san(v.fbId)}">
+                <td style="font-size:11px;color:var(--teal);font-weight:600">${san(v.hora)||'—'}</td>
                 <td>${san(v.producto)}</td>
-                <td><span class="pill ${v.tipo==='Bulto'?'pill-blue':'pill-green'}">${v.tipo||''}</span></td>
+                <td><span class="pill ${v.tipo==='Bulto'?'pill-blue':'pill-green'}">${san(v.tipo)}</span></td>
                 <td style="font-weight:600">${fmt(v.valor||0)}</td>
                 <td>${san(v.pago)}</td>
                 <td style="white-space:nowrap">
-                  <button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId}','${(v.tipo||'').replace(/'/g,"\\'")}',${v.valor||0},'${(v.pago||'').replace(/'/g,"\\'")}',${v.clienteNuevo||false})">✏️</button>
-                  <button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId}',${v.valor||0})">🗑</button>
+                  <button class="btn-icon btn-sm" onclick="editVentaFB(${jsq(v.fbId)},${jsq(v.tipo)},${Number(v.valor)||0},${jsq(v.pago)},${!!v.clienteNuevo})">✏️</button>
+                  <button class="btn-icon btn-sm" onclick="borrarVentaFB(${jsq(v.fbId)},${Number(v.valor)||0})">🗑</button>
                 </td>
               </tr>`).join('')
           : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">No hay ventas registradas hoy</td></tr>';
@@ -1631,9 +1664,9 @@ function escucharVentasHoy() {
     err => {
       console.error('onSnapshot error:', err);
       const tbody = document.getElementById('tbody-hist-hoy');
-      if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--red)">⚠️ Error: ${err.message}</td></tr>`;
-      // Reintentar en 5s
-      setTimeout(() => escucharVentasHoy(), 5000);
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--red)">⚠️ Error: ${san(err.message)}</td></tr>`;
+      // Reintentar en 5s (solo si la sesión sigue activa)
+      if (auth.currentUser) setTimeout(() => { if (auth.currentUser) escucharVentasHoy(); }, 5000);
     }
   );
 }
@@ -1726,7 +1759,7 @@ window.registrarVenta = async function() {
     toast('Venta registrada ✓');
   } catch(e) {
     console.error('registrarVenta:', e);
-    toast('Error al registrar: ' + e.message, 'var(--red)');
+    toast(errMsg(e), 'var(--red)');
   }
 };
 
@@ -1735,7 +1768,7 @@ window.borrarVentaFB = async function(fbId, valor) {
   try {
     await eliminarVenta(fbId);
     toast('Venta eliminada');
-  } catch(e) { toast('Error: ' + e.message, 'var(--red)'); }
+  } catch(e) { toast(errMsg(e), 'var(--red)'); }
 };
 
 window.editVentaFB = function(fbId, tipo, valor, pago, clienteNuevo) {
@@ -1766,9 +1799,10 @@ window.saveModal = async function() {
       await actualizarVenta(ctx.fbId, { tipo: newTipo, valor: newValor, pago: newPago, clienteNuevo: newCN });
       closeModal();
       toast('Venta actualizada ✓');
-    } catch(e) { toast('Error: ' + e.message, 'var(--red)'); }
+    } catch(e) { toast(errMsg(e), 'var(--red)'); }
   }
   if (ctx.type === 'invEdit') {
+    if (!esAdmin()) { toast('Solo el administrador puede cambiar precios', 'var(--amber)'); return; }
     const newPrecio = parseFloat(document.getElementById('edit-precio').value) || 0;
     const inv = INV.find(r => r.id === ctx.id);
     if (inv) { inv.precio = newPrecio; inv.precio_kg = newPrecio; await saveCatalogoItem(inv); }
@@ -1799,7 +1833,7 @@ window.registrarCompra = async function() {
     if (typeof renderInv     === 'function') renderInv(INV);
     if (typeof clearProdSel  === 'function') clearProdSel('cmp');
     toast('Compra registrada ✓');
-  } catch(e) { toast('Error: ' + e.message, 'var(--red)'); }
+  } catch(e) { toast(errMsg(e), 'var(--red)'); }
 };
 
 window.registrarGasto = async function() {
@@ -1815,7 +1849,7 @@ window.registrarGasto = async function() {
     document.getElementById('gst-concepto').value = '';
     document.getElementById('gst-valor').value = '';
     toast('Gasto registrado ✓');
-  } catch(e) { toast('Error: ' + e.message, 'var(--red)'); }
+  } catch(e) { toast(errMsg(e), 'var(--red)'); }
 };
 
 window.guardarFacturaFirebase = async function(data) {
@@ -1840,20 +1874,77 @@ window.recargarCompras = async function() {
 window.getHoyISO    = getHoyISO;
 window.getHoraCorta = getHoraCorta;
 
-// ── ARRANQUE ─────────────────────────────────────────────
-showLoading('Conectando con Firebase…');
-try {
-  await initCatalogo();
-  await cargarCompras();
-  await cargarVentasHistorial();
-  escucharVentasHoy();
-  hideLoading();
-  toast('Conectado ✓');
-} catch(e) {
-  hideLoading();
-  console.error('Firebase init error:', e);
-  toast('Sin conexión — modo offline', 'var(--amber)');
+// ── SESIÓN ───────────────────────────────────────────────
+window.fbLogin = async function(email, pass) {
+  // La sesión dura lo que la pestaña: al cerrarla hay que volver a entrar.
+  await setPersistence(auth, browserSessionPersistence);
+  await signInWithEmailAndPassword(auth, email, pass);
+};
+
+window.fbLogout = async function() {
+  await signOut(auth);
+  // Recargar borra de memoria todos los datos del usuario anterior.
+  location.reload();
+};
+
+// Perfil en usuarios/{uid}: { nombre, rol: 'admin' | 'vendedor', activo: true }
+async function cargarPerfil(user) {
+  const snap = await getDoc(doc(db, COL_USUARIOS, user.uid));
+  if (!snap.exists() || snap.data().activo !== true) return null;
+  const d = snap.data();
+  return {
+    uid: user.uid, email: user.email,
+    nombre: d.nombre || user.email,
+    rol: d.rol === 'admin' ? 'admin' : 'vendedor'
+  };
 }
+
+// ── ARRANQUE ─────────────────────────────────────────────
+let datosCargados = false;
+async function arrancarDatos() {
+  if (datosCargados) return;
+  datosCargados = true;
+  showLoading('Conectando con Firebase…');
+  try {
+    await initCatalogo();
+    if (esAdmin()) await cargarCompras();
+    await cargarVentasHistorial();
+    escucharVentasHoy();
+    hideLoading();
+    toast('Conectado ✓');
+  } catch(e) {
+    hideLoading();
+    console.error('Firebase init error:', e);
+    toast('Sin conexión — modo offline', 'var(--amber)');
+  }
+}
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    if (unsubVentasHoy) { unsubVentasHoy(); unsubVentasHoy = null; }
+    sesionRol = null;
+    aplicarSesion(null);
+    showLogin();
+    return;
+  }
+  try {
+    const perfil = await cargarPerfil(user);
+    if (!perfil) {
+      await signOut(auth);
+      setLoginError('Tu usuario no tiene acceso. Pide al administrador que lo active.');
+      return;
+    }
+    sesionRol = perfil.rol;
+    aplicarSesion(perfil);
+    setLoginError('');
+    showApp();
+    await arrancarDatos();
+  } catch(e) {
+    console.error('Verificación de acceso:', e);
+    await signOut(auth);
+    setLoginError('No se pudo verificar tu acceso. Revisa la conexión e intenta de nuevo.');
+  }
+});
 
 </script>
 
@@ -1888,19 +1979,23 @@ const dailyBulto=[0,0,0,260000,65000,0,65000,0,0,0,260000,72000,250000,0,0,0,390
 const dailyLabels=["15/2","16/2","17/2","18/2","19/2","20/2","21/2","22/2","23/2","24/2","25/2","26/2","27/2","28/2","1/3","2/3","3/3","4/3","5/3","6/3","7/3","8/3","9/3","10/3","11/3","12/3","13/3","14/3","15/3","16/3","17/3","18/3","19/3","20/3","21/3","22/3","23/3","24/3","25/3","26/3","27/3","28/3","29/3","30/3","31/3","1/4"];
 
 // ── STATE ──
-const sessionDelta={};
+// sessionDelta se declara en el bloque de datos (más arriba)
 const catPill={Aseo:'pill-green',Snack:'pill-amber',Accesorio:'pill-purple',Concentrado:'pill-blue',Medicina:'pill-red'};
 const fmt=v=>'$'+Math.round(v).toLocaleString('es-CO');
 
 // ── SANITIZACIÓN XSS ─────────────────────────────────────
 function san(str) {
-  if(!str) return '';
+  if(str==null||str===false) return '';
   return String(str)
     .replace(/&/g,'&amp;')
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;')
     .replace(/'/g,'&#x27;');
+}
+// Argumento seguro para handlers inline: onclick="f(${jsq(x)})"
+function jsq(v) {
+  return san(JSON.stringify(v == null ? '' : String(v)));
 }
 
 const fmtN=v=>{const n=parseFloat(v)||0;return n%1===0?n:parseFloat(n.toFixed(1));};
@@ -1913,7 +2008,7 @@ let gstSessionTotal=0;
 let vtaSessionTotal=0;
 
 // selected prod state per context
-const selState={vta:null,cmp:null,fac:null};
+// selState se declara en el bloque de datos (más arriba)
 let catFilterVta='todos';
 let historialChart=null;
 let diarioChart=null;
@@ -1945,10 +2040,10 @@ function searchProds(q,ctx){
     dd.innerHTML=items.slice(0,12).map(r=>{
       const stk=getStock(r);
       const stkCol=stk>3?'var(--green)':stk>=1?'var(--amber)':'var(--red)';
-      return `<div class="prod-option" onmousedown="selectProd('${r.id}','${ctx}')">
-        <span class="pill ${catPill[r.cat]||'pill-gray'}" style="flex-shrink:0">${r.cat}</span>
-        <div><div class="po-name">${r.p}</div><div class="po-meta">${r.id} · ${r.sub}</div></div>
-        <span class="po-stk" style="color:${stkCol}">${fmtN(stk)} ${r.unit}</span>
+      return `<div class="prod-option" onmousedown="selectProd(${jsq(r.id)},${jsq(ctx)})">
+        <span class="pill ${catPill[r.cat]||'pill-gray'}" style="flex-shrink:0">${san(r.cat)}</span>
+        <div><div class="po-name">${san(r.p)}</div><div class="po-meta">${san(r.id)} · ${san(r.sub)}</div></div>
+        <span class="po-stk" style="color:${stkCol}">${fmtN(stk)} ${san(r.unit)}</span>
       </div>`;
     }).join('');
   }
@@ -1984,7 +2079,7 @@ function clearProdSel(ctx){
 // ── CATEGORY CHIPS FOR VENTA ──
 const allCats=['todos',...new Set(INV.map(r=>r.cat))];
 document.getElementById('vta-cat-chips').innerHTML=allCats.map((c,i)=>
-  `<button class="chip${i===0?' on':''}" onclick="setVtaCat('${c}',this)">${c==='todos'?'Todos':c}</button>`
+  `<button class="chip${i===0?' on':''}" onclick="setVtaCat(${jsq(c)},this)">${c==='todos'?'Todos':san(c)}</button>`
 ).join('');
 function setVtaCat(cat,btn){
   catFilterVta=cat;
@@ -2015,7 +2110,7 @@ function updateVtaPreview(){
   const newStk=parseFloat((stk-qty).toFixed(1));
   document.getElementById('vpv-prod').textContent=item.p;
   document.getElementById('vpv-stk').textContent=fmtN(stk)+' '+item.unit;
-  document.getElementById('vpv-new').innerHTML=`<span class="${stkClass(newStk)}">${fmtN(newStk)} ${item.unit}</span>`;
+  document.getElementById('vpv-new').innerHTML=`<span class="${stkClass(newStk)}">${fmtN(newStk)} ${san(item.unit)}</span>`;
   // Show precio/kg for granel items
   const precioKgInfo = isGranel && (item.precio_kg||(item.unit==='kg'?item.precio:0));
   const existingNote = document.getElementById('vpv-precio-kg');
@@ -2048,14 +2143,14 @@ function registrarVenta(){
   const idx=Date.now();
   const tr=document.createElement('tr');
   tr.dataset.idx=idx;
-  tr.innerHTML=`<td>${fecha}</td><td>${item.p}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${tipo}</span></td><td>${fmtN(qty)}</td><td style="font-weight:600;color:var(--green)">${fmt(val)}</td><td>${pago}</td><td><button class="btn-icon btn-sm" onclick="openEditVenta(this,'session',${idx})">✏️</button><button class="btn-icon btn-sm" onclick="deleteRow(this,'vta-session',${val},${esBulto?1:0})">🗑</button></td>`;
+  tr.innerHTML=`<td>${san(fecha)}</td><td>${san(item.p)}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${san(tipo)}</span></td><td>${fmtN(qty)}</td><td style="font-weight:600;color:var(--green)">${fmt(val)}</td><td>${san(pago)}</td><td><button class="btn-icon btn-sm" onclick="openEditVenta(this,'session',${idx})">✏️</button><button class="btn-icon btn-sm" onclick="deleteRow(this,'vta-session',${val},${esBulto?1:0})">🗑</button></td>`;
   tbody.appendChild(tr);
   document.getElementById('vta-session-total').textContent='Total sesión: '+fmt(vtaSessionTotal);
 
   // Historial hoy
   const histTbody=document.getElementById('tbody-hist-hoy');
   const htr=document.createElement('tr');
-  htr.innerHTML=`<td>${item.p}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${tipo}</span></td><td>${fmt(val)}</td><td>${pago}</td><td><button class="btn-icon btn-sm" onclick="editVenta(this)">✏️</button></td>`;
+  htr.innerHTML=`<td>${san(item.p)}</td><td><span class="pill ${esBulto?'pill-blue':'pill-green'}">${san(tipo)}</span></td><td>${fmt(val)}</td><td>${san(pago)}</td><td><button class="btn-icon btn-sm" onclick="editVenta(this)">✏️</button></td>`;
   histTbody.appendChild(htr);
   todayHoyTotal+=val;
   document.getElementById('hist-hoy-total').textContent=fmt(todayHoyTotal);
@@ -2091,9 +2186,9 @@ function renderInv(data){
   document.getElementById('tbody-inv').innerHTML=data.map(r=>{
     const stk=getStock(r);
     const b=r.bought,s=r.sold+(sessionDelta[r.id]||0);
-    if(b===0&&s===0){none++;return `<tr><td class="mono">${r.id}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td>${r.p}</td><td style="color:var(--text3)">${r.precio?fmt(r.precio):'—'}</td><td style="color:var(--text3)">—</td><td style="color:var(--text3)">—</td><td><span class="pill pill-gray">Sin datos</span></td><td>${r.unit}</td><td><button class="btn-icon btn-sm" onclick="openEditStock('${r.id}')">✏️</button></td></tr>`;}
+    if(b===0&&s===0){none++;return `<tr><td class="mono">${san(r.id)}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${san(r.cat)}</span></td><td>${san(r.p)}</td><td style="color:var(--text3)">${r.precio?fmt(r.precio):'—'}</td><td style="color:var(--text3)">—</td><td style="color:var(--text3)">—</td><td><span class="pill pill-gray">Sin datos</span></td><td>${san(r.unit)}</td><td><button class="btn-icon btn-sm" onclick="openEditStock(${jsq(r.id)})">✏️</button></td></tr>`;}
     if(stk>3)ok++;else if(stk>=1)low++;else out++;
-    return `<tr><td class="mono">${r.id}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td>${r.p}</td><td style="color:var(--text2)">${r.precio?fmt(r.precio):'—'}</td><td style="color:var(--text2)">${fmtN(b)}</td><td style="color:var(--text2)">${fmtN(s)}</td><td class="${stkClass(stk)}">${fmtN(stk)}</td><td style="color:var(--text3)">${r.unit}</td><td><button class="btn-icon btn-sm" onclick="openEditStock('${r.id}')">✏️</button></td></tr>`;
+    return `<tr><td class="mono">${san(r.id)}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${san(r.cat)}</span></td><td>${san(r.p)}</td><td style="color:var(--text2)">${r.precio?fmt(r.precio):'—'}</td><td style="color:var(--text2)">${fmtN(b)}</td><td style="color:var(--text2)">${fmtN(s)}</td><td class="${stkClass(stk)}">${fmtN(stk)}</td><td style="color:var(--text3)">${san(r.unit)}</td><td><button class="btn-icon btn-sm" onclick="openEditStock(${jsq(r.id)})">✏️</button></td></tr>`;
   }).join('');
   document.getElementById('i-ok').textContent=ok;
   document.getElementById('i-low').textContent=low;
@@ -2107,7 +2202,7 @@ function filtrarInv(q){
   renderInv(INV.filter(r=>(r.p.toLowerCase().includes(f)||r.id.toLowerCase().includes(f)||r.cat.toLowerCase().includes(f)||r.sub.toLowerCase().includes(f))&&(invCatFilter==='todos'||r.cat===invCatFilter)));
 }
 const invCats=['todos',...new Set(INV.map(r=>r.cat))];
-document.getElementById('inv-chips').innerHTML=invCats.map((c,i)=>`<button class="chip${i===0?' on':''}" onclick="setInvFilter('${c}',this)">${c==='todos'?'Todos':c}</button>`).join('');
+document.getElementById('inv-chips').innerHTML=invCats.map((c,i)=>`<button class="chip${i===0?' on':''}" onclick="setInvFilter(${jsq(c)},this)">${c==='todos'?'Todos':san(c)}</button>`).join('');
 function setInvFilter(cat,btn){invCatFilter=cat;document.querySelectorAll('#inv-chips .chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');filtrarInv(document.getElementById('inv-search').value||'');}
 renderInv(INV);
 
@@ -2116,11 +2211,11 @@ let catCatFilter='todos';
 function renderCatalogo(data){
   document.getElementById('tbody-cat').innerHTML=data.map(r=>{
     const stk=getStock(r);
-    return `<tr><td class="mono">${r.id}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td><td style="color:var(--text2)">${r.sub}</td><td>${r.p}</td><td>${r.precio?fmt(r.precio):'<span style="color:var(--text3)">—</span>'}</td><td class="${stkClass(stk)}">${fmtN(stk)}</td><td><button class="btn-icon btn-sm" onclick="openEditCatalogo('${r.id}')">✏️</button></td></tr>`;
+    return `<tr><td class="mono">${san(r.id)}</td><td><span class="pill ${catPill[r.cat]||'pill-gray'}">${san(r.cat)}</span></td><td style="color:var(--text2)">${san(r.sub)}</td><td>${san(r.p)}</td><td>${r.precio?fmt(r.precio):'<span style="color:var(--text3)">—</span>'}</td><td class="${stkClass(stk)}">${fmtN(stk)}</td><td><button class="btn-icon btn-sm" onclick="openEditCatalogo(${jsq(r.id)})">✏️</button></td></tr>`;
   }).join('');
 }
 function filtrarCatalogo(q){const f=q.toLowerCase();renderCatalogo(INV.filter(r=>(r.p.toLowerCase().includes(f)||r.id.toLowerCase().includes(f)||r.sub.toLowerCase().includes(f))&&(catCatFilter==='todos'||r.cat===catCatFilter)));}
-document.getElementById('cat-chips').innerHTML=invCats.map((c,i)=>`<button class="chip${i===0?' on':''}" onclick="setCatFilter('${c}',this)">${c==='todos'?'Todos':c}</button>`).join('');
+document.getElementById('cat-chips').innerHTML=invCats.map((c,i)=>`<button class="chip${i===0?' on':''}" onclick="setCatFilter(${jsq(c)},this)">${c==='todos'?'Todos':san(c)}</button>`).join('');
 function setCatFilter(cat,btn){catCatFilter=cat;document.querySelectorAll('#cat-chips .chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');filtrarCatalogo('');}
 renderCatalogo(INV);
 
@@ -2134,7 +2229,7 @@ function renderCompras(data){
     const cat = r.cat||'';
     const prov = r.prov||'';
     const und = r.und||'';
-    return `<tr><td>${p}</td><td><span class="pill ${catPill[cat]||'pill-gray'}">${cat}</span></td><td>${prov}</td><td>${fmtN(q)} ${und}</td><td>${fmt(cu)}</td><td style="font-weight:600">${fmt(t)}</td><td><button class="btn-icon btn-sm" onclick="openEditCompra(${i})">✏️</button><button class="btn-icon btn-sm" onclick="deleteCompra(${i})">🗑</button></td></tr>`;
+    return `<tr><td>${san(p)}</td><td><span class="pill ${catPill[cat]||'pill-gray'}">${san(cat)}</span></td><td>${san(prov)}</td><td>${fmtN(q)} ${san(und)}</td><td>${fmt(cu)}</td><td style="font-weight:600">${fmt(t)}</td><td><button class="btn-icon btn-sm" onclick="openEditCompra(${i})">✏️</button><button class="btn-icon btn-sm" onclick="deleteCompra(${i})">🗑</button></td></tr>`;
   }).join('');
 }
 renderCompras(COMPRAS);
@@ -2256,7 +2351,7 @@ function registrarCompra(){
   const tbody=document.getElementById('tbody-cmp-session');
   if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
   const tr=document.createElement('tr');
-  tr.innerHTML=`<td>${fecha}</td><td>${item.p}</td><td>${provVal}</td><td>${fmtN(qty)} ${und}</td><td>${fmt(cu)}</td><td style="font-weight:600;color:var(--blue)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'cmp-session',${total},0)">🗑</button></td>`;
+  tr.innerHTML=`<td>${san(fecha)}</td><td>${san(item.p)}</td><td>${san(provVal)}</td><td>${fmtN(qty)} ${san(und)}</td><td>${fmt(cu)}</td><td style="font-weight:600;color:var(--blue)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'cmp-session',${total},0)">🗑</button></td>`;
   tbody.appendChild(tr);
   document.getElementById('cmp-session-total').textContent='Total sesión: '+fmt(cmpSessionTotal);
 
@@ -2287,7 +2382,7 @@ function registrarGasto(){
   const tbody=document.getElementById('tbody-gst-session');
   if(tbody.querySelector('td[colspan]')) tbody.innerHTML='';
   const tr=document.createElement('tr');
-  tr.innerHTML=`<td>${fecha}</td><td>${concepto}</td><td><span class="pill pill-amber">${cat}</span></td><td style="font-weight:600;color:var(--red)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'gst-session',${total},0)">🗑</button></td>`;
+  tr.innerHTML=`<td>${san(fecha)}</td><td>${san(concepto)}</td><td><span class="pill pill-amber">${san(cat)}</span></td><td style="font-weight:600;color:var(--red)">${fmt(total)}</td><td><button class="btn-icon btn-sm" onclick="deleteRow(this,'gst-session',${total},0)">🗑</button></td>`;
   tbody.appendChild(tr);
   document.getElementById('gst-session-total').textContent='Total sesión: '+fmt(gstSessionTotal);
   document.getElementById('gst-concepto').value='';
@@ -2360,7 +2455,7 @@ function saveModal(){
       const newVal=parseFloat(document.getElementById('edit-valor').value)||0;
       const newTipo=document.getElementById('edit-tipo').value;
       const newPago=document.getElementById('edit-pago').value;
-      tds[2].innerHTML=`<span class="pill ${newTipo==='Bulto'?'pill-blue':'pill-green'}">${newTipo}</span>`;
+      tds[2].innerHTML=`<span class="pill ${newTipo==='Bulto'?'pill-blue':'pill-green'}">${san(newTipo)}</span>`;
       tds[4].textContent=fmt(newVal);
       tds[5].textContent=newPago;
     }
@@ -2380,7 +2475,7 @@ function openEditStock(id){
       <div class="field"><label>Total vendido</label><input type="number" id="edit-sold" value="${item.sold}" step="0.1"></div>
       <div class="field"><label>Precio de venta ($)</label><input type="number" id="edit-precio" value="${item.precio||0}" step="100"></div>
     </div>
-    <div style="font-size:12px;color:var(--text3)">Stock estimado resultante: <strong>${fmtN(item.bought-item.sold)}</strong> ${item.unit}</div>
+    <div style="font-size:12px;color:var(--text3)">Stock estimado resultante: <strong>${fmtN(item.bought-item.sold)}</strong> ${san(item.unit)}</div>
   `,{type:'stock',id,showDelete:false});
 }
 function openEditCatalogo(id){
@@ -2388,7 +2483,7 @@ function openEditCatalogo(id){
   if(!item) return;
   openModal('Editar producto — '+item.id,`
     <div class="form-grid" style="grid-template-columns:1fr">
-      <div class="field"><label>Nombre canónico</label><input type="text" id="edit-nombre" value="${item.p}"></div>
+      <div class="field"><label>Nombre canónico</label><input type="text" id="edit-nombre" value="${san(item.p)}"></div>
       <div class="field"><label>Precio de venta ($)</label><input type="number" id="edit-precio" value="${item.precio||0}" step="100"></div>
     </div>
   `,{type:'catalogo',id,showDelete:false});
@@ -2397,10 +2492,10 @@ function openEditCompra(idx){
   const r=COMPRAS[idx];
   openModal('Editar compra',`
     <div class="form-grid" style="grid-template-columns:1fr 1fr">
-      <div class="field"><label>Producto</label><input type="text" id="edit-nombre" value="${r.p}"></div>
-      <div class="field"><label>Proveedor</label><input type="text" id="edit-prov" value="${r.prov}"></div>
-      <div class="field"><label>Cantidad</label><input type="number" id="edit-qty" value="${r.q}" step="0.1"></div>
-      <div class="field"><label>Costo unitario ($)</label><input type="number" id="edit-cu" value="${r.cu}" step="100"></div>
+      <div class="field"><label>Producto</label><input type="text" id="edit-nombre" value="${san(r.p)}"></div>
+      <div class="field"><label>Proveedor</label><input type="text" id="edit-prov" value="${san(r.prov)}"></div>
+      <div class="field"><label>Cantidad</label><input type="number" id="edit-qty" value="${san(r.q)}" step="0.1"></div>
+      <div class="field"><label>Costo unitario ($)</label><input type="number" id="edit-cu" value="${san(r.cu)}" step="100"></div>
     </div>
   `,{type:'compra',idx,showDelete:true});
 }
@@ -2440,13 +2535,13 @@ function editVenta(btn){
 const topValor=[{n:"Monello tradicional",v:1179000},{n:"Monello gato",v:761150},{n:"Arena Calabaza 4.5kg",v:288400},{n:"Nutranuggets",v:282000},{n:"Br Cat Castrado salmón",v:230000},{n:"Chunky adulto pollo",v:218100},{n:"Cat Chow",v:306800},{n:"Arena calabaza (bulto)",v:160000},{n:"Agility piel adulto 8kg",v:156000},{n:"Don kat adulto",v:113700}];
 const topRot=[{n:"Snack galleta leche",v:40,u:"paq"},{n:"Monello gato",v:43,u:"kg"},{n:"Monello tradicional",v:31,u:"kg"},{n:"Cat Chow",v:28,u:"kg"},{n:"Br Cat gatito pollo",v:22,u:"kg"},{n:"Chunky adulto pollo",v:21,u:"kg"},{n:"Don kat adulto",v:18,u:"kg"},{n:"Pudding calabaza",v:17,u:"und"},{n:"Michiko churu",v:28,u:"und"},{n:"Don kat gatito",v:14,u:"kg"}];
 const maxV=topValor[0].v,maxR=Math.max(...topRot.map(r=>r.v));
-document.getElementById('top-valor').innerHTML=topValor.map(p=>`<div class="bar-row"><span class="bar-label" title="${p.n}">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxV*100)}%;background:var(--green)"></div></div><span class="bar-value" style="color:var(--green)">${fmt(p.v)}</span></div>`).join('');
-document.getElementById('top-rot').innerHTML=topRot.map(p=>`<div class="bar-row"><span class="bar-label" title="${p.n}">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxR*100)}%;background:var(--blue)"></div></div><span class="bar-value" style="color:var(--blue)">${p.v} ${p.u}</span></div>`).join('');
+document.getElementById('top-valor').innerHTML=topValor.map(p=>`<div class="bar-row"><span class="bar-label" title="${san(p.n)}">${san(p.n)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxV*100)}%;background:var(--green)"></div></div><span class="bar-value" style="color:var(--green)">${fmt(p.v)}</span></div>`).join('');
+document.getElementById('top-rot').innerHTML=topRot.map(p=>`<div class="bar-row"><span class="bar-label" title="${san(p.n)}">${san(p.n)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxR*100)}%;background:var(--blue)"></div></div><span class="bar-value" style="color:var(--blue)">${p.v} ${san(p.u)}</span></div>`).join('');
 
 // ── PROVEEDORES ──
 const provs=[{n:"AnimalHome",v:3130956},{n:"Monello",v:2438748},{n:"Nutivara",v:2087450},{n:"Villapets",v:409096},{n:"Dorado",v:379700},{n:"Nagopets",v:195800},{n:"Servicampo",v:112174},{n:"Jambo",v:90200},{n:"Porvenir",v:61600},{n:"Tauro",v:39000}];
 const maxP=provs[0].v;
-document.getElementById('prov-bars').innerHTML=provs.map(p=>`<div class="bar-row"><span class="bar-label">${p.n}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxP*100)}%;background:var(--blue)"></div></div><span class="bar-value" style="color:var(--text2);font-size:11px">${fmt(p.v)}</span></div>`).join('');
+document.getElementById('prov-bars').innerHTML=provs.map(p=>`<div class="bar-row"><span class="bar-label">${san(p.n)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.v/maxP*100)}%;background:var(--blue)"></div></div><span class="bar-value" style="color:var(--text2);font-size:11px">${fmt(p.v)}</span></div>`).join('');
 
 // ── CHARTS ──
 function mkChart(id,type,labels,datasets,opts={}){
@@ -2539,12 +2634,7 @@ window.goTo = function(id, btn){
 // ══════════════════════════════════════
 // LOGIN SCREEN
 // ══════════════════════════════════════
-/* login in head */
-/* doLogin in head */
-/* doLogout in head */
-/* checkSession in head */
 // Enter key triggers login
-/* enter key in head */
 
 
 // ══════════════════════════════════════
@@ -2602,7 +2692,7 @@ function renderVentasDia(rows){
   }
   const sorted = rows.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
   tbody.innerHTML = sorted.map(v=>
-    `<tr><td style="font-size:11px;color:var(--teal);font-weight:600">${v.hora||'—'}</td><td>${san(v.producto)}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${san(v.pago)}</td><td style="white-space:nowrap"><button class="btn-icon btn-sm" onclick="editVentaFB('${v.fbId||''}','${(v.tipo||'').replace(/'/g,"\'")}',${v.valor},'${(v.pago||'').replace(/'/g,"\'")}')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('${v.fbId||''}',${v.valor||0})">🗑</button></td></tr>`
+    `<tr><td style="font-size:11px;color:var(--teal);font-weight:600">${san(v.hora)||'—'}</td><td>${san(v.producto)}</td><td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${san(v.tipo)}</span></td><td style="font-weight:600">${fmt2(v.valor)}</td><td>${san(v.pago)}</td><td style="white-space:nowrap"><button class="btn-icon btn-sm" onclick="editVentaFB(${jsq(v.fbId)},${jsq(v.tipo)},${Number(v.valor)||0},${jsq(v.pago)},${!!v.clienteNuevo})">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB(${jsq(v.fbId)},${Number(v.valor)||0})">🗑</button></td></tr>`
   ).join('');
 }
 
@@ -2658,7 +2748,7 @@ function buildHvFiltros(){
     periodos.map((p,i)=>{
       const val = typeof p==='string'&&p.includes('|') ? p.split('|')[1] : p;
       const lbl = typeof p==='string'&&p.includes('|') ? p.split('|')[0] : p;
-      return `<option value="${val}">${lbl}</option>`;
+      return `<option value="${san(val)}">${san(lbl)}</option>`;
     }).join('');
   if(periodos.length){
     const firstVal = typeof periodos[0]==='string'&&periodos[0].includes('|') ? periodos[0].split('|')[1] : periodos[0];
@@ -2743,7 +2833,7 @@ function renderHvSummary(rows){
     <div class="sbar-item"><div class="sv">${fmt2(bulto)}</div><div class="sl">Bulto</div></div>
     <div class="sbar-item"><div class="sv">${rows.length}</div><div class="sl">Transacciones</div></div>
     <div class="sbar-item"><div class="sv" style="color:var(--teal)">${nuevos}</div><div class="sl">Clientes nuevos</div></div>
-  \`;
+  `;
 }
 
 function renderHvCharts(rows){
@@ -2788,18 +2878,18 @@ function renderHvTable(rows, q=''){
   const filtered = q ? rows.filter(v=>(v.producto||'').toLowerCase().includes(q.toLowerCase())) : rows;
   document.getElementById('tbody-hv').innerHTML = filtered.map(v=>
     v.esCierre ? `<tr style="background:#E0F5EF">
-      <td style="font-size:11px"><div style="color:var(--text3)">${v.fecha}</div>${v.hora?'<div style="color:var(--teal);font-weight:600">'+v.hora+'</div>':''}</td>
-      <td colspan="3" style="font-weight:600;color:var(--teal-dark)">${v.producto} <span style="font-size:11px;font-weight:400;color:var(--text2)">${v.resumen||''}</span></td>
+      <td style="font-size:11px"><div style="color:var(--text3)">${san(v.fecha)}</div>${v.hora?'<div style="color:var(--teal);font-weight:600">'+san(v.hora)+'</div>':''}</td>
+      <td colspan="3" style="font-weight:600;color:var(--teal-dark)">${san(v.producto)} <span style="font-size:11px;font-weight:400;color:var(--text2)">${san(v.resumen)}</span></td>
       <td></td><td></td>
     </tr>` :
     `<tr>
-      <td style="font-size:11px"><div style="color:var(--text3)">${v.fecha}</div>${v.hora?'<div style="color:var(--teal);font-weight:600">'+v.hora+'</div>':''}</td>
+      <td style="font-size:11px"><div style="color:var(--text3)">${san(v.fecha)}</div>${v.hora?'<div style="color:var(--teal);font-weight:600">'+san(v.hora)+'</div>':''}</td>
       <td>${san(v.producto)}</td>
-      <td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${v.tipo||''}</span></td>
+      <td><span class="pill ${v.esBulto?'pill-blue':'pill-green'}">${san(v.tipo)}</span></td>
       <td style="font-weight:600">${fmt2(v.valor)}</td>
       <td>${san(v.pago)}</td>
       <td style="white-space:nowrap">
-        ${v.fbId&&!v.esCierre?'<button class="btn-icon btn-sm" onclick="editVentaFB(\''+v.fbId+'\',\''+String(v.tipo||'').replace(/\'/g,"\\'")+'\','+Number(v.valor||0)+',\''+String(v.pago||'').replace(/\'/g,"\\'")+'\',' +(v.clienteNuevo||false)+')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB(\''+v.fbId+'\','+Number(v.valor||0)+')">🗑</button>':''}
+        ${v.fbId&&!v.esCierre?'<button class="btn-icon btn-sm" onclick="editVentaFB('+jsq(v.fbId)+','+jsq(v.tipo)+','+(Number(v.valor)||0)+','+jsq(v.pago)+','+(!!v.clienteNuevo)+')">✏️</button><button class="btn-icon btn-sm" onclick="borrarVentaFB('+jsq(v.fbId)+','+(Number(v.valor)||0)+')">🗑</button>':''}
       </td>
     </tr>`
   ).join('');
@@ -2834,7 +2924,7 @@ function buildCmpHist(){
   const sel = document.getElementById('cmp-select-mes');
   if(sel){
     sel.innerHTML = '<option value="todos">Todos los períodos</option>' +
-      meses.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${nombres[parseInt(mo)]} ${y}</option>`;}).join('');
+      meses.map(m=>{const[y,mo]=m.split('-');return`<option value="${san(m)}">${nombres[parseInt(mo)]} ${san(y)}</option>`;}).join('');
     sel.value = 'todos';
   }
   filterCmpHistSelect('todos');
@@ -2871,7 +2961,7 @@ function renderCmpHist(rows, q=''){
   document.getElementById('cmp-summary').innerHTML=
     `<div class="sbar-item"><div class="sv">${fmt2(total)}</div><div class="sl">Total período</div></div>`+
     Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([c,v])=>
-      `<div class="sbar-item"><div class="sv">${fmt2(v)}</div><div class="sl">${c}</div></div>`
+      `<div class="sbar-item"><div class="sv">${fmt2(v)}</div><div class="sl">${san(c)}</div></div>`
     ).join('');
 
   // Table — with edit/delete for session entries (those with factura field)
@@ -2880,11 +2970,11 @@ function renderCmpHist(rows, q=''){
     const globalIdx = COMPRAS_HIST.indexOf(r);
     const canEdit = globalIdx !== -1; // all rows in COMPRAS_HIST are editable
     return `<tr>
-      <td style="font-size:11px;color:var(--text3)">${r.fecha}${r.factura?'<br><span style="color:var(--blue-text);font-weight:600">'+r.factura+'</span>':''}</td>
+      <td style="font-size:11px;color:var(--text3)">${san(r.fecha)}${r.factura?'<br><span style="color:var(--blue-text);font-weight:600">'+san(r.factura)+'</span>':''}</td>
       <td>${san(r.producto)}</td>
-      <td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat||'Gasto'}</span></td>
+      <td><span class="pill ${catPill[r.cat]||'pill-gray'}">${san(r.cat)||'Gasto'}</span></td>
       <td>${san(r.prov)}</td>
-      <td style="color:var(--text2)">${r.qty||''} ${r.und||''}</td>
+      <td style="color:var(--text2)">${san(r.qty)} ${san(r.und)}</td>
       <td style="color:var(--text2)">${r.cu?fmt2(r.cu):''}</td>
       <td style="font-weight:600">${fmt2(r.t||0)}</td>
       <td style="white-space:nowrap">
@@ -2899,6 +2989,7 @@ function renderCmpHist(rows, q=''){
 document.getElementById('page-historial-compras').addEventListener('click', function initCmpH(){
   if(COMPRAS_HIST.length && !cmpHistRows.length) buildCmpHist();
 }, {once:true});
+let cmpMesOpciones = []; // usada por buildCmpMesDropdown() desde buildCmpHist()
 buildCmpHist(); // also build on load
 
 // ══════════════════════════════════════
@@ -2928,8 +3019,8 @@ function populateHvDropdown(periodos){
   dd.innerHTML = periodos.slice(0,40).map(p => {
     const val = typeof p==='string'&&p.includes('|') ? p.split('|')[1] : p;
     const lbl = typeof p==='string'&&p.includes('|') ? p.split('|')[0] : p;
-    return `<div class="prod-option" onmousedown="setHvPeriodo('${val}','${lbl.replace(/'/g,'\'')}')">
-      <div><div class="po-name">${lbl}</div></div>
+    return `<div class="prod-option" onmousedown="setHvPeriodo(${jsq(val)},${jsq(lbl)})">
+      <div><div class="po-name">${san(lbl)}</div></div>
     </div>`;
   }).join('');
   dd.classList.add('open');
@@ -2980,7 +3071,7 @@ function navHvPeriodo(dir){
 // ══════════════════════════════════════
 // HISTORIAL COMPRAS — mes dropdown
 // ══════════════════════════════════════
-let cmpMesOpciones = [];
+// (cmpMesOpciones se declara antes de la primera llamada a buildCmpHist)
 
 function buildCmpMesDropdown(){
   const rows = cmpHistTab==='inventario' ? COMPRAS_HIST : OTRAS_COMPRAS_HIST;
@@ -2997,8 +3088,8 @@ function populateCmpMesDropdown(opciones){
   const dd = document.getElementById('cmp-mes-dropdown');
   if(!dd) return;
   dd.innerHTML = opciones.map(o=>
-    `<div class="prod-option" onmousedown="setCmpMes('${o.k}','${o.l}')">
-      <div class="po-name">${o.l}</div>
+    `<div class="prod-option" onmousedown="setCmpMes(${jsq(o.k)},${jsq(o.l)})">
+      <div class="po-name">${san(o.l)}</div>
     </div>`
   ).join('');
   dd.classList.add('open');
@@ -3168,9 +3259,9 @@ function renderFacturaItems(){
     <div class="factura-item">
       <button class="fi-del" onclick="eliminarItemFactura(${idx})">✕</button>
       ${item.isGranel?'<div class="fi-granel-badge">⚖️ Granel</div>':''}
-      <div class="fi-name">${item.nombre}</div>
+      <div class="fi-name">${san(item.nombre)}</div>
       <div class="fi-row">
-        ${!item.isGranel?'<div class="fi-field"><label>Cant.</label><span>'+fmtN(item.qty)+' '+item.und+'</span></div>':''}
+        ${!item.isGranel?'<div class="fi-field"><label>Cant.</label><span>'+fmtN(item.qty)+' '+san(item.und)+'</span></div>':''}
         <div class="fi-field"><label>Costo unit.</label><span>${fmt(item.cu)}</span></div>
         ${item.pv?'<div class="fi-field"><label>Precio venta</label><span>'+fmt(item.pv)+'</span></div>':''}
         <div class="fi-total">${fmt(item.subtotal)}</div>
@@ -3558,13 +3649,13 @@ function renderCierres(){
   tbody.innerHTML = cierres.map(c => {
     const diffColor = c.diff===0?'var(--green)':c.diff>0?'var(--blue-text)':'var(--red)';
     return `<tr>
-      <td style="font-size:11px;color:var(--text3)">${c.fecha}</td>
+      <td style="font-size:11px;color:var(--text3)">${san(c.fecha)}</td>
       <td>${fmt(c.ef||0)}</td>
       <td>${fmt(c.nq||0)}</td>
       <td>${fmt(c.ot||0)}</td>
       <td style="font-weight:600">${fmt(c.ventas||0)}</td>
       <td style="font-weight:700;color:${diffColor}">${c.diff>=0?'+':''}${fmt(c.diff||0)}</td>
-      <td style="font-size:11px;color:var(--text3)">${c.obs||'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${san(c.obs)||'—'}</td>
     </tr>`;
   }).join('');
 }
@@ -3622,7 +3713,7 @@ function actualizarPreview(){
   if(document.getElementById('exp-resumen').checked) lines.push('📊 Resumen diario de '+new Set(filterByRango(VENTAS_HIST).map(v=>v.fecha)).size+' días');
   const prev=document.getElementById('exp-preview');
   const cont=document.getElementById('exp-preview-content');
-  if(lines.length){ prev.style.display='block'; cont.innerHTML=lines.map(l=>'<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+l+'</div>').join(''); }
+  if(lines.length){ prev.style.display='block'; cont.innerHTML=lines.map(l=>'<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+san(l)+'</div>').join(''); }
   else prev.style.display='none';
 }
 
@@ -3849,13 +3940,13 @@ function buildListaCompras(tab){
     const provSugerido = provMap[r.cat] || '';
     return `<tr>
       <td><input type="checkbox" class="compra-check" data-idx="${i}" checked style="accent-color:var(--teal)"></td>
-      <td class="mono" style="font-size:11px">${r.id}</td>
-      <td style="font-weight:500">${r.p}</td>
-      <td><span class="pill ${catPill[r.cat]||'pill-gray'}">${r.cat}</span></td>
-      <td style="font-weight:700;color:${stkColor}">${fmtN(stk)} ${r.unit}</td>
-      <td>${r.unit}</td>
-      <td><input type="number" class="compra-qty" data-id="${r.id}" value="${r.unit==='kg'?5:2}" min="0.5" step="${r.unit==='kg'?0.5:1}" style="width:70px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;font-family:'Nunito',sans-serif"></td>
-      <td><input type="text" class="compra-prov" data-id="${r.id}" value="${provSugerido}" style="width:140px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;font-family:'Nunito',sans-serif"></td>
+      <td class="mono" style="font-size:11px">${san(r.id)}</td>
+      <td style="font-weight:500">${san(r.p)}</td>
+      <td><span class="pill ${catPill[r.cat]||'pill-gray'}">${san(r.cat)}</span></td>
+      <td style="font-weight:700;color:${stkColor}">${fmtN(stk)} ${san(r.unit)}</td>
+      <td>${san(r.unit)}</td>
+      <td><input type="number" class="compra-qty" data-id="${san(r.id)}" value="${r.unit==='kg'?5:2}" min="0.5" step="${r.unit==='kg'?0.5:1}" style="width:70px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;font-family:'Nunito',sans-serif"></td>
+      <td><input type="text" class="compra-prov" data-id="${san(r.id)}" value="${san(provSugerido)}" style="width:140px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;font-family:'Nunito',sans-serif"></td>
     </tr>`;
   }).join('');
 
@@ -4006,15 +4097,15 @@ function renderCierres(){
     const diffColor = c.diff===0?'var(--green)':c.diff>0?'var(--blue-text)':'var(--red)';
     const sob = c.sobrante;
     const sobCell = sob && sob.tipo && sob.tipo!=='cuadre'
-      ? `<span style="color:${sob.tipo==='sobrante'?'var(--blue-text)':'var(--red)'};font-weight:600">${sob.tipo==='sobrante'?'+':'-'}${fmt(sob.monto||0)}${sob.nota?' ('+sob.nota+')':''}</span>`
+      ? `<span style="color:${sob.tipo==='sobrante'?'var(--blue-text)':'var(--red)'};font-weight:600">${sob.tipo==='sobrante'?'+':'-'}${fmt(sob.monto||0)}${sob.nota?' ('+san(sob.nota)+')':''}</span>`
       : '<span style="color:var(--text3)">—</span>';
     return `<tr>
-      <td style="font-size:11px;color:var(--text3)">${c.fecha}</td>
+      <td style="font-size:11px;color:var(--text3)">${san(c.fecha)}</td>
       <td>${fmt(c.ef||0)}</td><td>${fmt(c.nq||0)}</td><td>${fmt(c.ot||0)}</td>
       <td style="font-weight:600">${fmt(c.ventas||0)}</td>
       <td style="font-weight:700;color:${diffColor}">${c.diff>=0?'+':''}${fmt(c.diff||0)}</td>
       <td>${sobCell}</td>
-      <td style="font-size:11px;color:var(--text3)">${c.obs||'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${san(c.obs)||'—'}</td>
     </tr>`;
   }).join('');
 };
@@ -4070,13 +4161,13 @@ window.guardarCierre = function(){
     ? `<div style="display:flex;justify-content:space-between;padding:6px 0">
         <span style="color:var(--text2)">${sobranteTipoCierre==='sobrante'?'📈 Sobrante':'📉 Faltante'}</span>
         <span style="font-weight:600;color:${sobranteTipoCierre==='sobrante'?'var(--blue-text)':'var(--red)'}">
-          ${sobranteTipoCierre==='sobrante'?'+':'-'}${fmt(sobMonto)}${sobNota?' — '+sobNota:''}
+          ${sobranteTipoCierre==='sobrante'?'+':'-'}${fmt(sobMonto)}${sobNota?' — '+san(sobNota):''}
         </span>
        </div>` : '';
 
   document.getElementById('cierre-confirm-content').innerHTML = `
     <div style="background:var(--surface2);border-radius:var(--radius);padding:14px 16px;font-size:13px">
-      <div style="font-weight:700;color:var(--text);margin-bottom:10px;font-size:14px">Resumen del ${fecha}</div>
+      <div style="font-weight:700;color:var(--text);margin-bottom:10px;font-size:14px">Resumen del ${san(fecha)}</div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
         <span style="color:var(--text2)">💵 Efectivo en caja</span><span style="font-weight:600">${fmt(ef)}</span>
       </div>
@@ -4097,7 +4188,7 @@ window.guardarCierre = function(){
         <span>Diferencia</span>
         <span style="color:${diffColor}">${diff>=0?'+':''}${fmt(diff)}</span>
       </div>
-      ${obs?'<div style="margin-top:8px;font-size:11px;color:var(--text3)">📝 '+obs+'</div>':''}
+      ${obs?'<div style="margin-top:8px;font-size:11px;color:var(--text3)">📝 '+san(obs)+'</div>':''}
     </div>
   `;
   document.getElementById('cierre-confirm-modal').classList.add('open');

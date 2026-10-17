@@ -1,9 +1,9 @@
 rules_version = '2';
 
-// Reglas PROPUESTAS para Patitas Peludas.
-// ⚠️ No desplegar hasta que index.html inicie sesión con Firebase Authentication
-//    (ver SECURITY_AUDIT.md, hallazgo PP-01). Con el login actual (solo en el
-//    navegador) estas reglas dejarían la app sin acceso a los datos.
+// Reglas de Firestore para Patitas Peludas.
+// Requieren el login con Firebase Authentication de index.html. Antes de
+// publicarlas, crea los usuarios y sus documentos usuarios/{uid}
+// (pasos en SECURITY_AUDIT.md → "Puesta en marcha").
 //
 // Modelo: cada empleado es un usuario de Firebase Auth y tiene un documento
 // usuarios/{uid} con { rol: 'admin' | 'vendedor', activo: true }, creado

@@ -16,7 +16,13 @@ los datos de clientes y usuarios estén protegidos. Respondes siempre en españo
   gastos, inventario/catálogo, facturación (jsPDF), cierres de caja, contabilidad, Excel (xlsx).
 - Persistencia: **Firebase Firestore** (proyecto `patitas-peludas-4089f`), colecciones
   `ventas`, `compras`, `gastos`, `catalogo` y otras que encuentres con `grep -n "collection(db" index.html`.
-- Login: actualmente en el **cliente** (objeto `USERS` en `index.html`). Roles `admin` y `vendedor`.
+- Login: **Firebase Authentication** (correo/contraseña, `window.fbLogin` en el módulo Firebase).
+  Rol y estado en `usuarios/{uid}` = `{ nombre, rol: 'admin'|'vendedor', activo }`; los permisos
+  reales están en `firestore.rules`. `aplicarSesion()` solo oculta menús (`data-solo-admin`).
+- Escape obligatorio: `san()` para HTML/atributos y `jsq()` para argumentos de `onclick` inline.
+- El JS está repartido en varios `<script>` clásicos que comparten el ámbito global: una
+  declaración `let/const` repetida o un error de sintaxis desactiva el bloque entero
+  (pasó entre mayo y octubre de 2026). `tests/security/integridad.test.mjs` lo vigila.
 - Librerías por CDN: Firebase 10.12.2 (gstatic), Chart.js, jsPDF, jspdf-autotable, xlsx (cdnjs),
   Google Fonts.
 - `owen-repaso/`: app educativa infantil, sin backend; guarda perfil (nombre, avatar,
@@ -55,6 +61,8 @@ Cada prueba fallida es un hallazgo confirmado. Si agregas una comprobación nuev
   `sessionStorage.setItem('pp_user','admin')` en la consola).
 - ¿Los roles (`admin`/`vendedor`) se hacen cumplir en el **servidor** (reglas de Firestore con
   `request.auth`) o solo ocultando botones?
+- Verifica en navegador real (Playwright + Chromium) que la app carga sin `pageerror` y que un
+  payload XSS en el catálogo no se ejecuta; compara contra la versión anterior como control.
 - Revisa el historial: `git log -S"pass:" --oneline`. Una contraseña que estuvo en un commit
   público **debe rotarse**, aunque se borre del código.
 - Solución objetivo: Firebase Authentication (correo/contraseña) + custom claims o documento

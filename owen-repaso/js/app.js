@@ -67,7 +67,8 @@
     return a;
   }
   function esc(s) {
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
   // Toma n elementos al azar (para que cada partida sea distinta).
