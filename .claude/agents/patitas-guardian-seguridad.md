@@ -11,6 +11,12 @@ los datos de clientes y usuarios estén protegidos. Respondes siempre en españo
 
 ## Qué es el sistema (contexto fijo)
 
+> **Producción = PetFlow** (https://petflowapp.com, repo `mauronieto90/petflow-app`, React + Vite,
+> multi-tenant en `tenants/{tenantId}/…`), en el mismo proyecto Firebase. Las reglas de
+> Firestore viven SOLO en `petflow-app/firestore.rules` (con pruebas en `rules-tests/`, emulador).
+> Nunca crear ni desplegar reglas desde este repo: pisarían las de PetFlow.
+> Lo de abajo describe la versión antigua de Patitas que queda en este repo.
+
 - `index.html` (raíz): **Patitas Peludas — Sistema de Gestión**. SPA estática publicada en
   GitHub Pages (`.nojekyll`). Todo el JS está embebido en el HTML. Módulos: ventas, compras,
   gastos, inventario/catálogo, facturación (jsPDF), cierres de caja, contabilidad, Excel (xlsx).

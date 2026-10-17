@@ -1,25 +1,11 @@
-// A01/A04 — Reglas de Firestore y protección contra pérdida de datos.
+// Las reglas de Firestore del proyecto patitas-peludas-4089f viven en el repo
+// mauronieto90/petflow-app (la app en producción). Este repo NO debe traer reglas
+// ni firebase.json: un `firebase deploy` desde aquí sobrescribiría las de PetFlow.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { read, exists } from './_helpers.mjs';
+import { exists } from './_helpers.mjs';
 
-test('las reglas de Firestore están versionadas en el repo', () => {
-  assert.ok(exists('firestore.rules'),
-    'Falta firestore.rules: no hay forma de revisar ni restaurar las reglas que protegen los datos');
-});
-
-test('las reglas no dejan la base abierta ni en modo prueba', { skip: !exists('firestore.rules') }, () => {
-  const rules = read('firestore.rules').replace(/\/\/.*$/gm, '');
-  assert.doesNotMatch(rules, /if\s+true\b/, 'Hay reglas "if true": acceso total para cualquiera');
-  assert.doesNotMatch(rules, /request\.time\s*</, 'Reglas de modo prueba con fecha de caducidad');
-  assert.match(rules, /request\.auth\s*!=\s*null|request\.auth\.uid|request\.auth\.token/,
-    'Ninguna regla exige usuario autenticado');
-});
-
-test('borrar datos requiere rol de administrador', { skip: !exists('firestore.rules') }, () => {
-  const rules = read('firestore.rules').replace(/\/\/.*$/gm, '');
-  const deletes = rules.match(/allow[^;]*\bdelete\b[^;]*;/g) || [];
-  for (const d of deletes) {
-    assert.match(d, /admin/i, `Borrado permitido sin verificar rol admin: ${d.trim()}`);
-  }
+test('este repo no trae reglas de Firestore que puedan pisar las de PetFlow', () => {
+  assert.ok(!exists('firestore.rules'), 'Las reglas se gestionan en petflow-app');
+  assert.ok(!exists('firebase.json'), 'Un firebase.json aquí permite desplegar por error sobre producción');
 });
