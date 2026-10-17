@@ -1,0 +1,12 @@
+{
+  "name": "app-sistemapatitas",
+  "private": true,
+  "description": "Patitas Peludas — Sistema de Gestión (GitHub Pages + Firebase)",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "test:security": "node --test --test-reporter=spec \"tests/security/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
